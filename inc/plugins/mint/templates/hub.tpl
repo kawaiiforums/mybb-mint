@@ -28,7 +28,7 @@
                     {$recentBalanceOperations}
                 </div>
             </div>
-            {$rewardSources}
+            {$rewardSourcesLegend}
         </section>
     </div>
 </div>

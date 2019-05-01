@@ -26,6 +26,12 @@ class BalanceTransfers extends \mint\DbEntityRepository
             'type' => 'varchar',
             'length' => 255,
         ],
+        'note' => [
+            'type' => 'text',
+        ],
+        'private' => [
+            'type' => 'bool',
+        ],
     ];
 
     public function execute(int $fromUserId, int $toUserId, int $value, array $details = []): bool
@@ -48,6 +54,12 @@ class BalanceTransfers extends \mint\DbEntityRepository
         if (!empty($details['handler'])) {
             $transferData['handler'] = $details['handler'];
         }
+
+        if (!empty($details['note'])) {
+            $transferData['note'] = substr($details['note'], 0, 100);
+        }
+
+        $transferData['private'] = !empty($details['private']);
 
         $this->db->write_query('BEGIN');
 

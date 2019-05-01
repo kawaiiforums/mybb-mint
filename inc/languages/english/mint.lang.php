@@ -17,6 +17,9 @@ $l['mint_mint_error'] = 'Could not execute the minting operation.';
 $l['mint_balance_transfer'] = 'Transfer';
 $l['mint_balance_transfer_new'] = 'New Transfer';
 $l['mint_balance_transfer_currency_amount'] = 'Amount';
+$l['mint_balance_transfer_note'] = 'Note';
+$l['mint_balance_transfer_note_placeholder'] = 'Optional message for this transaction';
+$l['mint_balance_transfer_private'] = 'Private';
 $l['mint_balance_transfer_transferred'] = 'Successfully transferred {1} of currency.';
 $l['mint_balance_transfer_error'] = 'Could not execute the transfer.';
 
@@ -26,6 +29,6 @@ $l['mint_balance_operations_termination_point'] = 'system operation (<code>{1}</
 $l['mint_balance_operations_to_user'] = 'to {1}';
 $l['mint_balance_operations_from_user'] = 'from {1}';
 
-$l['mint_reward_sources'] = 'Activity Rewards';
+$l['mint_reward_sources_legend'] = 'Activity Rewards';
 
 $l['mint_integrity_task_ran'] = 'The Mint Integrity task successfully ran.';

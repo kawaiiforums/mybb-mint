@@ -180,7 +180,9 @@ function addUniqueLogEvent(string $type, array $data): void
         'date' => \TIME_NOW,
     ], $data);
 
-    \mint\updateCache('unique_log_events', $log);
+    \mint\updateCache([
+        'unique_log_events' => $log,
+    ]);
 }
 
 function getFilesContentInDirectory(string $path, string $fileNameSuffix): array
@@ -257,10 +259,12 @@ function buildCreateTableQuery(string $tableName, array $columns): string
 
                 if (!empty($column['foreignKeys'])) {
                     foreach ($column['foreignKeys'] as $foreignKey) {
-                        $columnDefinition .= ' REFERENCES ' . TABLE_PREFIX . $foreignKey['table'] . '(' . $foreignKey['column'] . ')';
+                        if (empty($foreignKey['noReference'])) {
+                            $columnDefinition .= ' REFERENCES ' . TABLE_PREFIX . $foreignKey['table'] . '(' . $foreignKey['column'] . ')';
 
-                        if (!empty($foreignKey['onDelete'])) {
-                            $columnDefinition .= ' ON DELETE ' . strtoupper($foreignKey['onDelete']);
+                            if (!empty($foreignKey['onDelete'])) {
+                                $columnDefinition .= ' ON DELETE ' . strtoupper($foreignKey['onDelete']);
+                            }
                         }
                     }
                 }
@@ -313,10 +317,12 @@ function buildCreateTableQuery(string $tableName, array $columns): string
 
                 if (!empty($column['foreignKeys'])) {
                     foreach ($column['foreignKeys'] as $foreignKey) {
-                        $columnDefinition .= ' REFERENCES ' . TABLE_PREFIX . $foreignKey['table'] . '(' . $foreignKey['column'] . ')';
+                        if (empty($foreignKey['noReference'])) {
+                            $columnDefinition .= ' REFERENCES ' . TABLE_PREFIX . $foreignKey['table'] . '(' . $foreignKey['column'] . ')';
 
-                        if (!empty($foreignKey['onDelete'])) {
-                            $columnDefinition .= ' ON DELETE ' . strtoupper($foreignKey['onDelete']);
+                            if (!empty($foreignKey['onDelete'])) {
+                                $columnDefinition .= ' ON DELETE ' . strtoupper($foreignKey['onDelete']);
+                            }
                         }
                     }
                 }
@@ -369,10 +375,12 @@ function buildCreateTableQuery(string $tableName, array $columns): string
 
                 if (!empty($column['foreignKeys'])) {
                     foreach ($column['foreignKeys'] as $foreignKey) {
-                        $columnDefinition .= ' REFERENCES ' . TABLE_PREFIX . $foreignKey['table'] . '(' . $foreignKey['column'] . ')';
+                        if (empty($foreignKey['noReference'])) {
+                            $columnDefinition .= ' REFERENCES ' . TABLE_PREFIX . $foreignKey['table'] . '(' . $foreignKey['column'] . ')';
 
-                        if (!empty($foreignKey['onDelete'])) {
-                            $columnDefinition .= ' ON DELETE ' . strtoupper($foreignKey['onDelete']);
+                            if (!empty($foreignKey['onDelete'])) {
+                                $columnDefinition .= ' ON DELETE ' . strtoupper($foreignKey['onDelete']);
+                            }
                         }
                     }
                 }

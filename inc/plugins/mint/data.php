@@ -106,10 +106,10 @@ function verifyBalanceOperationsDataIntegrity(bool $attemptToFix = false)
     }
 
     // verify users.mint_balance
-    $query = $db->simple_select('users', 'mint_balance', 'uid IN (' . implode(',', array_map('intval', $userIds)) . ')');
+    $query = $db->simple_select('users', 'uid, mint_balance', 'uid IN (' . implode(',', array_map('intval', $userIds)) . ')');
 
     while ($row = $db->fetch_array($query)) {
-        $balanceSum = $userBalanceSums[$row['user_id']];
+        $balanceSum = $userBalanceSums[$row['uid']];
 
         if ($row['mint_balance'] != $balanceSum) {
             $events['user_balance_inconsistency'] = [
@@ -120,7 +120,7 @@ function verifyBalanceOperationsDataIntegrity(bool $attemptToFix = false)
             if ($attemptToFix) {
                 $db->update_query('users', [
                     'mint_balance' => $balanceSum,
-                ], 'uid = ' . (int)$row['user_id']);
+                ], 'uid = ' . (int)$row['uid']);
             }
 
             break;
@@ -137,6 +137,19 @@ function verifyBalanceOperationsDataIntegrity(bool $attemptToFix = false)
         if (\mint\getSettingValue('disable_manual_balance_operations_on_inconsistency')) {
             \mint\updateSettingValue('manual_balance_operations', 0);
         }
+
+        return false;
+    } else {
+        $events = \mint\getCacheValue('unique_log_events');
+
+        unset($events['result_balance_inconsistency']);
+        unset($events['user_balance_inconsistency']);
+
+        \mint\updateCache([
+            'unique_log_events' => $events,
+        ]);
+
+        return true;
     }
 }
 
@@ -148,6 +161,7 @@ function getUserBalanceOperations(int $userId, ?string $conditions = null)
     $query = $db->query("
         SELECT
             bo.*,
+            bt.note,
             tp.name AS termination_point_name,
             u_from.uid AS from_user_id, u_from.username AS from_username,
             u_to.uid AS to_user_id, u_to.username AS to_username

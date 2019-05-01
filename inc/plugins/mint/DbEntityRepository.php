@@ -100,7 +100,11 @@ abstract class DbEntityRepository
 
         $columns = array_map(
             function (string $value) {
-                return 't1.' . trim($value);
+                if (strpos($value, '(') !== false) {
+                    return str_replace('(', '(t1.', $value);
+                } else {
+                    return 't1.' . trim($value);
+                }
             },
             explode(',', $columns)
         );

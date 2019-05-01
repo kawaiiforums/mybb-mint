@@ -9,11 +9,9 @@ function admin_load()
 {
     global $mybb, $db, $lang, $run_module, $action_file, $page, $sub_tabs, $pageUrl;
 
-    $module = 'config';
-    $actionFile = 'mint';
-    $pageUrl = 'index.php?module=' . $module . '-' . $actionFile;
+    if ($run_module == 'config' && $action_file == 'mint') {
+        $pageUrl = 'index.php?module=' . $run_module . '-' . $action_file;
 
-    if ($run_module == $module && $action_file == $actionFile) {
         $lang->load('mint');
 
         $page->add_breadcrumb_item($lang->mint_admin, $pageUrl);
@@ -134,9 +132,90 @@ function admin_load()
             ]);
 
             $controller->run();
+        } else {
+            exit;
         }
 
-        $page->output_footer();
+
+    } elseif ($run_module == 'tools' && $action_file == 'mint_logs') {
+        $pageUrl = 'index.php?module=' . $run_module . '-' . $action_file;
+
+        $lang->load('mint');
+
+        $page->add_breadcrumb_item($lang->mint_admin_logs, $pageUrl);
+
+        $sub_tabs = [];
+
+        $tabControllers = [
+            'balance_operations',
+            'balance_transfers',
+        ];
+
+        foreach ($tabControllers as $tabName) {
+            $sub_tabs[$tabName] = [
+                'link'        => $pageUrl . '&amp;action=' . $tabName,
+                'title'       => $lang->{'mint_admin_' . $tabName},
+                'description' => $lang->{'mint_admin_' . $tabName . '_description'},
+            ];
+        }
+
+        if ($mybb->input['action'] == 'balance_operations' || empty($mybb->input['action'])) {
+            $controller = new AcpEntityManagementController('balance_operations', BalanceOperations::class);
+
+            $controller->setColumns([
+                'id' => [],
+                'date' => [
+                    'presenter' => function (string $value) {
+                        return \my_date('normal', $value);
+                    },
+                ],
+                'user' => [
+                    'dataColumn' => 'user_username',
+                    'presenter' => function (?string $value, array $row) {
+                        if ($value !== null) {
+                            return \build_profile_link($value, $row['user_id']);
+                        } else {
+                            return null;
+                        }
+                    },
+                ],
+                'value' => [],
+                'result_balance' => [],
+                'transfer_id' => [
+                    'presenter' => function (?int $value) {
+                        if ($value !== null) {
+                            return '#' . (int)$value;
+                        } else {
+                            return null;
+                        }
+                    },
+                ],
+                'termination_point' => [
+                    'dataColumn' => 'termination_point_name',
+                    'presenter' => function (?string $value) {
+                        if ($value !== null) {
+                            return '<code>' . \htmlspecialchars_uni($value) . '</code>';
+                        } else {
+                            return null;
+                        }
+                    },
+                ],
+            ]);
+            $controller->addForeignKeyData([
+                'users' => [
+                    'username',
+                ],
+                'mint_termination_points' => [
+                    'name'
+                ],
+            ]);
+            $controller->insertAllowed(false);
+            $controller->listManagerOptions([
+                'order_dir' => 'desc',
+            ]);
+
+            $controller->run();
+        }
     }
 }
 
@@ -158,6 +237,27 @@ function admin_config_menu(array &$sub_menu): void
         'id' => 'mint',
         'link' => 'index.php?module=config-mint',
         'title' => $lang->mint_admin,
+    ];
+}
+
+function admin_tools_action_handler(array &$actions): void
+{
+    $actions['mint_logs'] = [
+        'active' => 'mint_logs',
+        'file' => 'mint_logs',
+    ];
+}
+
+function admin_tools_menu_logs(array &$sub_menu): void
+{
+    global $lang;
+
+    $lang->load('mint');
+
+    $sub_menu[] = [
+        'id' => 'mint_logs',
+        'link' => 'index.php?module=tools-mint_logs',
+        'title' => $lang->mint_admin_logs,
     ];
 }
 

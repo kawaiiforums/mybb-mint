@@ -12,6 +12,13 @@ class BalanceOperations extends \mint\DbEntityRepository
         ],
         'user_id' => [
             'type' => 'integer',
+            'foreignKeys' => [
+                [
+                    'table' => 'users',
+                    'column' => 'uid',
+                    'noReference' => true,
+                ],
+            ],
         ],
         'result_balance' => [
             'type' => 'integer',

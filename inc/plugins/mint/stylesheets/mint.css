@@ -11,7 +11,7 @@
 .mint-hub__message--error { background: #FFF5F5; }
 
 .mint-hub__block { margin: 20px 0; }
-.mint-hub__block__title { padding: 10px; border-bottom: solid 2px rgba(0,0,0,0.1); font-size: 14px; color: #AAA; }
+.mint-hub__block__title { padding: 10px; border-bottom: solid 2px rgba(0,0,0,0.1); font-size: 14px; color: #767676; }
 
 .mint-hub__list__entry { padding: 10px 2px; border-bottom: solid 1px #FAFAFA; }
 .mint-hub__list__entry:last-child { border-bottom: none; }
@@ -22,10 +22,6 @@
 .mint-hub__table__row__cell { display: table-cell; padding: 10px; border-bottom: solid 1px #FAFAFA; vertical-align: middle; }
 .mint-hub__table__row:last-child .mint-hub__table__row__cell { border-bottom: none; }
 .mint-hub__table__row__cell--align-right { text-align: right; }
-.mint-hub__table__note { margin: 2px 0; padding: 2px; color: #222; }
-.mint-hub__table__note:empty { display: none; }
-.mint-hub__table__note--minor { display: inline-block; padding: 4px 6px; background: #FAFAFA; border-radius: 6px; font-size: 11px; color: #444; }
-.mint-hub__table__note:last-child { margin-bottom: 0; }
 
 .mint-hub__flowing-list__entry { display: inline-block; margin: 6px 2px; padding: 2px 0; border: solid 2px #FAFAFA; border-radius: 30px; font-size: 13px; line-height: 1.8; overflow: hidden; }
 .mint-hub__flowing-list__entry__title { padding: 10px; background: #FAFAFA; color: #666; }
@@ -33,8 +29,9 @@
 
 .mint-hub .pagination { padding: 20px 0; text-align: center; }
 
-.mint-hub__form label { display: block; padding: 10px 0; }
-.mint-hub__form label .title { padding: 8px 0; font-size: 13px; }
+.mint-hub__form .mint-hub__form__element { display: block; padding: 10px 0; }
+.mint-hub__form .mint-hub__form__element .mint-hub__form__element__title { padding: 8px 0; font-size: 13px; }
+.mint-hub__form .mint-hub__form__element--major .mint-hub__form__element__title { font-weight: bold; }
 .mint-hub__form .button { margin: 8px 0; }
 
 .mint-hub__sections { display: flex; }
@@ -64,9 +61,13 @@ a.mint-hub__section__header__nav__link { color: inherit; }
 a.mint-hub__service-nav__link { color: inherit; }
 a.mint-hub__service-nav__link:hover { background-color: var(--color); color: var(--stroke-color); }
 
-.mint-hub__balance-operation { font-size: 16px; }
 .mint-hub__balance-operation--positive { color: #008000; }
 .mint-hub__balance-operation--negative { color: #444444; }
+.mint-hub__balance-operation__date { display: inline-block; margin: 2px 0; padding: 4px 6px; background: #FAFAFA; border-radius: 6px; font-size: 11px; color: #444; }
+.mint-hub__balance-operation__details { margin: 2px 0; padding: 2px; color: #222; }
+.mint-hub__balance-operation__details:empty { display: none; }
+.mint-hub__balance-operation__note { display: inline-block; margin: 2px 0; padding: 4px 6px; border: solid 1px #FAFAFA; border-radius: 6px; font-size: 11px; color: #555; }
+.mint-hub__balance-operation__note:empty { display: none; }
 
-.mint-hub__rewards__reward { padding: 4px; color: #AAA; }
-.mint-hub__rewards__title { margin: 0 2px; padding: 10px; }
+.mint-hub__reward-sources-legend__reward { padding: 4px; color: #AAA; }
+.mint-hub__reward-sources-legend__title { margin: 0 2px; padding: 10px; }

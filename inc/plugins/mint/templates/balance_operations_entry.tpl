@@ -3,7 +3,8 @@
         <p class="mint-hub__balance-operation mint-hub__balance-operation--{$type}">{$sign} {$amount}</p>
     </div>
     <div class="mint-hub__table__row__cell">
-        <p class="mint-hub__table__note mint-hub__table__note--minor">{$date}</p>
-        <p class="mint-hub__table__note">{$notes}</p>
+        <p class="mint-hub__balance-operation__date">{$date}</p>
+        <p class="mint-hub__balance-operation__details">{$details}</p>
+        <p class="mint-hub__balance-operation__note">{$note}</p>
     </div>
 </div>

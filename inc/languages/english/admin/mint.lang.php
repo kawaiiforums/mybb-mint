@@ -4,9 +4,10 @@ $l['mint_description'] = 'Adds virtual currency mined through user activity and 
 
 $l['mint_admin_pluginlibrary_missing'] = 'Mint requires <a href="https://github.com/frostschutz/MyBB-PluginLibrary">PluginLibrary</a> in order to be installed.';
 
-$l['mint_admin'] = 'Mint';
-
 $l['mint_admin_submit'] = 'Submit';
+
+
+$l['mint_admin'] = 'Mint';
 
 
 $l['mint_admin_item_categories'] = 'Item Categories';
@@ -91,6 +92,22 @@ $l['mint_admin_inventory_types_updated'] = 'Successfully updated inventory type.
 $l['mint_admin_inventory_types_deleted'] = 'Successfully deleted inventory type.';
 $l['mint_admin_inventory_types_delete_confirm_title'] = 'Confirm inventory type removal';
 $l['mint_admin_inventory_types_delete_confirm_message'] = 'Are you sure you want to remove selected inventory type?';
+
+
+$l['mint_admin_logs'] = 'Mint Logs';
+
+
+$l['mint_admin_balance_operations'] = 'Balance Operations';
+$l['mint_admin_balance_operations_description'] = 'This section allows you to view a history of users\' balance operations.';
+$l['mint_admin_balance_operations_id'] = 'ID';
+$l['mint_admin_balance_operations_date'] = 'Date';
+$l['mint_admin_balance_operations_user'] = 'User';
+$l['mint_admin_balance_operations_value'] = 'Value';
+$l['mint_admin_balance_operations_result_balance'] = 'Result Balance';
+$l['mint_admin_balance_operations_transfer_id'] = 'Transfer';
+$l['mint_admin_balance_operations_termination_point'] = 'Termination Point';
+
+$l['mint_admin_balance_operations_empty'] = 'No balance operations to show.';
 
 
 $l['mint_integrity_task_ran'] = 'The Mint Integrity task successfully ran.';

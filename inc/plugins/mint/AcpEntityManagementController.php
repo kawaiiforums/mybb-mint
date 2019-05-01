@@ -11,6 +11,7 @@ class AcpEntityManagementController
     protected $foreignKeyData = [];
     protected $entityOptions = [];
     protected $listManagerOptions = [];
+    protected $insertAllowed = true;
     protected $insertController;
 
     /* @var DbEntityRepository */
@@ -43,10 +44,12 @@ class AcpEntityManagementController
     public function run()
     {
         if ($this->mybb->request_method == 'post' && $this->mybb->get_input('add')) {
-            if (is_callable($this->insertController)) {
-                ($this->insertController)();
-            } else {
-                $this->defaultInsertController();
+            if ($this->insertAllowed) {
+                if (is_callable($this->insertController)) {
+                    ($this->insertController)();
+                } else {
+                    $this->defaultInsertController();
+                }
             }
         } elseif (in_array($this->mybb->get_input('option'), array_keys($this->entityOptions))) {
             $entityOption = &$this->entityOptions[$this->mybb->get_input('option')];
@@ -62,10 +65,24 @@ class AcpEntityManagementController
 
             $this->outputList();
 
-            echo '<br />';
+            if ($this->insertAllowed) {
+                echo '<br />';
 
-            $this->outputAddForm();
+                $this->outputAddForm();
+            }
+
+            $this->page->output_footer();
         }
+    }
+
+    public function insertAllowed(bool $status): void
+    {
+        $this->insertAllowed = $status;
+    }
+
+    public function listManagerOptions(array $options): void
+    {
+        $this->listManagerOptions = $options;
     }
 
     public function setColumns(array $columns): void

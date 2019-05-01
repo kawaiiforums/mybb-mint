@@ -23,96 +23,33 @@ function misc_start()
             $inventoryServiceLinks = null;
             $balanceServiceLinks = null;
 
-            $links = [
-                'mint' => [
+            $links = [];
+
+            if (\is_member(\mint\getCsvSettingValues('mint_groups'))) {
+                $links['mint'] = [
                     'url' => 'misc.php?action=economy_balance_mint',
                     'title' => $lang->mint_mint,
-                ],
-            ];
-
-            foreach ($links as $serviceName => $service) {
-                $url = \htmlspecialchars_uni($service['url']);
-                $title = \htmlspecialchars_uni($service['title']);
-
-                eval('$balanceServiceLinks .= "' . \mint\tpl('hub_service_link') . '";');
+                ];
             }
 
+            $balanceServiceLinks = \mint\getRenderedServiceLinks($links);
 
             $recentBalanceOperations = null;
 
             $query = \mint\getUserBalanceOperations($mybb->user['uid'], "ORDER BY id DESC LIMIT 3");
 
             if ($db->num_rows($query) != 0) {
-                while ($entry = $db->fetch_array($query)) {
-                    $amount = \mint\getFormattedCurrency(abs($entry['value']));
-                    $date = \my_date('normal', $entry['date']);
-
-                    if ($entry['value'] < 0) {
-                        $sign = '-';
-                        $type = 'negative';
-                    } else {
-                        $sign = '+';
-                        $type = 'positive';
-                    }
-
-                    $notes = [];
-
-                    if ($entry['termination_point_name']) {
-                        $notes[] = $lang->sprintf(
-                            $lang->mint_balance_operations_termination_point,
-                            \htmlspecialchars_uni($entry['termination_point_name'])
-                        );
-                    }
-
-                    if ($entry['to_user_id'] && $entry['to_user_id'] != $mybb->user['uid']) {
-                        $notes[] = $lang->sprintf(
-                            $lang->mint_balance_operations_to_user,
-                            \build_profile_link($entry['to_username'], $entry['to_user_id'])
-                        );
-                    }
-
-                    if ($entry['from_user_id'] && $entry['from_user_id'] != $mybb->user['uid']) {
-                        $notes[] = $lang->sprintf(
-                            $lang->mint_balance_operations_from_user,
-                            \build_profile_link($entry['from_username'], $entry['from_user_id'])
-                        );
-                    }
-
-                    $notes = implode(' &middot; ', $notes);
-
-                    eval('$recentBalanceOperations .= "' . \mint\tpl('balance_operations_entry') . '";');
-                }
+                $recentBalanceOperations = \mint\getRenderedBalanceOperationEntries($query);
             } else {
                 $recentBalanceOperations = \mint\getRenderedMessage($lang->mint_no_entries);
             }
 
-
             $legendEntries = \mint\getRegisteredRewardSourceLegendEntries();
 
             if ($legendEntries) {
-                $entries = null;
-
-                foreach ($legendEntries as $legendEntry) {
-                    $title = \htmlspecialchars_uni($legendEntry['title']);
-
-                    if (isset($legendEntry['reward'])) {
-                        if (is_callable($legendEntry['reward'])) {
-                            $reward = $legendEntry['reward']();
-                        } else {
-                            $reward = $legendEntry['reward'];
-                        }
-
-                        $reward = my_number_format($reward);
-                    } else {
-                        $reward = null;
-                    }
-
-                    eval('$entries .= "' . \mint\tpl('reward_sources_entry') . '";');
-                }
-
-                eval('$rewardSources = "' . \mint\tpl('reward_sources') . '";');
+                $rewardSourcesLegend = \mint\getRenderedRewardSourceLegend($legendEntries);
             } else {
-                $rewardSources = null;
+                $rewardSourcesLegend = null;
             }
 
             eval('$page = "' . \mint\tpl('hub') . '";');
@@ -170,7 +107,7 @@ function misc_start()
                 $minAmount = null;
                 $maxAmount = null;
 
-                eval('$form = "' . \mint\tpl('transfer_form') . '";');
+                eval('$form = "' . \mint\tpl('mint_form') . '";');
             } else {
                 $messages .= \mint\getRenderedMessage($lang->mint_balance_operations_disabled);
 
@@ -198,10 +135,24 @@ function misc_start()
                             $user = \get_user_by_username($mybb->get_input('user_name'));
 
                             if ($user) {
+                                $details = [];
+
+                                if (!empty($mybb->input['note'])) {
+                                    $details['note'] = $mybb->get_input('note');
+                                }
+
+                                if (
+                                    !empty($mybb->input['private']) &&
+                                    \is_member(\mint\getSettingValue('private_balance_transfer_groups'))
+                                ) {
+                                    $details['private'] = true;
+                                }
+
                                 $result = BalanceTransfers::with($db)->execute(
                                     $mybb->user['uid'],
                                     $user['uid'],
-                                    $amount
+                                    $amount,
+                                    $details
                                 );
 
                                 if ($result) {
@@ -225,6 +176,16 @@ function misc_start()
 
                 $minAmount = 1;
                 $maxAmount = \mint\getUserBalance($mybb->user['uid']);
+
+                $privateCheckboxAttributes = null;
+
+                if (\is_member(\mint\getSettingValue('private_balance_transfer_groups'))) {
+                    if (\mint\getSettingValue('private_balance_transfer_by_default')) {
+                        $privateCheckboxAttributes .= ' checked="checked"';
+                    }
+                } else {
+                    $privateCheckboxAttributes .= ' disabled="disabled"';
+                }
 
                 eval('$form = "' . \mint\tpl('transfer_form') . '";');
             } else {
@@ -261,45 +222,7 @@ function misc_start()
 
                 $query = \mint\getUserBalanceOperations($mybb->user['uid'], $listManager->sql());
 
-                while ($entry = $db->fetch_array($query)) {
-                    $amount = \mint\getFormattedCurrency(abs($entry['value']));
-                    $date = \my_date('normal', $entry['date']);
-
-                    if ($entry['value'] < 0) {
-                        $sign = '-';
-                        $type = 'negative';
-                    } else {
-                        $sign = '+';
-                        $type = 'positive';
-                    }
-
-                    $notes = [];
-
-                    if ($entry['termination_point_name']) {
-                        $notes[] = $lang->sprintf(
-                            $lang->mint_balance_operations_termination_point,
-                            \htmlspecialchars_uni($entry['termination_point_name'])
-                        );
-                    }
-
-                    if ($entry['to_user_id'] && $entry['to_user_id'] != $mybb->user['uid']) {
-                        $notes[] = $lang->sprintf(
-                            $lang->mint_balance_operations_to_user,
-                            \build_profile_link($entry['to_username'], $entry['to_user_id'])
-                        );
-                    }
-
-                    if ($entry['from_user_id'] && $entry['from_user_id'] != $mybb->user['uid']) {
-                        $notes[] = $lang->sprintf(
-                            $lang->mint_balance_operations_from_user,
-                            \build_profile_link($entry['from_username'], $entry['from_user_id'])
-                        );
-                    }
-
-                    $notes = implode(' &middot; ', $notes);
-
-                    eval('$entries .= "' . \mint\tpl('balance_operations_entry') . '";');
-                }
+                $entries = \mint\getRenderedBalanceOperationEntries($query);
             } else {
                 $entries = \mint\getRenderedMessage($lang->mint_no_entries);
             }

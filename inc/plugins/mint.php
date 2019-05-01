@@ -226,6 +226,18 @@ function mint_activate()
             'optionscode' => 'yesno',
             'value'       => '1',
         ],
+        'private_balance_transfer_groups' => [
+            'title'       => 'Private Balance Transfer Groups',
+            'description' => 'Select which user groups are allowed to perform non-public balance transfers.',
+            'optionscode' => 'groupselect',
+            'value'       => '-1',
+        ],
+        'private_balance_transfer_by_default' => [
+            'title'       => 'Private Balance Transfers by Default',
+            'description' => 'Choose whether Balance Transfers should be assumed non-public (when possible).',
+            'optionscode' => 'yesno',
+            'value'       => '1',
+        ],
     ];
 
     $settings = array_merge($settings, \mint\getRegisteredSettings());
