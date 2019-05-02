@@ -1,0 +1,1 @@
+<p class="mint-hub__balance-operation__flag mint-hub__balance-operation__flag--{$flagType}">{$flagContent}</p>

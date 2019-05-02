@@ -161,7 +161,7 @@ function getUserBalanceOperations(int $userId, ?string $conditions = null)
     $query = $db->query("
         SELECT
             bo.*,
-            bt.note,
+            bt.note, bt.private,
             tp.name AS termination_point_name,
             u_from.uid AS from_user_id, u_from.username AS from_username,
             u_to.uid AS to_user_id, u_to.username AS to_username

@@ -61,12 +61,15 @@ a.mint-hub__section__header__nav__link { color: inherit; }
 a.mint-hub__service-nav__link { color: inherit; }
 a.mint-hub__service-nav__link:hover { background-color: var(--color); color: var(--stroke-color); }
 
-.mint-hub__balance-operation--positive { color: #008000; }
-.mint-hub__balance-operation--negative { color: #444444; }
+.mint-hub__balance-operation__value { font-size: 16px; }
+.mint-hub__balance-operation--positive .mint-hub__balance-operation__value { color: #008000; }
+.mint-hub__balance-operation--negative .mint-hub__balance-operation__value { color: #444444; }
 .mint-hub__balance-operation__date { display: inline-block; margin: 2px 0; padding: 4px 6px; background: #FAFAFA; border-radius: 6px; font-size: 11px; color: #444; }
+.mint-hub__balance-operation__flag { display: inline-block; margin: 2px 0; padding: 3px 6px; border: solid 1px #EEE; border-radius: 6px; font-size: 11px; }
+.mint-hub__balance-operation__flag--private { border-color: #f1e8e8; color: #807373; }
 .mint-hub__balance-operation__details { margin: 2px 0; padding: 2px; color: #222; }
 .mint-hub__balance-operation__details:empty { display: none; }
-.mint-hub__balance-operation__note { display: inline-block; margin: 2px 0; padding: 4px 6px; border: solid 1px #FAFAFA; border-radius: 6px; font-size: 11px; color: #555; }
+.mint-hub__balance-operation__note { display: inline-block; margin: 2px 0; padding: 4px 6px; border: solid 2px #FAFAFA; border-radius: 6px; font-size: 13px; color: #555; }
 .mint-hub__balance-operation__note:empty { display: none; }
 
 .mint-hub__reward-sources-legend__reward { padding: 4px; color: #AAA; }

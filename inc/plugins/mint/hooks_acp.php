@@ -215,6 +215,55 @@ function admin_load()
             ]);
 
             $controller->run();
+        } elseif ($mybb->input['action'] == 'balance_transfers') {
+            $controller = new AcpEntityManagementController('balance_transfers', BalanceTransfers::class);
+
+            $controller->setColumns([
+                'id' => [],
+                'date' => [
+                    'presenter' => function (string $value) {
+                        return \my_date('normal', $value);
+                    },
+                ],
+                'from_user' => [
+                    'dataColumn' => 'from_user_username',
+                    'presenter' => function (?string $value, array $row) {
+                        if ($value !== null) {
+                            return \build_profile_link($value, $row['from_user_id']);
+                        } else {
+                            return null;
+                        }
+                    },
+                ],
+                'to_user' => [
+                    'dataColumn' => 'to_user_username',
+                    'presenter' => function (?string $value, array $row) {
+                        if ($value !== null) {
+                            return \build_profile_link($value, $row['to_user_id']);
+                        } else {
+                            return null;
+                        }
+                    },
+                ],
+                'value' => [],
+                'note' => [],
+                'private' => [
+                    'presenter' => function (string $value) use ($lang) {
+                        return $value ? $lang->yes : $lang->no;
+                    },
+                ],
+            ]);
+            $controller->addForeignKeyData([
+                'users' => [
+                    'username',
+                ],
+            ]);
+            $controller->insertAllowed(false);
+            $controller->listManagerOptions([
+                'order_dir' => 'desc',
+            ]);
+
+            $controller->run();
         }
     }
 }

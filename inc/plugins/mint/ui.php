@@ -31,6 +31,7 @@ function getRenderedBalanceOperationEntries($query): ?string
     while ($entry = $db->fetch_array($query)) {
         $amount = \mint\getFormattedCurrency(abs($entry['value']));
         $date = \my_date('normal', $entry['date']);
+        $note = \htmlspecialchars_uni($entry['note']);
 
         if ($entry['value'] < 0) {
             $sign = '-';
@@ -65,7 +66,14 @@ function getRenderedBalanceOperationEntries($query): ?string
 
         $details = implode(' &middot; ', $details);
 
-        $note = \htmlspecialchars_uni($entry['note']);
+        $flags = null;
+
+        if ($entry['private'] == true) {
+            $flagType = 'private';
+            $flagContent = $lang->mint_balance_transfer_private;
+
+            eval('$flags .= "' . \mint\tpl('balance_operations_entry_flag') . '";');
+        }
 
         eval('$output .= "' . \mint\tpl('balance_operations_entry') . '";');
     }

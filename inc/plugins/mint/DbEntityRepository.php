@@ -32,7 +32,7 @@ abstract class DbEntityRepository
     {
         $this->db->insert_query(
             static::TABLE_NAME,
-            $this->escapeArray($data, false)
+            $this->getEscapedArray($data, false)
         );
 
         if ($this->db->type == 'pgsql') {
@@ -55,7 +55,7 @@ abstract class DbEntityRepository
         $escapedData = [];
 
         foreach ($data as $row) {
-            $escapedData[] = $this->escapeArray($row, false);
+            $escapedData[] = $this->getEscapedArray($row, false);
         }
 
         $this->db->insert_query_multiple(
@@ -78,11 +78,11 @@ abstract class DbEntityRepository
         }
 
         if (is_array($value)) {
-            $escapedValues = $this->escapeColumnValues($columnName, $value);
+            $escapedValues = $this->getEscapedColumnValues($columnName, $value);
 
             $conditions = $columnName . ' IN (' . implode(',', $escapedValues) . ')';
         } else {
-            $conditions = $columnName . ' = ' . $this->escapeColumnValue($columnName, $value);
+            $conditions = $columnName . ' = ' . $this->getEscapedColumnValue($columnName, $value);
         }
 
         $query = $this->db->simple_select(static::TABLE_NAME, $fields, $conditions);
@@ -163,7 +163,7 @@ abstract class DbEntityRepository
      */
     public function updateById(int $id, array $data): bool
     {
-        return $this->update($data, $this->escapedComparison('id', '=', $id));
+        return $this->update($data, $this->getEscapedComparison('id', '=', $id));
     }
 
     /**
@@ -176,7 +176,7 @@ abstract class DbEntityRepository
     {
         $result = $this->db->update_query(
             static::TABLE_NAME,
-            $this->escapeArray($data),
+            $this->getEscapedArray($data),
             $whereString
         );
 
@@ -193,23 +193,23 @@ abstract class DbEntityRepository
         return (bool)$result;
     }
 
-    public function escapedComparison(string $columnName, string $operator, $value): string
+    public function getEscapedComparison(string $columnName, string $operator, $value): string
     {
-        return $columnName . ' ' . $operator . ' ' . $this->escapeColumnValue($columnName, $value);
+        return $columnName . ' ' . $operator . ' ' . $this->getEscapedColumnValue($columnName, $value);
     }
 
-    protected function escapeArray(array $data, bool $includeQuotes = true): array
+    protected function getEscapedArray(array $data, bool $includeQuotes = true): array
     {
         $escapedData = [];
 
         foreach ($data as $columnName => $value) {
-            $escapedData[$columnName] = $this->escapeColumnValue($columnName, $value, $includeQuotes);
+            $escapedData[$columnName] = $this->getEscapedColumnValue($columnName, $value, $includeQuotes);
         }
 
         return $escapedData;
     }
 
-    protected function escapeColumnValue(string $columnName, $value, bool $includeQuotes = true)
+    protected function getEscapedColumnValue(string $columnName, $value, bool $includeQuotes = true)
     {
         switch (static::COLUMNS[$columnName]['type']) {
             case 'bool':
@@ -233,12 +233,12 @@ abstract class DbEntityRepository
         return $escapedValue;
     }
 
-    protected function escapeColumnValues(string $columnName, array $values): array
+    protected function getEscapedColumnValues(string $columnName, array $values): array
     {
         $escapedValues = [];
 
         foreach ($values as $value) {
-            $escapedValues[] = $this->escapeColumnValue($columnName, $value);
+            $escapedValues[] = $this->getEscapedColumnValue($columnName, $value);
         }
 
         return $escapedValues;

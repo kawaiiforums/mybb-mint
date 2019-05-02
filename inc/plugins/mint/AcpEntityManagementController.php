@@ -8,6 +8,7 @@ class AcpEntityManagementController
     protected $actionUrl;
     protected $actionName;
     protected $columns = [];
+    protected $dataColumns = [];
     protected $foreignKeyData = [];
     protected $entityOptions = [];
     protected $listManagerOptions = [];
@@ -87,6 +88,8 @@ class AcpEntityManagementController
 
     public function setColumns(array $columns): void
     {
+        $dataColumns = [];
+
         foreach ($columns as $columnName => &$column) {
             if (!isset($column['customizable'])) {
                 $column['customizable'] = $columnName == 'id' ? false : true;
@@ -103,9 +106,18 @@ class AcpEntityManagementController
             if (!isset($column['outputHandler'])) {
                 $column['outputHandler'] = null;
             }
+
+            if ($column['listed']) {
+                if (isset($column['dataColumn'])) {
+                    $dataColumns[$column['dataColumn']] = $columnName;
+                } else {
+                    $dataColumns[] = $columnName;
+                }
+            }
         }
 
         $this->columns = $columns;
+        $this->dataColumns = $dataColumns;
     }
 
     public function addForeignKeyData(array $foreignKeyData): void
@@ -128,12 +140,22 @@ class AcpEntityManagementController
 
     public function outputList()
     {
-        $itemsNum = $this->dbRepository->count();
+        $whereConditions = $this->GetFilterConditions();
+
+        if ($whereConditions) {
+            $where = 'WHERE ' . $whereConditions . ' ';
+
+            $itemsNum = $this->dbRepository->get('COUNT(id)', $where, array_fill_keys(array_keys($this->foreignKeyData), []));
+        } else {
+            $where = null;
+
+            $itemsNum = $this->dbRepository->count($whereConditions);
+        }
 
         $defaultOptions = [
             'mybb' => $this->mybb,
             'baseurl' => $this->actionUrl,
-            'order_columns' => array_keys($this->columns),
+            'order_columns' => $this->dataColumns,
             'order_dir' => 'asc',
             'items_num' => $itemsNum,
             'per_page' => 20,
@@ -143,7 +165,7 @@ class AcpEntityManagementController
             array_merge($defaultOptions, $this->listManagerOptions)
         );
 
-        $query = $this->dbRepository->get('*', $listManager->sql(), $this->foreignKeyData);
+        $query = $this->dbRepository->get('*', $where . ' ' . $listManager->sql(), $this->foreignKeyData);
 
         $table = new \Table;
 
@@ -228,9 +250,17 @@ class AcpEntityManagementController
             $table->construct_row();
         }
 
-        $table->output($this->actionLang());
+        $table->output($this->lang->sprintf(
+            $this->actionLang('list'),
+            $itemsNum
+        ));
 
         echo $listManager->pagination();
+    }
+
+    protected function getFilterConditions(): ?string
+    {
+        return null;
     }
 
     protected function defaultInsertController(): void
@@ -356,6 +386,7 @@ class AcpEntityManagementController
             return $column['listed'] === true;
         });
     }
+
     protected function getCustomizableColumns(): array
     {
         return array_filter($this->columns, function ($column) {

@@ -222,7 +222,7 @@ function mint_activate()
         ],
         'disable_manual_balance_operations_on_inconsistency' => [
             'title'       => 'Disable Manual Balance Operations on Inconsistency Detection',
-            'description' => 'Choose whether to automatically disable the <i>Manual Balance Operations</i> setting when data inconsistency is detected by the Mint Integrity task.',
+            'description' => 'Choose whether to automatically disable the <i>Allow Manual Balance Operations</i> setting when inconsistency of stored data is detected by the Mint Integrity task.',
             'optionscode' => 'yesno',
             'value'       => '1',
         ],

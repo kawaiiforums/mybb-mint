@@ -12,9 +12,23 @@ class BalanceTransfers extends \mint\DbEntityRepository
         ],
         'from_user_id' => [
             'type' => 'integer',
+            'foreignKeys' => [
+                [
+                    'table' => 'users',
+                    'column' => 'uid',
+                    'noReference' => true,
+                ],
+            ],
         ],
         'to_user_id' => [
             'type' => 'integer',
+            'foreignKeys' => [
+                [
+                    'table' => 'users',
+                    'column' => 'uid',
+                    'noReference' => true,
+                ],
+            ],
         ],
         'value' => [
             'type' => 'integer',
