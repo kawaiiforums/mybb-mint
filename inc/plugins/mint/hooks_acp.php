@@ -178,9 +178,17 @@ function admin_load()
                             return null;
                         }
                     },
+                    'filter' => true,
+                    'filterConditionColumn' => 't2.username',
                 ],
-                'value' => [],
-                'result_balance' => [],
+                'value' => [
+                    'formMethod' => 'generate_numeric_field',
+                    'filter' => true,
+                ],
+                'result_balance' => [
+                    'formMethod' => 'generate_numeric_field',
+                    'filter' => true,
+                ],
                 'transfer_id' => [
                     'presenter' => function (?int $value) {
                         if ($value !== null) {
@@ -189,6 +197,8 @@ function admin_load()
                             return null;
                         }
                     },
+                    'formMethod' => 'generate_numeric_field',
+                    'filter' => true,
                 ],
                 'termination_point' => [
                     'dataColumn' => 'termination_point_name',
@@ -199,6 +209,8 @@ function admin_load()
                             return null;
                         }
                     },
+                    'filter' => true,
+                    'filterConditionColumn' => 't3.name',
                 ],
             ]);
             $controller->addForeignKeyData([
@@ -234,6 +246,8 @@ function admin_load()
                             return null;
                         }
                     },
+                    'filter' => true,
+                    'filterConditionColumn' => 't2.username',
                 ],
                 'to_user' => [
                     'dataColumn' => 'to_user_username',
@@ -244,13 +258,28 @@ function admin_load()
                             return null;
                         }
                     },
+                    'filter' => true,
+                    'filterConditionColumn' => 't3.username',
                 ],
-                'value' => [],
+                'value' => [
+                    'formMethod' => 'generate_numeric_field',
+                    'filter' => true,
+                ],
                 'note' => [],
                 'private' => [
                     'presenter' => function (string $value) use ($lang) {
                         return $value ? $lang->yes : $lang->no;
                     },
+                    'formElement' => function (\Form $form, array $entity, string $name) use ($lang) {
+                        $output = null;
+
+                        $output .= $form->generate_radio_button($name, '1', $lang->yes);
+                        $output .= '<br />';
+                        $output .= $form->generate_radio_button($name, '0', $lang->no);
+
+                        return $output;
+                    },
+                    'filter' => true,
                 ],
             ]);
             $controller->addForeignKeyData([

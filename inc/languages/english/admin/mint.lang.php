@@ -100,14 +100,19 @@ $l['mint_admin_logs'] = 'Mint Logs';
 $l['mint_admin_balance_operations'] = 'Balance Operations';
 $l['mint_admin_balance_operations_list'] = 'Balance Operations ({1})';
 $l['mint_admin_balance_operations_description'] = 'This section allows you to view a history of users\' balance operations.';
-$l['mint_admin_balance_operations_filter'] = 'Filter';
+$l['mint_admin_balance_operations_filter'] = 'Filters';
 $l['mint_admin_balance_operations_id'] = 'ID';
 $l['mint_admin_balance_operations_date'] = 'Date';
 $l['mint_admin_balance_operations_user'] = 'User';
+$l['mint_admin_balance_operations_user_description'] = '';
 $l['mint_admin_balance_operations_value'] = 'Value';
+$l['mint_admin_balance_operations_value_description'] = '';
 $l['mint_admin_balance_operations_result_balance'] = 'Result Balance';
+$l['mint_admin_balance_operations_result_balance_description'] = '';
 $l['mint_admin_balance_operations_transfer_id'] = 'Transfer';
+$l['mint_admin_balance_operations_transfer_id_description'] = 'ID of a Balance Transfer.';
 $l['mint_admin_balance_operations_termination_point'] = 'Termination Point';
+$l['mint_admin_balance_operations_termination_point_description'] = 'Name of a Termination Point.';
 
 $l['mint_admin_balance_operations_empty'] = 'No balance operations to show.';
 
@@ -116,14 +121,18 @@ $l['mint_admin_balance_transfers'] = 'Balance Transfers';
 $l['mint_admin_balance_transfers_list'] = 'Balance Transfers ({1})';
 $l['mint_admin_balance_transfers_description'] = 'This section allows you to view a history of users\' balance transfers.';
 
-$l['mint_admin_balance_transfers_filter'] = 'Filter';
+$l['mint_admin_balance_transfers_filter'] = 'Filters';
 $l['mint_admin_balance_transfers_id'] = 'ID';
 $l['mint_admin_balance_transfers_from_user'] = 'From User';
+$l['mint_admin_balance_transfers_from_user_description'] = '';
 $l['mint_admin_balance_transfers_to_user'] = 'To User';
+$l['mint_admin_balance_transfers_to_user_description'] = '';
 $l['mint_admin_balance_transfers_value'] = 'Value';
+$l['mint_admin_balance_transfers_value_description'] = '';
 $l['mint_admin_balance_transfers_date'] = 'Date';
 $l['mint_admin_balance_transfers_note'] = 'Note';
 $l['mint_admin_balance_transfers_private'] = 'Private';
+$l['mint_admin_balance_transfers_private_description'] = '';
 
 $l['mint_admin_balance_transfers_empty'] = 'No balance transfers to show.';
 

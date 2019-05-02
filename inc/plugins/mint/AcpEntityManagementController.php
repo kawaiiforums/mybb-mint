@@ -13,6 +13,7 @@ class AcpEntityManagementController
     protected $entityOptions = [];
     protected $listManagerOptions = [];
     protected $insertAllowed = true;
+    protected $filterAllowed = false;
     protected $insertController;
 
     /* @var DbEntityRepository */
@@ -38,7 +39,7 @@ class AcpEntityManagementController
         $this->actionName = $actionName;
         $this->actionUrl = $this->pageUrl . '&action=' . $this->actionName;
         $this->dbRepository = $dbRepository::with($this->db);
-        
+
         $this->setColumns($this->dbRepository::COLUMNS);
     }
 
@@ -72,6 +73,12 @@ class AcpEntityManagementController
                 $this->outputAddForm();
             }
 
+            if ($this->filterAllowed) {
+                echo '<br />';
+
+                $this->outputFilterForm();
+            }
+
             $this->page->output_footer();
         }
     }
@@ -99,6 +106,10 @@ class AcpEntityManagementController
                 $column['listed'] = true;
             }
 
+            if (!isset($column['filter'])) {
+                $column['filter'] = false;
+            }
+
             if (!isset($column['presenter'])) {
                 $column['presenter'] = null;
             }
@@ -113,6 +124,10 @@ class AcpEntityManagementController
                 } else {
                     $dataColumns[] = $columnName;
                 }
+            }
+
+            if ($column['filter']) {
+                $this->filterAllowed = true;
             }
         }
 
@@ -133,19 +148,32 @@ class AcpEntityManagementController
     public function outputAddForm()
     {
         $this->outputForm(
+            'add',
             $this->actionUrl . '&amp;add=1',
             $this->actionLang('add')
         );
     }
 
+    public function outputFilterForm()
+    {
+        $this->outputForm(
+            'filter',
+            $this->actionUrl,
+            $this->actionLang('filter')
+        );
+    }
+
     public function outputList()
     {
-        $whereConditions = $this->GetFilterConditions();
+        $whereConditions = $this->getFilterConditions();
 
         if ($whereConditions) {
             $where = 'WHERE ' . $whereConditions . ' ';
 
-            $itemsNum = $this->dbRepository->get('COUNT(id)', $where, array_fill_keys(array_keys($this->foreignKeyData), []));
+            $itemsNum = $this->db->fetch_field(
+                $this->dbRepository->get('COUNT(id) AS n', $where, array_fill_keys(array_keys($this->foreignKeyData), [])),
+                'n'
+            );
         } else {
             $where = null;
 
@@ -260,7 +288,33 @@ class AcpEntityManagementController
 
     protected function getFilterConditions(): ?string
     {
-        return null;
+        $conditions = [];
+
+        if (isset($this->mybb->input['filter'])) {
+            $inputFilterValues = $this->mybb->get_input('filter', \MyBB::INPUT_ARRAY);
+
+            foreach ($this->columns as $columnName => $column) {
+                if ($column['filter'] && isset($inputFilterValues[$columnName]) && $inputFilterValues[$columnName] !== '') {
+                    $operator = '=';
+                    $value = $inputFilterValues[$columnName];
+
+                    if (isset($column['dataColumn'])) {
+                        if (isset($column['filterConditionColumn'])) {
+                            $queryColumn = $column['filterConditionColumn'];
+
+                            $conditions[] = $queryColumn . ' ' . $operator . " '" . $this->db->escape_string($value) . "'";
+                        }
+
+                    } else {
+                        $conditions[] = $this->dbRepository->getEscapedComparison($columnName, $operator, $value);
+                    }
+                }
+            }
+        }
+
+        $conditionsString = implode(' AND ', $conditions);
+
+        return $conditionsString;
     }
 
     protected function defaultInsertController(): void
@@ -294,6 +348,7 @@ class AcpEntityManagementController
                 $this->page->output_nav_tabs($this->sub_tabs, $this->actionName);
 
                 $this->outputForm(
+                    'edit',
                     $this->actionUrl . '&amp;option=update&amp;id=' . (int)$entity['id'],
                     $this->actionLang('update'),
                     $entity
@@ -328,18 +383,34 @@ class AcpEntityManagementController
         }
     }
 
-    protected function outputForm(string $url, string $title, array $entity = []): void
+    protected function outputForm(string $mode, string $url, string $title, array $entity = []): void
     {
+        if ($mode == 'filter') {
+            $columns = $this->getFilterColumns();
+        } else {
+            $columns = $this->columns;
+        }
+
         $form = new \Form($url, 'post');
 
         $form_container = new \FormContainer($title);
 
-        foreach ($this->columns as $columnName => $column) {
-            if ($column['customizable'] === true) {
-                if (!empty($column['formElement'])) {
-                    $formElement = $column['formElement']($form, $entity);
+        foreach ($columns as $columnName => $column) {
+            if ($mode == 'filter' || $column['customizable'] === true) {
+                if ($mode == 'filter') {
+                    $name = 'filter[' . $columnName . ']';
                 } else {
-                    $formMethod = $column['formMethod'] ?? 'generate_text_box';
+                    $name = $columnName;
+                }
+
+                if (!empty($column['formElement'])) {
+                    $formElement = $column['formElement']($form, $entity, $name);
+                } else {
+                    if (isset($column['formMethod'])) {
+                        $formMethod = $column['formMethod'];
+                    } else {
+                        $formMethod = 'generate_text_box';
+                    }
 
                     if ($entity) {
                         $value = $entity[$columnName];
@@ -347,7 +418,7 @@ class AcpEntityManagementController
                         $value = false;
                     }
 
-                    $formElement = $form->$formMethod($columnName, $value);
+                    $formElement = $form->$formMethod($name, $value);
                 }
 
                 $form_container->output_row(
@@ -391,6 +462,13 @@ class AcpEntityManagementController
     {
         return array_filter($this->columns, function ($column) {
             return $column['customizable'] === true;
+        });
+    }
+
+    protected function getFilterColumns(): array
+    {
+        return array_filter($this->columns, function ($column) {
+            return $column['filter'] === true;
         });
     }
 }
