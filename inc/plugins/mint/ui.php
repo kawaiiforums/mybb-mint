@@ -22,7 +22,7 @@ function getRenderedMessage(string $content, string $type = 'note'): string
     return $message;
 }
 
-function getRenderedBalanceOperationEntries($query): ?string
+function getRenderedBalanceOperationEntries($query, ?int $contextUserId = null, bool $showSigns = true): ?string
 {
     global $mybb, $db, $lang;
 
@@ -41,6 +41,10 @@ function getRenderedBalanceOperationEntries($query): ?string
             $type = 'positive';
         }
 
+        if (!$showSigns) {
+            $sign = null;
+        }
+
         $details = [];
 
         if ($entry['termination_point_name']) {
@@ -50,17 +54,17 @@ function getRenderedBalanceOperationEntries($query): ?string
             );
         }
 
-        if ($entry['to_user_id'] && $entry['to_user_id'] != $mybb->user['uid']) {
-            $details[] = $lang->sprintf(
-                $lang->mint_balance_operations_to_user,
-                \build_profile_link($entry['to_username'], $entry['to_user_id'])
-            );
-        }
-
-        if ($entry['from_user_id'] && $entry['from_user_id'] != $mybb->user['uid']) {
+        if ($entry['from_user_id'] && $entry['from_user_id'] != $contextUserId) {
             $details[] = $lang->sprintf(
                 $lang->mint_balance_operations_from_user,
                 \build_profile_link($entry['from_username'], $entry['from_user_id'])
+            );
+        }
+
+        if ($entry['to_user_id'] && $entry['to_user_id'] != $contextUserId) {
+            $details[] = $lang->sprintf(
+                $lang->mint_balance_operations_to_user,
+                \build_profile_link($entry['to_username'], $entry['to_user_id'])
             );
         }
 
@@ -77,6 +81,27 @@ function getRenderedBalanceOperationEntries($query): ?string
 
         eval('$output .= "' . \mint\tpl('balance_operations_entry') . '";');
     }
+
+    return $output;
+}
+
+function getRenderedBalanceTopUserEntries($query): ?string
+{
+    global $db, $lang;
+
+    $entries = null;
+
+    while ($entry = $db->fetch_array($query)) {
+        $profileLink = \build_profile_link(
+            \format_name($entry['username'], $entry['usergroup'], $entry['displaygroup']),
+            $entry['uid']
+        );
+        $balance = \mint\getFormattedCurrency($entry['mint_balance'], true);
+
+        eval('$entries .= "' . \mint\tpl('balance_top_users_entry') . '";');
+    }
+
+    eval('$output = "' . \mint\tpl('balance_top_users') . '";');
 
     return $output;
 }

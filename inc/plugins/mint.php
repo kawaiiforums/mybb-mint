@@ -47,8 +47,8 @@ function mint_info()
         'name'          => 'Mint',
         'description'   => $lang->mint_description,
         'website'       => '',
-        'author'        => 'Tomasz \'Devilshakerz\' Mlynski',
-        'authorsite'    => 'https://devilshakerz.com/',
+        'author'        => 'kawaiiforums',
+        'authorsite'    => 'https://github.com/kawaiiforums',
         'version'       => 'dev',
         'codename'      => 'mint',
         'compatibility' => '18*',
@@ -237,6 +237,24 @@ function mint_activate()
             'description' => 'Choose whether Balance Transfers should be assumed non-public (when possible).',
             'optionscode' => 'yesno',
             'value'       => '1',
+        ],
+        'recent_balance_operations_entries' => [
+            'title'       => 'Recent Balance Operations to Display',
+            'description' => 'Choose how many users\' recent balance operations should be shown on the Hub page.',
+            'optionscode' => 'numeric',
+            'value'       => '3',
+        ],
+        'recent_public_balance_transfers_entries' => [
+            'title'       => 'Recent Public Balance Transfers to Display',
+            'description' => 'Choose how many public balance transfers should be shown on the Hub page.',
+            'optionscode' => 'numeric',
+            'value'       => '3',
+        ],
+        'top_users_entries' => [
+            'title'       => 'Top Users by Balance to Display',
+            'description' => 'Choose how many users should be listed in the <i>Top Users by Balance</i> ranking.',
+            'optionscode' => 'numeric',
+            'value'       => '3',
         ],
     ];
 

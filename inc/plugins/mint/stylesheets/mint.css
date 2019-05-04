@@ -72,5 +72,10 @@ a.mint-hub__service-nav__link:hover { background-color: var(--color); color: var
 .mint-hub__balance-operation__note { display: inline-block; margin: 2px 0; padding: 4px 6px; border: solid 2px #FAFAFA; border-radius: 6px; font-size: 13px; color: #555; }
 .mint-hub__balance-operation__note:empty { display: none; }
 
+.mint-hub__recent-public-transfers .mint-hub__balance-operation__value { color: inherit; }
+
+.mint-hub__balance-top-users .mint__currency { color: #888; }
+.mint-hub__balance-top-users .mint__currency__value { font-size: 15px; color: #222; }
+
 .mint-hub__reward-sources-legend__reward { padding: 4px; color: #AAA; }
 .mint-hub__reward-sources-legend__title { margin: 0 2px; padding: 10px; }

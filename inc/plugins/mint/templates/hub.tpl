@@ -28,6 +28,14 @@
                     {$recentBalanceOperations}
                 </div>
             </div>
+            {$balanceTopUsers}
+
+            <div class="mint-hub__block">
+                <p class="mint-hub__block__title">{$lang->mint_recent_public_balance_transfers}</p>
+                <div class="mint-hub__table mint-hub__recent-public-transfers">
+                    {$recentPublicTransfers}
+                </div>
+            </div>
             {$rewardSourcesLegend}
         </section>
     </div>

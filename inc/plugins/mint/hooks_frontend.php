@@ -34,15 +34,40 @@ function misc_start()
 
             $balanceServiceLinks = \mint\getRenderedServiceLinks($links);
 
-            $recentBalanceOperations = null;
 
-            $query = \mint\getUserBalanceOperations($mybb->user['uid'], "ORDER BY id DESC LIMIT 3");
+            $query = \mint\getRecentUserBalanceOperations(
+                $mybb->user['uid'],
+                \mint\getSettingValue('recent_balance_operations_entries')
+            );
 
             if ($db->num_rows($query) != 0) {
-                $recentBalanceOperations = \mint\getRenderedBalanceOperationEntries($query);
+                $recentBalanceOperations = \mint\getRenderedBalanceOperationEntries($query, $mybb->user['uid']);
             } else {
                 $recentBalanceOperations = \mint\getRenderedMessage($lang->mint_no_entries);
             }
+
+
+            $query = \mint\getRecentPublicBalanceTransfers(
+                \mint\getSettingValue('recent_public_balance_transfers_entries')
+            );
+
+            if ($db->num_rows($query) != 0) {
+                $recentPublicTransfers = \mint\getRenderedBalanceOperationEntries($query, null, false);
+            } else {
+                $recentPublicTransfers = \mint\getRenderedMessage($lang->mint_no_entries);
+            }
+
+
+            if (\mint\getSettingValue('top_users_entries') > 0) {
+                $query = \mint\getTopUsersByBalance(\mint\getSettingValue('top_users_entries'));
+
+                if ($db->num_rows($query) != 0) {
+                    $balanceTopUsers = \mint\getRenderedBalanceTopUserEntries($query);
+                }
+            } else {
+                $balanceTopUsers = null;
+            }
+
 
             $legendEntries = \mint\getRegisteredRewardSourceLegendEntries();
 
@@ -132,36 +157,44 @@ function misc_start()
 
                     if ($amount > 0) {
                         if ($amount <= \mint\getUserBalance($mybb->user['uid'])) {
-                            $user = \get_user_by_username($mybb->get_input('user_name'));
+                            $user = \get_user_by_username($mybb->get_input('user_name'), [
+                                'fields' => [
+                                    'ignorelist',
+                                ],
+                            ]);
 
                             if ($user) {
-                                $details = [];
+                                if (!\mint\userOnIgnoreList($mybb->user['uid'], $user)) {
+                                    $details = [];
 
-                                if (!empty($mybb->input['note'])) {
-                                    $details['note'] = $mybb->get_input('note');
-                                }
+                                    if (!empty($mybb->input['note'])) {
+                                        $details['note'] = $mybb->get_input('note');
+                                    }
 
-                                if (
-                                    !empty($mybb->input['private']) &&
-                                    \is_member(\mint\getSettingValue('private_balance_transfer_groups'))
-                                ) {
-                                    $details['private'] = true;
-                                }
+                                    if (
+                                        !empty($mybb->input['private']) &&
+                                        \is_member(\mint\getSettingValue('private_balance_transfer_groups'))
+                                    ) {
+                                        $details['private'] = true;
+                                    }
 
-                                $result = BalanceTransfers::with($db)->execute(
-                                    $mybb->user['uid'],
-                                    $user['uid'],
-                                    $amount,
-                                    $details
-                                );
+                                    $result = BalanceTransfers::with($db)->execute(
+                                        $mybb->user['uid'],
+                                        $user['uid'],
+                                        $amount,
+                                        $details
+                                    );
 
-                                if ($result) {
-                                    $messages .= \mint\getRenderedMessage($lang->sprintf(
-                                        $lang->mint_balance_transfer_transferred,
-                                        (int)$amount
-                                    ), 'success');
+                                    if ($result) {
+                                        $messages .= \mint\getRenderedMessage($lang->sprintf(
+                                            $lang->mint_balance_transfer_transferred,
+                                            (int)$amount
+                                        ), 'success');
+                                    } else {
+                                        $messages .= \mint\getRenderedMessage($lang->mint_balance_transfer_error, 'error');
+                                    }
                                 } else {
-                                    $messages .= \mint\getRenderedMessage($lang->mint_balance_transfer_error, 'error');
+                                    $messages .= \mint\getRenderedMessage($lang->mint_user_on_ignored_list, 'error');
                                 }
                             } else {
                                 $messages .= \mint\getRenderedMessage($lang->mint_user_not_found, 'error');
@@ -200,11 +233,29 @@ function misc_start()
             \error_no_permission();
         }
     } elseif ($mybb->get_input('action') == 'economy_balance_operations') {
-        if ($mybb->user['uid'] != 0) {
-            \add_breadcrumb($lang->mint_hub, 'misc.php?action=economy');
-            \add_breadcrumb($lang->mint_balance_operations);
+        \add_breadcrumb($lang->mint_hub, 'misc.php?action=economy');
+        \add_breadcrumb($lang->mint_balance_operations);
 
-            $itemsNum = BalanceOperations::with($db)->count('user_id = ' . (int)$mybb->user['uid']);
+        if (isset($mybb->input['user_id'])) {
+            $user = get_user($mybb->get_input('user_id', \MyBB::INPUT_INT));
+        } elseif ($mybb->user['uid'] != 0) {
+            $user = $mybb->user;
+        } else {
+            $user = null;
+        }
+
+        if ($user) {
+            $includePrivateWithUserIds = [
+                $mybb->user['uid'],
+            ];
+
+            $itemsNum = \mint\countUserPublicBalanceOperations($user['uid'], $includePrivateWithUserIds);
+
+            $pageTitle = $lang->sprintf(
+                $lang->mint_user_balance_operations,
+                \htmlspecialchars_uni($user['username']),
+                $itemsNum
+            );
 
             $listManager = new \mint\ListManager([
                 'mybb' => $mybb,
@@ -220,19 +271,27 @@ function misc_start()
             if ($itemsNum > 0) {
                 $entries = null;
 
-                $query = \mint\getUserBalanceOperations($mybb->user['uid'], $listManager->sql());
+                $query = \mint\getUserPublicBalanceOperations(
+                    $user['uid'],
+                    $includePrivateWithUserIds,
+                    $listManager->sql()
+                );
 
-                $entries = \mint\getRenderedBalanceOperationEntries($query);
+                $entries = \mint\getRenderedBalanceOperationEntries($query, $user['uid']);
             } else {
                 $entries = \mint\getRenderedMessage($lang->mint_no_entries);
             }
 
             $pagination = $listManager->pagination();
 
-            eval('$page = "' . \mint\tpl('balance_operations') . '";');
-            \output_page($page);
         } else {
-            \error_no_permission();
+            $pageTitle = $lang->mint_balance_operations;
+            $pagination = null;
+
+            $entries = \mint\getRenderedMessage($lang->mint_user_not_found, 'error');
         }
+
+        eval('$page = "' . \mint\tpl('balance_operations') . '";');
+        \output_page($page);
     }
 }

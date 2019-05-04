@@ -5,6 +5,7 @@ $l['mint_hub'] = 'Economy Hub';
 $l['mint_no_entries'] = 'Nothing to show yet.';
 $l['mint_recipient_username'] = 'Recipient Username';
 $l['mint_user_not_found'] = 'Could not find specified user.';
+$l['mint_user_on_ignored_list'] = 'You cannot perform this operation because you\'re on selected user\'s ignore list.';
 $l['mint_balance_operations_disabled'] = 'Balance operations are currently disabled.';
 $l['mint_currency_amount_exceeding_balance'] = 'The amount of currency exceeds your current balance.';
 
@@ -24,10 +25,15 @@ $l['mint_balance_transfer_transferred'] = 'Successfully transferred {1} of curre
 $l['mint_balance_transfer_error'] = 'Could not execute the transfer.';
 
 $l['mint_balance_operations'] = 'Balance Operations';
+$l['mint_user_balance_operations'] = '{1}\'s Balance Operations ({2})';
 $l['mint_balance_operations_recent'] = 'Recent Balance Operations';
 $l['mint_balance_operations_termination_point'] = 'system operation (<code>{1}</code>)';
 $l['mint_balance_operations_to_user'] = 'to {1}';
 $l['mint_balance_operations_from_user'] = 'from {1}';
+
+$l['mint_recent_public_balance_transfers'] = 'Recent Public Transfers';
+
+$l['mint_balance_top_users'] = 'Top Users by Balance';
 
 $l['mint_reward_sources_legend'] = 'Activity Rewards';
 

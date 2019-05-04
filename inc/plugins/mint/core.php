@@ -186,3 +186,16 @@ function resolveRegisteredRewardSources(): void
 
     \mint\registerRewardSources($rewardSources);
 }
+
+// users
+function userOnIgnoreList(int $subjectUserId, $targetUser): bool
+{
+    if (!is_array($targetUser)) {
+        $targetUser = \get_user($targetUser);
+    }
+
+    return (
+        !empty($targetUser['ignorelist']) &&
+        strpos(',' . $targetUser['ignorelist'] . ',', ',' . $subjectUserId . ',') !== false
+    );
+}

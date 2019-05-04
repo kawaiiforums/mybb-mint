@@ -30,6 +30,17 @@ function getUserBalance(int $userId, bool $forUpdate = false): ?int
     }
 }
 
+function getTopUsersByBalance(int $limit)
+{
+    global $db;
+
+    return $db->simple_select('users', 'uid, username, usergroup, displaygroup, mint_balance', null, [
+        'order_by' => 'mint_balance',
+        'order_dir' => 'desc',
+        'limit' => (int)$limit,
+    ]);
+}
+
 function userBalanceOperationWithTerminationPoint($user, int $value, string $terminationPointName, bool $allowOverdraft = true): bool
 {
     global $db;
@@ -154,7 +165,7 @@ function verifyBalanceOperationsDataIntegrity(bool $attemptToFix = false)
 }
 
 // balance operations
-function getUserBalanceOperations(int $userId, ?string $conditions = null)
+function getBalanceOperations(?string $conditions = null)
 {
     global $db;
 
@@ -171,14 +182,120 @@ function getUserBalanceOperations(int $userId, ?string $conditions = null)
                 LEFT JOIN " . TABLE_PREFIX . "mint_balance_transfers bt ON bo.transfer_id = bt.id 
                 LEFT JOIN " . TABLE_PREFIX . "users u_from ON bt.from_user_id = u_from.uid
                 LEFT JOIN " . TABLE_PREFIX . "users u_to ON bt.to_user_id = u_to.uid
-            WHERE
-                bo.user_id = " . (int)$userId . " 
             {$conditions}
     ");
 
     return $query;
 }
 
+function countBalanceOperations(?string $conditions = null): int
+{
+    global $db;
+
+    return $db->fetch_field(
+        $db->query("
+            SELECT
+                COUNT(bo.id) AS n
+                FROM
+                    " . TABLE_PREFIX . "mint_balance_operations bo
+                    LEFT JOIN " . TABLE_PREFIX . "mint_termination_points tp ON bo.termination_point_id = tp.id
+                    LEFT JOIN " . TABLE_PREFIX . "mint_balance_transfers bt ON bo.transfer_id = bt.id 
+                    LEFT JOIN " . TABLE_PREFIX . "users u_from ON bt.from_user_id = u_from.uid
+                    LEFT JOIN " . TABLE_PREFIX . "users u_to ON bt.to_user_id = u_to.uid
+                {$conditions}
+        "),
+        'n'
+    );
+}
+
+function getUserBalanceOperations(int $userId, ?string $conditions = null)
+{
+    return \mint\getBalanceOperations('WHERE bo.user_id = ' . (int)$userId . ' ' . $conditions);
+}
+
+function getRecentUserBalanceOperations(int $userId, int $limit)
+{
+    return \mint\getUserBalanceOperations(
+        $userId,
+        "ORDER BY id DESC LIMIT " . (int)$limit
+    );
+}
+
+function getUserPublicBalanceOperations(int $userId, array $includePrivateWithUserIds = [], ?string $conditions = null)
+{
+    $whereString = 'bo.user_id = ' . (int)$userId;
+
+    if (!empty($includePrivateWithUserIds)) {
+        $csv = implode(
+            ',',
+            array_map('intval', $includePrivateWithUserIds)
+        );
+
+        $whereString .= ' AND (
+            private IS NULL OR
+            private = 0 OR
+            from_user_id IN (' . $csv . ') OR
+            to_user_id IN(' . $csv . ')
+        )';
+    } else {
+         $whereString .= ' AND private IS NULL OR private = 0';
+    }
+
+    return \mint\getBalanceOperations('WHERE ' . $whereString . ' ' . $conditions);
+}
+
+function countUserPublicBalanceOperations(int $userId, array $includePrivateWithUserIds = [], ?string $conditions = null): int
+{
+    $whereString = 'bo.user_id = ' . (int)$userId;
+
+    if (!empty($includePrivateWithUserIds)) {
+        $csv = implode(
+            ',',
+            array_map('intval', $includePrivateWithUserIds)
+        );
+
+        $whereString .= ' AND (
+            private IS NULL OR
+            private = 0 OR
+            from_user_id IN (' . $csv . ') OR
+            to_user_id IN(' . $csv . ')
+        )';
+    } else {
+         $whereString .= ' AND private IS NULL OR private = 0';
+    }
+
+    return \mint\countBalanceOperations('WHERE ' . $whereString . ' ' . $conditions);
+}
+
+// transfers
+function getBalanceTransfers(?string $conditions = null)
+{
+    global $db;
+
+    $query = $db->query("
+        SELECT
+            bt.*,
+            tp.name AS termination_point_name,
+            u_from.uid AS from_user_id, u_from.username AS from_username,
+            u_to.uid AS to_user_id, u_to.username AS to_username
+            FROM
+                " . TABLE_PREFIX . "mint_balance_operations bo
+                LEFT JOIN " . TABLE_PREFIX . "mint_termination_points tp ON bo.termination_point_id = tp.id
+                LEFT JOIN " . TABLE_PREFIX . "mint_balance_transfers bt ON bo.transfer_id = bt.id 
+                LEFT JOIN " . TABLE_PREFIX . "users u_from ON bt.from_user_id = u_from.uid
+                LEFT JOIN " . TABLE_PREFIX . "users u_to ON bt.to_user_id = u_to.uid
+            {$conditions}
+    ");
+
+    return $query;
+}
+
+function getRecentPublicBalanceTransfers(int $limit)
+{
+    return \mint\getBalanceTransfers(
+        "WHERE private = 0 ORDER BY id DESC LIMIT " . (int)$limit
+    );
+}
 
 // content entity rewards
 function addContentEntityReward(string $rewardSourceName, int $contentEntityId, int $userId): bool
