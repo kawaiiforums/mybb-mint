@@ -275,13 +275,10 @@ function getBalanceTransfers(?string $conditions = null)
     $query = $db->query("
         SELECT
             bt.*,
-            tp.name AS termination_point_name,
             u_from.uid AS from_user_id, u_from.username AS from_username,
             u_to.uid AS to_user_id, u_to.username AS to_username
             FROM
-                " . TABLE_PREFIX . "mint_balance_operations bo
-                LEFT JOIN " . TABLE_PREFIX . "mint_termination_points tp ON bo.termination_point_id = tp.id
-                LEFT JOIN " . TABLE_PREFIX . "mint_balance_transfers bt ON bo.transfer_id = bt.id 
+                " . TABLE_PREFIX . "mint_balance_transfers bt
                 LEFT JOIN " . TABLE_PREFIX . "users u_from ON bt.from_user_id = u_from.uid
                 LEFT JOIN " . TABLE_PREFIX . "users u_to ON bt.to_user_id = u_to.uid
             {$conditions}
