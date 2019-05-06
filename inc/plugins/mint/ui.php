@@ -47,10 +47,10 @@ function getRenderedBalanceOperationEntries($query, ?int $contextUserId = null, 
 
         $details = [];
 
-        if ($entry['termination_point_name']) {
+        if ($entry['currency_termination_point_name']) {
             $details[] = $lang->sprintf(
                 $lang->mint_balance_operations_termination_point,
-                \htmlspecialchars_uni($entry['termination_point_name'])
+                \htmlspecialchars_uni($entry['currency_termination_point_name'])
             );
         }
 

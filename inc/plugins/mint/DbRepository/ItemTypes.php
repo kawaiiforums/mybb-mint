@@ -19,6 +19,10 @@ class ItemTypes extends \mint\DbEntityRepository
                 ],
             ],
         ],
+        'name' => [
+            'type' => 'varchar',
+            'length' => 255,
+        ],
         'title' => [
             'type' => 'varchar',
             'length' => 255,
@@ -29,6 +33,7 @@ class ItemTypes extends \mint\DbEntityRepository
         ],
         'stacked' => [
             'type' => 'bool',
+            'notNull' => true,
         ],
     ];
 }

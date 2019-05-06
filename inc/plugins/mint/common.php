@@ -221,7 +221,10 @@ function buildCreateTableQuery(string $tableName, array $columns): string
 
     $columnDefinitions = [];
     $keyDefinitions = [];
-    $keys = [];
+    $keys = [
+        'foreign' => [],
+        'unique' => [],
+    ];
     $tableMetaEncoded = null;
 
     switch ($db->type) {
@@ -259,13 +262,7 @@ function buildCreateTableQuery(string $tableName, array $columns): string
 
                 if (!empty($column['foreignKeys'])) {
                     foreach ($column['foreignKeys'] as $foreignKey) {
-                        if (empty($foreignKey['noReference'])) {
-                            $columnDefinition .= ' REFERENCES ' . TABLE_PREFIX . $foreignKey['table'] . '(' . $foreignKey['column'] . ')';
-
-                            if (!empty($foreignKey['onDelete'])) {
-                                $columnDefinition .= ' ON DELETE ' . strtoupper($foreignKey['onDelete']);
-                            }
-                        }
+                        $keys['foreign'][$columnName] = $foreignKey;
                     }
                 }
 
@@ -317,13 +314,7 @@ function buildCreateTableQuery(string $tableName, array $columns): string
 
                 if (!empty($column['foreignKeys'])) {
                     foreach ($column['foreignKeys'] as $foreignKey) {
-                        if (empty($foreignKey['noReference'])) {
-                            $columnDefinition .= ' REFERENCES ' . TABLE_PREFIX . $foreignKey['table'] . '(' . $foreignKey['column'] . ')';
-
-                            if (!empty($foreignKey['onDelete'])) {
-                                $columnDefinition .= ' ON DELETE ' . strtoupper($foreignKey['onDelete']);
-                            }
-                        }
+                        $keys['foreign'][$columnName] = $foreignKey;
                     }
                 }
 
@@ -375,13 +366,7 @@ function buildCreateTableQuery(string $tableName, array $columns): string
 
                 if (!empty($column['foreignKeys'])) {
                     foreach ($column['foreignKeys'] as $foreignKey) {
-                        if (empty($foreignKey['noReference'])) {
-                            $columnDefinition .= ' REFERENCES ' . TABLE_PREFIX . $foreignKey['table'] . '(' . $foreignKey['column'] . ')';
-
-                            if (!empty($foreignKey['onDelete'])) {
-                                $columnDefinition .= ' ON DELETE ' . strtoupper($foreignKey['onDelete']);
-                            }
-                        }
+                        $keys['foreign'][$columnName] = $foreignKey;
                     }
                 }
 
@@ -399,10 +384,20 @@ function buildCreateTableQuery(string $tableName, array $columns): string
                 }
             }
 
-            if (isset($keys['unique'])) {
-                foreach ($keys['unique'] as $keyName => $columnNames) {
-                    $keyDefinitions[] = 'UNIQUE (' . implode(', ', $columnNames) . ')';
+            foreach ($keys['foreign'] as $referencingColumn => $foreignKey) {
+                if (empty($foreignKey['noReference'])) {
+                    $definition = 'FOREIGN KEY (' . $referencingColumn . ') REFERENCES ' . TABLE_PREFIX . $foreignKey['table'] . '(' . $foreignKey['column'] . ')';
+
+                    if (!empty($foreignKey['onDelete'])) {
+                        $definition .= ' ON DELETE ' . strtoupper($foreignKey['onDelete']);
+                    }
+
+                    $keyDefinitions[] = $definition;
                 }
+            }
+
+            foreach ($keys['unique'] as $keyName => $columnNames) {
+                $keyDefinitions[] = 'UNIQUE (' . implode(', ', $columnNames) . ')';
             }
 
             break;
@@ -475,7 +470,9 @@ function dropColumns(array $tables): void
 
     foreach ($tables as $tableName => $tableColumns) {
         foreach ($tableColumns as $columnName) {
-            $db->drop_column($tableName, $columnName);
+            if ($db->field_exists($columnName, $tableName)) {
+                $db->drop_column($tableName, $columnName);
+            }
         }
     }
 }

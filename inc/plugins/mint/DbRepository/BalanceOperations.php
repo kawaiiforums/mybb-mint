@@ -19,17 +19,21 @@ class BalanceOperations extends \mint\DbEntityRepository
                     'noReference' => true,
                 ],
             ],
+            'notNull' => true,
         ],
         'result_balance' => [
             'type' => 'integer',
+            'notNull' => true,
         ],
         'value' => [
             'type' => 'integer',
+            'notNull' => true,
         ],
         'date' => [
             'type' => 'integer',
+            'notNull' => true,
         ],
-        'transfer_id' => [
+        'balance_transfer_id' => [
             'type' => 'integer',
             'foreignKeys' => [
                 [
@@ -38,11 +42,11 @@ class BalanceOperations extends \mint\DbEntityRepository
                 ],
             ],
         ],
-        'termination_point_id' => [
+        'currency_termination_point_id' => [
             'type' => 'integer',
             'foreignKeys' => [
                 [
-                    'table' => 'mint_termination_points',
+                    'table' => 'mint_currency_termination_points',
                     'column' => 'id',
                 ],
             ],
@@ -57,12 +61,12 @@ class BalanceOperations extends \mint\DbEntityRepository
             'date' => TIME_NOW,
         ];
 
-        if (!empty($details['transfer_id'])) {
-            $operationData['transfer_id'] = $details['transfer_id'];
+        if (!empty($details['balance_transfer_id'])) {
+            $operationData['balance_transfer_id'] = $details['balance_transfer_id'];
         }
 
-        if (!empty($details['termination_point_id'])) {
-            $operationData['termination_point_id'] = $details['termination_point_id'];
+        if (!empty($details['currency_termination_point_id'])) {
+            $operationData['currency_termination_point_id'] = $details['currency_termination_point_id'];
         }
 
         if ($useTransaction) {

@@ -2,7 +2,7 @@
 
 namespace mint\Hooks;
 
-use mint\DbRepository\{BalanceOperations, BalanceTransfers, TerminationPoints};
+use mint\DbRepository\{BalanceOperations, BalanceTransfers, CurrencyTerminationPoints};
 
 function misc_start()
 {

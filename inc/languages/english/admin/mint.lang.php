@@ -1,18 +1,20 @@
 <?php
 
+// plugins
 $l['mint_description'] = 'Adds virtual currency mined through user activity and marketplace for virtual items.';
 
 $l['mint_admin_pluginlibrary_missing'] = 'Mint requires <a href="https://github.com/frostschutz/MyBB-PluginLibrary">PluginLibrary</a> in order to be installed.';
 
+// common
 $l['mint_admin_submit'] = 'Submit';
 
-
+// Mint
 $l['mint_admin'] = 'Mint';
 
-
+// Mint: Item Categories
 $l['mint_admin_item_categories'] = 'Item Categories';
+$l['mint_admin_item_categories_list'] = 'Item Categories ({1})';
 $l['mint_admin_item_categories_description'] = 'Here you can manage item categories.';
-
 $l['mint_admin_item_categories_id'] = 'ID';
 $l['mint_admin_item_categories_title'] = 'Title';
 $l['mint_admin_item_categories_title_description'] = '';
@@ -27,14 +29,16 @@ $l['mint_admin_item_categories_deleted'] = 'Successfully deleted item category.'
 $l['mint_admin_item_categories_delete_confirm_title'] = 'Confirm item category removal';
 $l['mint_admin_item_categories_delete_confirm_message'] = 'Are you sure you want to remove selected item category?';
 
-
+// Mint: Item Types
 $l['mint_admin_item_types'] = 'Item Types';
+$l['mint_admin_item_types_list'] = 'Item Types ({1})';
 $l['mint_admin_item_types_description'] = 'Here you can manage item types.';
-
 $l['mint_admin_item_types_id'] = 'ID';
+$l['mint_admin_item_types_name'] = 'Name';
+$l['mint_admin_item_types_name_description'] = 'Choose an internal identifier that may be used by custom modules.';
 $l['mint_admin_item_types_title'] = 'Title';
 $l['mint_admin_item_types_title_description'] = '';
-$l['mint_admin_item_types_category_id'] = 'Category';
+$l['mint_admin_item_types_category_id'] = 'Item Category';
 $l['mint_admin_item_types_category_id_description'] = '';
 $l['mint_admin_item_types_category'] = 'Category';
 $l['mint_admin_item_types_category_description'] = '';
@@ -53,15 +57,17 @@ $l['mint_admin_item_types_deleted'] = 'Successfully deleted item type.';
 $l['mint_admin_item_types_delete_confirm_title'] = 'Confirm item type removal';
 $l['mint_admin_item_types_delete_confirm_message'] = 'Are you sure you want to remove selected item type?';
 
-
+// Mint: Shop Items
 $l['mint_admin_shop_items'] = 'Shop Items';
+$l['mint_admin_shop_items_list'] = 'Shop Items ({1})';
 $l['mint_admin_shop_items_description'] = 'Here you can manage shop items.';
-
 $l['mint_admin_shop_items_id'] = 'ID';
 $l['mint_admin_shop_items_item_type'] = 'Item Type';
 $l['mint_admin_shop_items_item_type_description'] = '';
 $l['mint_admin_shop_items_ask_price'] = 'Price';
 $l['mint_admin_shop_items_ask_price_description'] = '';
+$l['mint_admin_shop_items_amount'] = 'In Stock';
+$l['mint_admin_shop_items_amount_description'] = 'Choose how many times the item can be sold.';
 
 $l['mint_admin_shop_items_empty'] = 'No shop items added.';
 
@@ -73,10 +79,10 @@ $l['mint_admin_shop_items_deleted'] = 'Successfully deleted shop item.';
 $l['mint_admin_shop_items_delete_confirm_title'] = 'Confirm shop item removal';
 $l['mint_admin_shop_items_delete_confirm_message'] = 'Are you sure you want to remove selected shop item?';
 
-
+// Mint: Inventory Types
 $l['mint_admin_inventory_types'] = 'Inventory Types';
+$l['mint_admin_inventory_types_list'] = 'Inventory Types ({1})';
 $l['mint_admin_inventory_types_description'] = 'Here you can manage inventory types.';
-
 $l['mint_admin_inventory_types_id'] = 'ID';
 $l['mint_admin_inventory_types_size'] = 'Size';
 $l['mint_admin_inventory_types_size_description'] = '';
@@ -93,10 +99,10 @@ $l['mint_admin_inventory_types_deleted'] = 'Successfully deleted inventory type.
 $l['mint_admin_inventory_types_delete_confirm_title'] = 'Confirm inventory type removal';
 $l['mint_admin_inventory_types_delete_confirm_message'] = 'Are you sure you want to remove selected inventory type?';
 
-
+// Mint Logs
 $l['mint_admin_logs'] = 'Mint Logs';
 
-
+// Mint Logs: Balance Operations
 $l['mint_admin_balance_operations'] = 'Balance Operations';
 $l['mint_admin_balance_operations_list'] = 'Balance Operations ({1})';
 $l['mint_admin_balance_operations_description'] = 'This section allows you to view a history of users\' balance operations.';
@@ -109,14 +115,14 @@ $l['mint_admin_balance_operations_value'] = 'Value';
 $l['mint_admin_balance_operations_value_description'] = '';
 $l['mint_admin_balance_operations_result_balance'] = 'Result Balance';
 $l['mint_admin_balance_operations_result_balance_description'] = '';
-$l['mint_admin_balance_operations_transfer_id'] = 'Transfer';
-$l['mint_admin_balance_operations_transfer_id_description'] = 'ID of a Balance Transfer.';
+$l['mint_admin_balance_operations_balance_transfer_id'] = 'Transfer';
+$l['mint_admin_balance_operations_balance_transfer_id_description'] = 'ID of a Balance Transfer.';
 $l['mint_admin_balance_operations_termination_point'] = 'Termination Point';
 $l['mint_admin_balance_operations_termination_point_description'] = 'Name of a Termination Point.';
 
 $l['mint_admin_balance_operations_empty'] = 'No balance operations to show.';
 
-
+// Mint Logs: Balance Transfers
 $l['mint_admin_balance_transfers'] = 'Balance Transfers';
 $l['mint_admin_balance_transfers_list'] = 'Balance Transfers ({1})';
 $l['mint_admin_balance_transfers_description'] = 'This section allows you to view a history of users\' balance transfers.';
@@ -136,5 +142,5 @@ $l['mint_admin_balance_transfers_private_description'] = '';
 
 $l['mint_admin_balance_transfers_empty'] = 'No balance transfers to show.';
 
-
+// tasks
 $l['mint_integrity_task_ran'] = 'The Mint Integrity task successfully ran.';

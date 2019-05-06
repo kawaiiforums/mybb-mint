@@ -3,7 +3,7 @@
 namespace mint\Hooks;
 
 use mint\AcpEntityManagementController;
-use mint\DbRepository\{BalanceOperations, BalanceTransfers, ContentEntityRewards, InventoryTypes, ItemCategories, ItemTransactions, ItemTypes, ShopItems, UserItems};
+use mint\DbRepository\{BalanceOperations, BalanceTransfers, ContentEntityRewards, InventoryTypes, ItemCategories, ItemTransactions, ItemTypes, ShopItems, Items};
 
 function admin_load()
 {
@@ -61,6 +61,7 @@ function admin_load()
                     'customizable' => false,
                     'dataColumn' => 'category_title',
                 ],
+                'name' => [],
                 'title' => [],
                 'image' => [],
                 'stacked' => [
@@ -102,6 +103,9 @@ function admin_load()
                     },
                 ],
                 'ask_price' => [
+                    'formMethod' => 'generate_numeric_field',
+                ],
+                'amount' => [
                     'formMethod' => 'generate_numeric_field',
                 ],
             ]);
@@ -189,7 +193,7 @@ function admin_load()
                     'formMethod' => 'generate_numeric_field',
                     'filter' => true,
                 ],
-                'transfer_id' => [
+                'balance_transfer_id' => [
                     'presenter' => function (?int $value) {
                         if ($value !== null) {
                             return '#' . (int)$value;
@@ -201,7 +205,7 @@ function admin_load()
                     'filter' => true,
                 ],
                 'termination_point' => [
-                    'dataColumn' => 'termination_point_name',
+                    'dataColumn' => 'currency_termination_point_name',
                     'presenter' => function (?string $value) {
                         if ($value !== null) {
                             return '<code>' . \htmlspecialchars_uni($value) . '</code>';
@@ -217,7 +221,7 @@ function admin_load()
                 'users' => [
                     'username',
                 ],
-                'mint_termination_points' => [
+                'mint_currency_termination_points' => [
                     'name'
                 ],
             ]);
@@ -371,7 +375,7 @@ function admin_user_users_merge_commit(): void
             ],
         ],
         [
-            'class' => UserItems::class,
+            'class' => Items::class,
             'columns' => [
                 'user_id',
             ],

@@ -72,16 +72,18 @@ function mint_install()
 
     \mint\createTables([
         \mint\DbRepository\BalanceTransfers::class,
-        \mint\DbRepository\TerminationPoints::class,
+        \mint\DbRepository\CurrencyTerminationPoints::class,
         \mint\DbRepository\BalanceOperations::class,
         \mint\DbRepository\ContentEntityRewards::class,
+
         \mint\DbRepository\InventoryTypes::class,
+        \mint\DbRepository\ItemTerminationPoints::class,
         \mint\DbRepository\ItemCategories::class,
         \mint\DbRepository\ItemTypes::class,
+        \mint\DbRepository\Items::class,
         \mint\DbRepository\ShopItems::class,
-        \mint\DbRepository\UserItems::class,
         \mint\DbRepository\ItemTransactions::class,
-        \mint\DbRepository\UserItemTransactions::class,
+        \mint\DbRepository\ItemOperations::class,
     ]);
 
     // datacache
@@ -133,16 +135,18 @@ function mint_uninstall()
 
     \mint\dropTables([
         \mint\DbRepository\BalanceTransfers::class,
-        \mint\DbRepository\TerminationPoints::class,
+        \mint\DbRepository\CurrencyTerminationPoints::class,
         \mint\DbRepository\BalanceOperations::class,
         \mint\DbRepository\ContentEntityRewards::class,
+
         \mint\DbRepository\InventoryTypes::class,
+        \mint\DbRepository\ItemTerminationPoints::class,
         \mint\DbRepository\ItemCategories::class,
         \mint\DbRepository\ItemTypes::class,
+        \mint\DbRepository\Items::class,
         \mint\DbRepository\ShopItems::class,
-        \mint\DbRepository\UserItems::class,
         \mint\DbRepository\ItemTransactions::class,
-        \mint\DbRepository\UserItemTransactions::class,
+        \mint\DbRepository\ItemOperations::class,
     ], true, true);
 
     // settings
@@ -179,13 +183,24 @@ function mint_activate()
     \mint\resolveRegisteredRewardSources();
 
     // termination points
-    \mint\registerTerminationPoints([
+    \mint\registerCurrencyTerminationPoints([
         'mint',
         'burn',
     ]);
 
+    \mint\registerItemTerminationPoints([
+        'forge',
+        'melt',
+    ]);
+
     \mint\addNewTerminationPoints(
-        \mint\getRegisteredTerminationPoints()
+        \mint\getRegisteredCurrencyTerminationPoints(),
+        \mint\DbRepository\CurrencyTerminationPoints::class
+    );
+
+    \mint\addNewTerminationPoints(
+        \mint\getRegisteredItemTerminationPoints(),
+        \mint\DbRepository\ItemTerminationPoints::class
     );
 
     // settings

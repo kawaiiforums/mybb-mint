@@ -12,21 +12,40 @@ class ItemTransactions extends \mint\DbEntityRepository
         ],
         'ask_user_id' => [
             'type' => 'integer',
+            'foreignKeys' => [
+                [
+                    'table' => 'users',
+                    'column' => 'uid',
+                    'noReference' => true,
+                ],
+            ],
+            'notNull' => true,
         ],
         'bid_user_id' => [
             'type' => 'integer',
+            'foreignKeys' => [
+                [
+                    'table' => 'users',
+                    'column' => 'uid',
+                    'noReference' => true,
+                ],
+            ],
         ],
         'ask_price' => [
             'type' => 'integer',
+            'notNull' => true,
         ],
         'ask_date' => [
             'type' => 'integer',
+            'notNull' => true,
         ],
         'active' => [
             'type' => 'bool',
+            'notNull' => true,
         ],
         'completed' => [
             'type' => 'bool',
+            'notNull' => true,
         ],
         'completion_date' => [
             'type' => 'integer',

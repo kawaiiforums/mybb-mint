@@ -32,9 +32,11 @@ class BalanceTransfers extends \mint\DbEntityRepository
         ],
         'value' => [
             'type' => 'integer',
+            'notNull' => true,
         ],
         'date' => [
             'type' => 'integer',
+            'notNull' => true,
         ],
         'handler' => [
             'type' => 'varchar',
@@ -45,6 +47,7 @@ class BalanceTransfers extends \mint\DbEntityRepository
         ],
         'private' => [
             'type' => 'bool',
+            'notNull' => true,
         ],
     ];
 
@@ -80,10 +83,10 @@ class BalanceTransfers extends \mint\DbEntityRepository
         $transferId = $this->insert($transferData);
 
         $result = BalanceOperations::with($this->db)->execute($fromUserId, -$value, [
-            'transfer_id' => $transferId,
+            'balance_transfer_id' => $transferId,
         ], false);
         $result &= BalanceOperations::with($this->db)->execute($toUserId, $value, [
-            'transfer_id' => $transferId,
+            'balance_transfer_id' => $transferId,
         ], false);
 
         if ($result) {

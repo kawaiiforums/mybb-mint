@@ -4,7 +4,7 @@ namespace mint;
 
 use mint\DbRepository\BalanceOperations;
 use mint\DbRepository\ContentEntityRewards;
-use mint\DbRepository\TerminationPoints;
+use mint\DbRepository\CurrencyTerminationPoints;
 
 // balance
 function getUserBalance(int $userId, bool $forUpdate = false): ?int
@@ -51,11 +51,11 @@ function userBalanceOperationWithTerminationPoint($user, int $value, string $ter
         $userId = (int)$user;
     }
 
-    $terminationPointId = TerminationPoints::with($db)->getByColumn('name', $terminationPointName)['id'] ?? null;
+    $terminationPointId = CurrencyTerminationPoints::with($db)->getByColumn('name', $terminationPointName)['id'] ?? null;
 
     if ($terminationPointId !== null) {
         $result = BalanceOperations::with($db)->execute($userId, $value, [
-            'termination_point_id' => $terminationPointId,
+            'currency_termination_point_id' => $terminationPointId,
         ], true, $allowOverdraft);
 
         return $result;
@@ -173,13 +173,13 @@ function getBalanceOperations(?string $conditions = null)
         SELECT
             bo.*,
             bt.note, bt.private,
-            tp.name AS termination_point_name,
+            tp.name AS currency_termination_point_name,
             u_from.uid AS from_user_id, u_from.username AS from_username,
             u_to.uid AS to_user_id, u_to.username AS to_username
             FROM
                 " . TABLE_PREFIX . "mint_balance_operations bo
-                LEFT JOIN " . TABLE_PREFIX . "mint_termination_points tp ON bo.termination_point_id = tp.id
-                LEFT JOIN " . TABLE_PREFIX . "mint_balance_transfers bt ON bo.transfer_id = bt.id 
+                LEFT JOIN " . TABLE_PREFIX . "mint_currency_termination_points tp ON bo.currency_termination_point_id = tp.id
+                LEFT JOIN " . TABLE_PREFIX . "mint_balance_transfers bt ON bo.balance_transfer_id = bt.id 
                 LEFT JOIN " . TABLE_PREFIX . "users u_from ON bt.from_user_id = u_from.uid
                 LEFT JOIN " . TABLE_PREFIX . "users u_to ON bt.to_user_id = u_to.uid
             {$conditions}
@@ -198,8 +198,8 @@ function countBalanceOperations(?string $conditions = null): int
                 COUNT(bo.id) AS n
                 FROM
                     " . TABLE_PREFIX . "mint_balance_operations bo
-                    LEFT JOIN " . TABLE_PREFIX . "mint_termination_points tp ON bo.termination_point_id = tp.id
-                    LEFT JOIN " . TABLE_PREFIX . "mint_balance_transfers bt ON bo.transfer_id = bt.id 
+                    LEFT JOIN " . TABLE_PREFIX . "mint_currency_termination_points tp ON bo.currency_termination_point_id = tp.id
+                    LEFT JOIN " . TABLE_PREFIX . "mint_balance_transfers bt ON bo.balance_transfer_id = bt.id 
                     LEFT JOIN " . TABLE_PREFIX . "users u_from ON bt.from_user_id = u_from.uid
                     LEFT JOIN " . TABLE_PREFIX . "users u_to ON bt.to_user_id = u_to.uid
                 {$conditions}
@@ -302,7 +302,7 @@ function addContentEntityReward(string $rewardSourceName, int $contentEntityId, 
     $rewardSource = \mint\getRegisteredRewardSources()[$rewardSourceName] ?? null;
 
     if ($rewardSource && $rewardSource['reward']() != 0) {
-        $terminationPointId = TerminationPoints::with($db)->getByColumn('name', $rewardSource['terminationPoint'])['id'] ?? null;
+        $terminationPointId = CurrencyTerminationPoints::with($db)->getByColumn('name', $rewardSource['terminationPoint'])['id'] ?? null;
 
         if ($terminationPointId !== null) {
             $entry = $db->fetch_array(
@@ -332,7 +332,7 @@ function addContentEntityReward(string $rewardSourceName, int $contentEntityId, 
                     'user_id' => $userId,
                     'content_type' => $rewardSource['contentType'],
                     'content_entity_id' => $contentEntityId,
-                    'termination_point_id' => $terminationPointId,
+                    'currency_termination_point_id' => $terminationPointId,
                     'value' => $value,
                     'last_action_date' => \TIME_NOW,
                     'void' => false,
@@ -357,14 +357,14 @@ function voidContentEntityReward(string $rewardSourceName, int $contentEntityId)
     $rewardSource = \mint\getRegisteredRewardSources()[$rewardSourceName] ?? null;
 
     if ($rewardSource) {
-        $terminationPointId = TerminationPoints::with($db)->getByColumn('name', $rewardSource['terminationPoint'])['id'] ?? null;
+        $terminationPointId = CurrencyTerminationPoints::with($db)->getByColumn('name', $rewardSource['terminationPoint'])['id'] ?? null;
 
         if ($terminationPointId !== null) {
             $entries = \mint\queryResultAsArray(
                 ContentEntityRewards::with($db)->get('*', "WHERE
                     content_type = '" . $db->escape_string($rewardSource['contentType']) . "' AND
                     content_entity_id = " . (int)$contentEntityId . " AND
-                    termination_point_id = " . (int)$terminationPointId . "
+                    currency_termination_point_id = " . (int)$terminationPointId . "
                 ")
             );
 
@@ -378,7 +378,7 @@ function voidContentEntityReward(string $rewardSourceName, int $contentEntityId)
                             user_id = " . (int)$entry['user_id'] . " AND
                             content_type = '" . $db->escape_string($rewardSource['contentType']) . "' AND
                             content_entity_id = " . (int)$contentEntityId . " AND
-                            termination_point_id = " . (int)$terminationPointId . " 
+                            currency_termination_point_id = " . (int)$terminationPointId . " 
                         ");
 
                         \mint\userBalanceOperationWithTerminationPoint($entry['user_id'], -$entry['value'], $rewardSource['terminationPoint']);

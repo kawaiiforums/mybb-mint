@@ -3,7 +3,7 @@
 namespace mint;
 
 use \mint\DbRepository\{
-    TerminationPoints
+    CurrencyTerminationPoints
 };
 
 // modules
@@ -62,28 +62,47 @@ function getRegisteredSettings(): array
     return $settings;
 }
 
-function registerTerminationPoints(array $names): void
+function registerCurrencyTerminationPoints(array $names): void
 {
     global $mintRuntimeRegistry;
 
-    $mintRuntimeRegistry['terminationPoints'] = array_unique(
-        array_merge($mintRuntimeRegistry['terminationPoints'] ?? [], $names)
+    $mintRuntimeRegistry['currencyTerminationPoints'] = array_unique(
+        array_merge($mintRuntimeRegistry['currencyTerminationPoints'] ?? [], $names)
     );
 }
 
-function getRegisteredTerminationPoints(): array
+function getRegisteredCurrencyTerminationPoints(): array
 {
     global $mintRuntimeRegistry;
 
-    return $mintRuntimeRegistry['terminationPoints'] ?? [];
+    return $mintRuntimeRegistry['currencyTerminationPoints'] ?? [];
 }
 
-function addNewTerminationPoints(array $names): void
+function registerItemTerminationPoints(array $names): void
+{
+    global $mintRuntimeRegistry;
+
+    $mintRuntimeRegistry['itemTerminationPoints'] = array_unique(
+        array_merge($mintRuntimeRegistry['itemTerminationPoints'] ?? [], $names)
+    );
+}
+
+function getRegisteredItemTerminationPoints(): array
+{
+    global $mintRuntimeRegistry;
+
+    return $mintRuntimeRegistry['itemTerminationPoints'] ?? [];
+}
+
+function addNewTerminationPoints(array $names, $dbEntityRepositoryClass): void
 {
     global $db;
 
+    /* @var $dbEntityRepository \mint\DbEntityRepository */
+    $dbEntityRepository = $dbEntityRepositoryClass::with($db);
+
     $terminationPoints = \mint\queryResultAsArray(
-        TerminationPoints::with($db)->get(),
+        $dbEntityRepository->get(),
         'id',
         'name'
     ) ?? [];
@@ -99,7 +118,7 @@ function addNewTerminationPoints(array $names): void
             ];
         }
 
-        TerminationPoints::with($db)->insertMultiple($rows);
+        $dbEntityRepository->insertMultiple($rows);
     }
 }
 
@@ -148,7 +167,7 @@ function resolveRegisteredRewardSources(): void
 
     foreach ($rewardSources as $rewardSourceName => &$rewardSource) {
         if (!empty($rewardSource['terminationPoint'])) {
-            \mint\registerTerminationPoints([
+            \mint\registerCurrencyTerminationPoints([
                 $rewardSource['terminationPoint'],
             ]);
         }

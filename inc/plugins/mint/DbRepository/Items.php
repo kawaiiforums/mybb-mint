@@ -2,9 +2,9 @@
 
 namespace mint\DbRepository;
 
-class ShopItems extends \mint\DbEntityRepository
+class Items extends \mint\DbEntityRepository
 {
-    public const TABLE_NAME = 'mint_shop_items';
+    public const TABLE_NAME = 'mint_items';
     public const COLUMNS = [
         'id' => [
             'type' => 'integer',
@@ -20,16 +20,16 @@ class ShopItems extends \mint\DbEntityRepository
                 ],
             ],
         ],
-        'ask_price' => [
+        'user_id' => [
             'type' => 'integer',
             'notNull' => true,
         ],
-        'limited' => [
+        'inventory_slot' => [
+            'type' => 'integer',
+            'notNull' => true,
+        ],
+        'active' => [
             'type' => 'bool',
-            'notNull' => true,
-        ],
-        'amount' => [
-            'type' => 'integer',
             'notNull' => true,
         ],
     ];

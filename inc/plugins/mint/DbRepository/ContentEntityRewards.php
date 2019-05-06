@@ -12,22 +12,25 @@ class ContentEntityRewards extends \mint\DbEntityRepository
         ],
         'user_id' => [
             'type' => 'integer',
+            'notNull' => true,
             'uniqueKey' => 1,
         ],
         'content_type' => [
             'type' => 'varchar',
             'length' => 255,
+            'notNull' => true,
             'uniqueKey' => 1,
         ],
         'content_entity_id' => [
             'type' => 'integer',
+            'notNull' => true,
             'uniqueKey' => 1,
         ],
-        'termination_point_id' => [
+        'currency_termination_point_id' => [
             'type' => 'integer',
             'foreignKeys' => [
                 [
-                    'table' => 'mint_termination_points',
+                    'table' => 'mint_currency_termination_points',
                     'column' => 'id',
                 ],
             ],
