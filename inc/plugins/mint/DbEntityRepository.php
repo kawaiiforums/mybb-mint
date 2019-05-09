@@ -176,7 +176,7 @@ abstract class DbEntityRepository
     {
         $result = $this->db->update_query(
             static::TABLE_NAME,
-            $this->getEscapedArray($data),
+            $this->getEscapedArray($data, false),
             $whereString
         );
 

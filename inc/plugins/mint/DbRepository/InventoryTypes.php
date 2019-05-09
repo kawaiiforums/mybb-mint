@@ -10,7 +10,7 @@ class InventoryTypes extends \mint\DbEntityRepository
             'type' => 'integer',
             'primaryKey' => true,
         ],
-        'size' => [
+        'slots' => [
             'type' => 'integer',
             'notNull' => true,
         ],

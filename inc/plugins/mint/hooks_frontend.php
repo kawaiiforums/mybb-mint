@@ -2,7 +2,7 @@
 
 namespace mint\Hooks;
 
-use mint\DbRepository\{BalanceOperations, BalanceTransfers, CurrencyTerminationPoints};
+use mint\DbRepository\{BalanceOperations, BalanceTransfers, CurrencyTerminationPoints, InventoryTypes, Items, ItemTypes};
 
 function misc_start()
 {
@@ -15,12 +15,12 @@ function misc_start()
         if ($mybb->user['uid'] != 0) {
             \add_breadcrumb($lang->mint_hub, 'misc.php?action=economy');
 
-            $currentBalance = \mint\getFormattedCurrency(
+            // currency
+            $currentBalanceCounter = \mint\getFormattedCurrency(
                 \mint\getUserBalance($mybb->user['uid']),
                 true
             );
 
-            $inventoryServiceLinks = null;
             $balanceServiceLinks = null;
 
             $links = [];
@@ -32,7 +32,7 @@ function misc_start()
                 ];
             }
 
-            $balanceServiceLinks = \mint\getRenderedServiceLinks($links);
+            $currencyServiceLinks = \mint\getRenderedServiceLinks($links);
 
 
             $query = \mint\getRecentUserBalanceOperations(
@@ -77,6 +77,49 @@ function misc_start()
                 $rewardSourcesLegend = null;
             }
 
+            // items
+            $userInventoryData = \mint\getUserInventoryData($mybb->user);
+
+            $userItemsCount = $userInventoryData['slotsOccupied'];
+
+            if ($userInventoryData) {
+                $itemsInventoryTitle = \htmlspecialchars_uni($userInventoryData['title']);
+                $userInventorySlots = (int)$userInventoryData['slots'];
+            } else {
+                $itemsInventoryTitle = $lang->mint_items_no_inventory;
+                $userInventorySlots = 0;
+            }
+
+            $itemsInventory = null;
+
+            $currentItemsCounter = $lang->sprintf(
+                $lang->mint_items_in_slots,
+                $userItemsCount,
+                $userInventorySlots
+            );
+
+            if ($userItemsCount > $userInventorySlots) {
+                $inventorySlotsFilledPercent = 100;
+            } elseif ($userInventorySlots == 0) {
+                $inventorySlotsFilledPercent = 0;
+            } else {
+                $inventorySlotsFilledPercent = round($userItemsCount / $userInventorySlots, 2) * 100;
+            }
+
+
+            $itemsServiceLinks = null;
+
+            $links = [];
+
+            if (\is_member(\mint\getCsvSettingValues('forge_groups'))) {
+                $links['forge'] = [
+                    'url' => 'misc.php?action=economy_items_forge',
+                    'title' => $lang->mint_forge,
+                ];
+            }
+
+            $itemsServiceLinks = \mint\getRenderedServiceLinks($links);
+
             eval('$page = "' . \mint\tpl('hub') . '";');
             \output_page($page);
         } else {
@@ -90,7 +133,7 @@ function misc_start()
             $messages = null;
 
             if (\mint\getSettingValue('manual_balance_operations')) {
-                if (isset($mybb->input['amount']) && verify_post_check($mybb->get_input('my_post_key'))) {
+                if (isset($mybb->input['amount']) && \verify_post_check($mybb->get_input('my_post_key'))) {
                     $amount = $mybb->get_input('amount', \MyBB::INPUT_INT);
 
                     $user = \get_user_by_username($mybb->get_input('user_name'));
@@ -152,7 +195,7 @@ function misc_start()
             $messages = null;
 
             if (\mint\getSettingValue('manual_balance_operations')) {
-                if (isset($mybb->input['amount']) && verify_post_check($mybb->get_input('my_post_key'))) {
+                if (isset($mybb->input['amount']) && \verify_post_check($mybb->get_input('my_post_key'))) {
                     $amount = $mybb->get_input('amount', \MyBB::INPUT_INT);
 
                     if ($amount > 0) {
@@ -293,5 +336,119 @@ function misc_start()
 
         eval('$page = "' . \mint\tpl('balance_operations') . '";');
         \output_page($page);
+    } elseif ($mybb->get_input('action') == 'economy_items_forge') {
+        if ($mybb->user['uid'] != 0 && \is_member(\mint\getCsvSettingValues('forge_groups'))) {
+            \add_breadcrumb($lang->mint_hub, 'misc.php?action=economy');
+            \add_breadcrumb($lang->mint_forge);
+
+            $maxAmount = 1000;
+
+            $messages = null;
+
+            if (isset($mybb->input['item_type_id']) && \verify_post_check($mybb->get_input('my_post_key'))) {
+                $amount = $mybb->get_input('amount', \MyBB::INPUT_INT);
+
+                if ($amount <= $maxAmount) {
+                    $user = \get_user_by_username($mybb->get_input('user_name'));
+
+                    if ($user) {
+                        $itemType = ItemTypes::with($db)->getById($mybb->get_input('item_type_id', \MyBB::INPUT_INT));
+
+                        if ($itemType) {
+                            $items = array_fill(0, $amount, [
+                                'stacked' => $itemType['stacked'],
+                                'item_type_id' => $itemType['id'],
+                            ]);
+
+                            if (\mint\countAvailableUserInventorySlotsWithItems($user['uid'], $items) >= 0) {
+                                $result = \mint\createUserItemsWithTerminationPoint($itemType['id'], $amount, $user['uid'], 'forge');
+
+                                if ($result) {
+                                    $messages .= \mint\getRenderedMessage($lang->sprintf(
+                                        $lang->mint_forge_forged,
+                                        (int)$amount
+                                    ), 'success');
+                                } else {
+                                    $messages .= \mint\getRenderedMessage($lang->sprintf(
+                                        $lang->mint_forge_error,
+                                        (int)$amount
+                                    ), 'error');
+                                }
+                            } else {
+                                $messages .= \mint\getRenderedMessage($lang->mint_items_not_enough_inventory_slots, 'error');
+                            }
+                        } else {
+                            $messages .= \mint\getRenderedMessage($lang->mint_item_type_not_found, 'error');
+                        }
+                    } else {
+                        $messages .= \mint\getRenderedMessage($lang->mint_user_not_found, 'error');
+                    }
+                }
+            }
+
+            $currencyTitle = \mint\getSettingValue('currency_name');
+
+            $minAmount = null;
+            $maxAmount = null;
+
+            eval('$form = "' . \mint\tpl('forge_form') . '";');
+
+            eval('$page = "' . \mint\tpl('forge') . '";');
+            \output_page($page);
+        } else {
+            \error_no_permission();
+        }
+
+    }
+}
+
+function xmlhttp()
+{
+    global $mybb, $db, $charset;
+
+    if ($mybb->get_input('action') == 'mint_get_item_type') {
+        $query = ltrim($mybb->get_input('query'));
+        $searchType = $mybb->get_input('search_type', \MyBB::INPUT_INT);
+
+        if (\my_strlen($query) < 2) {
+            exit;
+        }
+
+        if ($mybb->get_input('getone', \MyBB::INPUT_INT) == 1) {
+            $limit = 1;
+        } else {
+            $limit = 15;
+        }
+
+        $likeString = $db->escape_string_like($query);
+
+        if ($searchType == 1) {
+            $likeString .= '%';
+        } elseif ($searchType == 2) {
+            $likeString = '%' . $likeString;
+        } else {
+            $likeString = '%' . $likeString . '%';
+        }
+
+        header('Content-type: application/json; charset=' . $charset);
+
+        $data = [];
+
+        $query = $db->simple_select('mint_item_types', 'id, title', "title LIKE '" . $likeString . "'", [
+            'order_by' => 'title',
+            'order_dir' => 'asc',
+            'limit' => $limit,
+        ]);
+
+        while ($row = $db->fetch_array($query)) {
+            $data[] = [
+                'id' => $row['id'],
+                'text' => $row['title'],
+            ];
+        }
+
+        echo json_encode($data);
+
+        exit;
     }
 }

@@ -536,3 +536,16 @@ function loadPluginLibrary(): void
         require_once PLUGINLIBRARY;
     }
 }
+
+function updateUser(int $userId, array $data): bool
+{
+    global $mybb, $db;
+
+    $result = (bool)$db->update_query('users', $data, 'uid = ' . (int)$userId);
+
+    if ($userId != 0 && $mybb->user['uid'] == $userId) {
+        $mybb->user = array_merge($mybb->user, $data);
+    }
+
+    return $result;
+}

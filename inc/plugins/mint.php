@@ -65,8 +65,9 @@ function mint_install()
     \mint\createColumns([
         'users' => [
             'mint_balance' => 'integer NOT NULL DEFAULT 0',
-            'mint_inventory_size_bonus' => 'integer NOT NULL DEFAULT 0',
-            'mint_inventory_type_id' => 'integer NOT NULL DEFAULT 0',
+            'mint_inventory_type_id' => 'integer',
+            'mint_inventory_slots_bonus' => 'integer NOT NULL DEFAULT 0',
+            'mint_inventory_slots_occupied' => 'integer NOT NULL DEFAULT 0',
         ],
     ]);
 
@@ -81,9 +82,10 @@ function mint_install()
         \mint\DbRepository\ItemCategories::class,
         \mint\DbRepository\ItemTypes::class,
         \mint\DbRepository\Items::class,
+        \mint\DbRepository\ItemUsers::class,
         \mint\DbRepository\ShopItems::class,
         \mint\DbRepository\ItemTransactions::class,
-        \mint\DbRepository\ItemOperations::class,
+        \mint\DbRepository\ItemTransactionItems::class,
     ]);
 
     // datacache
@@ -128,8 +130,9 @@ function mint_uninstall()
     \mint\dropColumns([
         'users' => [
             'mint_balance',
-            'mint_inventory_size_bonus',
             'mint_inventory_type_id',
+            'mint_inventory_slots_bonus',
+            'mint_inventory_slots_occupied',
         ],
     ]);
 
@@ -144,9 +147,10 @@ function mint_uninstall()
         \mint\DbRepository\ItemCategories::class,
         \mint\DbRepository\ItemTypes::class,
         \mint\DbRepository\Items::class,
+        \mint\DbRepository\ItemUsers::class,
         \mint\DbRepository\ShopItems::class,
         \mint\DbRepository\ItemTransactions::class,
-        \mint\DbRepository\ItemOperations::class,
+        \mint\DbRepository\ItemTransactionItems::class,
     ], true, true);
 
     // settings
@@ -225,7 +229,13 @@ function mint_activate()
         ],
         'mint_groups' => [
             'title'       => 'Mint Groups',
-            'description' => 'Select which user groups are allowed to create currency on request.',
+            'description' => 'Select which user groups are allowed to create and remove currency on request.',
+            'optionscode' => 'groupselect',
+            'value'       => '4',
+        ],
+        'forge_groups' => [
+            'title'       => 'Forge Groups',
+            'description' => 'Select which user groups are allowed to create and remove items on request.',
             'optionscode' => 'groupselect',
             'value'       => '4',
         ],
@@ -251,6 +261,12 @@ function mint_activate()
             'title'       => 'Private Balance Transfers by Default',
             'description' => 'Choose whether Balance Transfers should be assumed non-public (when possible).',
             'optionscode' => 'yesno',
+            'value'       => '1',
+        ],
+        'default_inventory_type_id' => [
+            'title'       => 'Default Inventory Type ID',
+            'description' => 'Provide the ID of a fallback Inventory Type that will be assigned to users by default (if any).',
+            'optionscode' => 'numeric',
             'value'       => '1',
         ],
         'recent_balance_operations_entries' => [

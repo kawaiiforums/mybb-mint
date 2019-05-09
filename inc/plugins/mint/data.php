@@ -5,6 +5,11 @@ namespace mint;
 use mint\DbRepository\BalanceOperations;
 use mint\DbRepository\ContentEntityRewards;
 use mint\DbRepository\CurrencyTerminationPoints;
+use mint\DbRepository\InventoryTypes;
+use mint\DbRepository\Items;
+use mint\DbRepository\ItemTerminationPoints;
+use mint\DbRepository\ItemTypes;
+use mint\DbRepository\ItemUsers;
 
 // balance
 function getUserBalance(int $userId, bool $forUpdate = false): ?int
@@ -39,29 +44,6 @@ function getTopUsersByBalance(int $limit)
         'order_dir' => 'desc',
         'limit' => (int)$limit,
     ]);
-}
-
-function userBalanceOperationWithTerminationPoint($user, int $value, string $terminationPointName, bool $allowOverdraft = true): bool
-{
-    global $db;
-
-    if (is_array($user)) {
-        $userId = (int)$user['uid'];
-    } else {
-        $userId = (int)$user;
-    }
-
-    $terminationPointId = CurrencyTerminationPoints::with($db)->getByColumn('name', $terminationPointName)['id'] ?? null;
-
-    if ($terminationPointId !== null) {
-        $result = BalanceOperations::with($db)->execute($userId, $value, [
-            'currency_termination_point_id' => $terminationPointId,
-        ], true, $allowOverdraft);
-
-        return $result;
-    } else {
-        return false;
-    }
 }
 
 function verifyBalanceOperationsDataIntegrity(bool $attemptToFix = false)
@@ -267,7 +249,30 @@ function countUserPublicBalanceOperations(int $userId, array $includePrivateWith
     return \mint\countBalanceOperations('WHERE ' . $whereString . ' ' . $conditions);
 }
 
-// transfers
+function userBalanceOperationWithTerminationPoint($user, int $value, string $terminationPointName, bool $allowOverdraft = true): bool
+{
+    global $db;
+
+    if (is_array($user)) {
+        $userId = (int)$user['uid'];
+    } else {
+        $userId = (int)$user;
+    }
+
+    $terminationPointId = CurrencyTerminationPoints::with($db)->getByColumn('name', $terminationPointName)['id'] ?? null;
+
+    if ($terminationPointId !== null) {
+        $result = BalanceOperations::with($db)->execute($userId, $value, [
+            'currency_termination_point_id' => $terminationPointId,
+        ], true, $allowOverdraft);
+
+        return $result;
+    } else {
+        return false;
+    }
+}
+
+// balance transfers
 function getBalanceTransfers(?string $conditions = null)
 {
     global $db;
@@ -393,4 +398,254 @@ function voidContentEntityReward(string $rewardSourceName, int $contentEntityId)
     } else {
         return false;
     }
+}
+
+// inventory
+function getUserInventoryType($user): ?array
+{
+    global $db;
+
+    if ($user['mint_inventory_type_id']) {
+        $inventoryTypeId = $user['mint_inventory_type_id'];
+    } else {
+        $inventoryTypeId = \mint\getSettingValue('default_inventory_type_id');
+    }
+
+    $userInventoryType = InventoryTypes::with($db)->getById($inventoryTypeId);
+
+    return $userInventoryType;
+}
+
+function getUserInventoryData($user): ?array
+{
+    if (!is_array($user)) {
+        $user = \get_user($user);
+
+        if (!$user) {
+            return null;
+        }
+    }
+
+    $userInventoryType = \mint\getUserInventoryType($user);
+
+    if ($userInventoryType) {
+        $slots = $userInventoryType['slots'] + $user['mint_inventory_slots_bonus'];
+
+        $userInventoryData = [
+            'title' => $userInventoryType['title'],
+            'slots' => $slots,
+            'slotsOccupied' => $user['mint_inventory_slots_occupied'],
+            'slotsAvailable' => $slots - $user['mint_inventory_slots_occupied'],
+        ];
+    } else {
+        $userInventoryData = null;
+    }
+
+    return $userInventoryData;
+}
+
+function countOccupiedUserInventorySlots(int $userId, bool $cached = true, bool $forUpdate = false): ?int
+{
+    global $mybb, $db;
+
+    if ($cached || $forUpdate) {
+        if (!$forUpdate && $userId === $mybb->user['uid']) {
+            $count = (int)$mybb->user['mint_inventory_slots_occupied'];
+        } else {
+            $conditions = 'uid = ' . (int)$userId;
+
+            if ($forUpdate && in_array($db->type, ['pgsql', 'mysql'])) {
+                $conditions .= ' FOR UPDATE';
+            }
+
+            $query = $db->simple_select('users', 'mint_inventory_slots_occupied', $conditions);
+
+            if ($db->num_rows($query) == 1) {
+                $count = (int)$db->fetch_field($query, 'mint_inventory_slots_occupied');
+            } else {
+                $count = null;
+            }
+        }
+    } else {
+        $query = $db->query("
+            SELECT SUM(n) AS n FROM
+            (
+                SELECT
+                    COUNT(iu.id) AS n
+                    FROM
+                        " . TABLE_PREFIX . "mint_item_users iu
+                        INNER JOIN " . TABLE_PREFIX . "mint_items i ON iu.item_id = i.id
+                        INNER JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
+                    WHERE user_id = " . (int)$userId . " AND it.stacked = 0 AND iu.active = 1
+                UNION ALL
+                SELECT
+                    COUNT(DISTINCT item_type_id) AS n
+                    FROM
+                        " . TABLE_PREFIX . "mint_item_users iu
+                        INNER JOIN " . TABLE_PREFIX . "mint_items i ON iu.item_id = i.id
+                        INNER JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
+                    WHERE user_id = " . (int)$userId . " AND it.stacked = 1 AND iu.active = 1
+            ) itemCountsByStackedStatus
+        ");
+
+        $count = $db->fetch_field($query, 'n');
+    }
+
+    return $count;
+}
+
+// items
+function getItemsById(array $itemIds, bool $forUpdate = false)
+{
+    global $db;
+
+    if (!empty($itemIds)) {
+        $conditions = 'id IN (' . implode(',', array_map('intval', $itemIds)) . ')';
+
+        if ($forUpdate && in_array($db->type, ['pgsql', 'mysql'])) {
+            $conditions .= ' FOR UPDATE';
+        }
+
+        $query = $db->simple_select('mint_items', '*', $conditions);
+
+        return $query;
+    } else {
+        return null;
+    }
+}
+
+// user items
+function getDistinctUserItemTypeIds(int $userId): array
+{
+    global $db;
+
+    return \mint\queryResultAsArray(
+        $db->query("
+            SELECT
+                DISTINCT item_type_id
+                FROM
+                    " . TABLE_PREFIX . "mint_item_users iu
+                    INNER JOIN " . TABLE_PREFIX . "mint_items i ON iu.item_id = i.id
+                WHERE user_id = " . (int)$userId . " AND iu.active = 1
+        "),
+        null,
+        'item_type_id'
+    );
+}
+
+function getRequiredUserInventorySlotsForItems(int $userId, array $items): int
+{
+    $slotsRequired = 0;
+
+    $distinctUserItemTypeIds = \mint\getDistinctUserItemTypeIds($userId);
+
+    foreach ($items as $item) {
+        if (!$item['stacked'] || !in_array($item['item_type_id'], $distinctUserItemTypeIds)) {
+            $slotsRequired++;
+        }
+    }
+
+    return $slotsRequired;
+}
+
+function countAvailableUserInventorySlotsWithItems(int $userId, array $items): int
+{
+    $bidUserInventory = \mint\getUserInventoryData($userId);
+    $slotsRequired = \mint\getRequiredUserInventorySlotsForItems($userId, $items);
+
+    $slotsWithItems = $bidUserInventory['slotsAvailable'] - $slotsRequired;
+
+    return $slotsWithItems;
+}
+
+function createUserItemsWithTerminationPoint(int $itemTypeId, int $amount, int $userId, string $terminationPointName, bool $useDbTransaction = true): bool
+{
+    global $db;
+
+    $terminationPointId = ItemTerminationPoints::with($db)->getByColumn('name', $terminationPointName)['id'] ?? null;
+
+    if ($terminationPointId !== null) {
+        $itemType = ItemTypes::with($db)->getById($itemTypeId);
+
+        if ($itemType !== null) {
+            if ($useDbTransaction) {
+                $db->write_query('BEGIN');
+            }
+
+            $result = true;
+
+            $items = [];
+
+            for ($i = 1; $i <= $amount; $i++) {
+                $itemId = Items::with($db)->create($itemTypeId, $terminationPointId);
+
+                if ($itemId) {
+                    $items[] = [
+                        'item_id' => $itemId,
+                        'item_type_id' => $itemTypeId,
+                        'stacked' => $itemType['stacked'],
+                    ];
+                } else {
+                    $result &= false;
+                    break;
+                }
+            }
+
+            if ($result == true) {
+                $result &= ItemUsers::with($db)->assign($items, $userId);
+            }
+
+            if ($useDbTransaction) {
+                if ($result == true) {
+                    $db->write_query('COMMIT');
+                } else {
+                    $db->write_query('ROLLBACK');
+                }
+            }
+
+            return $result;
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+}
+
+// item transactions
+function getItemTransactionById(int $transactionId, bool $forUpdate = false): ?array
+{
+    global $db;
+
+    $conditions = 'id = ' . (int)$transactionId;
+
+    if ($forUpdate && in_array($db->type, ['pgsql', 'mysql'])) {
+        $conditions .= ' FOR UPDATE';
+    }
+
+    $query = $db->simple_select('mint_item_transactions', '*', $conditions);
+
+    if ($db->num_rows($query) == 1) {
+        return $db->fetch_array($query);
+    } else {
+        return null;
+    }
+}
+
+function getItemTransactionItems(int $transactionId): array
+{
+    global $db;
+
+    return \mint\queryResultAsArray(
+        $db->query("
+            SELECT
+                iti.item_id, i.item_type_id, iu.user_id, it.stacked
+                FROM
+                    " . TABLE_PREFIX . "mint_item_transaction_items iti
+                    LEFT JOIN " . TABLE_PREFIX . "mint_items i ON iti.item_id = i.id
+                    LEFT JOIN " . TABLE_PREFIX . "mint_items_users iu ON iti.item_id = i.id AND iu.active = 1
+                    LEFT JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
+                WHERE item_transaction_id = " . (int)$transactionId . "
+        ")
+    );
 }

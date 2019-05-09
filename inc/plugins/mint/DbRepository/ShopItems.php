@@ -24,12 +24,12 @@ class ShopItems extends \mint\DbEntityRepository
             'type' => 'integer',
             'notNull' => true,
         ],
-        'limited' => [
-            'type' => 'bool',
-            'notNull' => true,
-        ],
-        'amount' => [
+        'limit' => [
             'type' => 'integer',
+        ],
+        'times_purchased' => [
+            'type' => 'integer',
+            'default' => '0',
             'notNull' => true,
         ],
     ];

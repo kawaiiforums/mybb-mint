@@ -317,14 +317,34 @@ class AcpEntityManagementController
         return $conditionsString;
     }
 
+    protected function getValidationErrors(array $inputData): array
+    {
+        $errors = [];
+
+        foreach ($this->columns as $columnName => $column) {
+            if (!empty($column['validator']) && is_callable($column['validator'])) {
+                $errors = array_merge($errors, $column['validator']($inputData[$columnName] ?? null));
+            }
+        }
+
+        return $errors;
+    }
+
     protected function defaultInsertController(): void
     {
         if ($this->mybb->request_method == 'post') {
             $data = array_intersect_key($this->mybb->input, $this->getCustomizableColumns());
 
-            $this->dbRepository->insert($data);
+            $errors = $this->getValidationErrors($data);
 
-            \flash_message($this->actionLang('added'), 'success');
+            if ($errors) {
+                \flash_message($this->getFormattedErrors($errors), 'error');
+            } else {
+                $this->dbRepository->insert($data);
+
+                \flash_message($this->actionLang('added'), 'success');
+            }
+
             \admin_redirect($this->actionUrl);
         }
     }
@@ -339,9 +359,16 @@ class AcpEntityManagementController
             if ($this->mybb->request_method == 'post') {
                 $data = array_intersect_key($this->mybb->input, $this->getCustomizableColumns());
 
-                $this->dbRepository->updateById($entity['id'], $data);
+                $errors = $this->getValidationErrors($data);
 
-                \flash_message($this->actionLang('updated'), 'success');
+                if ($errors) {
+                    \flash_message($this->getFormattedErrors($errors), 'error');
+                } else {
+                    $this->dbRepository->updateById($entity['id'], $data);
+
+                    \flash_message($this->actionLang('updated'), 'success');
+                }
+
                 \admin_redirect($this->actionUrl);
             } else {
                 $this->page->output_header($this->actionLang());
@@ -353,6 +380,8 @@ class AcpEntityManagementController
                     $this->actionLang('update'),
                     $entity
                 );
+
+                $this->page->output_footer();
             }
         }
     }
@@ -435,6 +464,28 @@ class AcpEntityManagementController
 
         $form->output_submit_wrapper($buttons);
         $form->end();
+    }
+
+    protected function getFormattedErrors(array $errors): string
+    {
+        global $lang;
+
+        $output = '';
+
+        if ($errors) {
+            $output .= '<p>' . $lang->encountered_errors . '</p>';
+            $output .= '<ul>';
+
+            foreach ($errors as $name => $data) {
+                $errorString = $lang->sprintf($this->actionLang('error_' . $name), ...$data);
+
+                $output .= '<li>' . $errorString . '</li>';
+            }
+
+            $output .= '</ul>';
+        }
+
+        return $output;
     }
 
     protected function namespaceLang(?string $name = null): string

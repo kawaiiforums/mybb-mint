@@ -51,7 +51,7 @@ class BalanceTransfers extends \mint\DbEntityRepository
         ],
     ];
 
-    public function execute(int $fromUserId, int $toUserId, int $value, array $details = []): bool
+    public function execute(int $fromUserId, int $toUserId, int $value, array $details = [], bool $useDbTransaction = true): bool
     {
         if ($value < 0) {
             return false;
@@ -78,7 +78,9 @@ class BalanceTransfers extends \mint\DbEntityRepository
 
         $transferData['private'] = !empty($details['private']);
 
-        $this->db->write_query('BEGIN');
+        if ($useDbTransaction) {
+            $this->db->write_query('BEGIN');
+        }
 
         $transferId = $this->insert($transferData);
 
@@ -90,11 +92,15 @@ class BalanceTransfers extends \mint\DbEntityRepository
         ], false);
 
         if ($result) {
-            $this->db->write_query('COMMIT');
+            if ($useDbTransaction) {
+                $this->db->write_query('COMMIT');
+            }
 
             return true;
         } else {
-            $this->db->write_query('ROLLBACK');
+            if ($useDbTransaction) {
+                $this->db->write_query('ROLLBACK');
+            }
 
             return false;
         }

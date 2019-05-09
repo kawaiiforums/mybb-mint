@@ -57,6 +57,8 @@ $l['mint_admin_item_types_deleted'] = 'Successfully deleted item type.';
 $l['mint_admin_item_types_delete_confirm_title'] = 'Confirm item type removal';
 $l['mint_admin_item_types_delete_confirm_message'] = 'Are you sure you want to remove selected item type?';
 
+$l['mint_admin_item_types_error_item_category_invalid'] = 'Selected Item Category is invalid.';
+
 // Mint: Shop Items
 $l['mint_admin_shop_items'] = 'Shop Items';
 $l['mint_admin_shop_items_list'] = 'Shop Items ({1})';
@@ -64,10 +66,14 @@ $l['mint_admin_shop_items_description'] = 'Here you can manage shop items.';
 $l['mint_admin_shop_items_id'] = 'ID';
 $l['mint_admin_shop_items_item_type'] = 'Item Type';
 $l['mint_admin_shop_items_item_type_description'] = '';
+$l['mint_admin_shop_items_item_type_id'] = 'Item Type';
+$l['mint_admin_shop_items_item_type_id_description'] = '';
 $l['mint_admin_shop_items_ask_price'] = 'Price';
 $l['mint_admin_shop_items_ask_price_description'] = '';
-$l['mint_admin_shop_items_amount'] = 'In Stock';
-$l['mint_admin_shop_items_amount_description'] = 'Choose how many times the item can be sold.';
+$l['mint_admin_shop_items_limit'] = 'Limit';
+$l['mint_admin_shop_items_limit_description'] = 'Choose how many times the item can be sold.';
+$l['mint_admin_shop_items_times_purchased'] = 'Sales';
+$l['mint_admin_shop_items_times_purchased_description'] = '';
 
 $l['mint_admin_shop_items_empty'] = 'No shop items added.';
 
@@ -79,13 +85,15 @@ $l['mint_admin_shop_items_deleted'] = 'Successfully deleted shop item.';
 $l['mint_admin_shop_items_delete_confirm_title'] = 'Confirm shop item removal';
 $l['mint_admin_shop_items_delete_confirm_message'] = 'Are you sure you want to remove selected shop item?';
 
+$l['mint_admin_shop_items_error_item_type_invalid'] = 'Selected Item Type is invalid.';
+
 // Mint: Inventory Types
 $l['mint_admin_inventory_types'] = 'Inventory Types';
 $l['mint_admin_inventory_types_list'] = 'Inventory Types ({1})';
 $l['mint_admin_inventory_types_description'] = 'Here you can manage inventory types.';
 $l['mint_admin_inventory_types_id'] = 'ID';
-$l['mint_admin_inventory_types_size'] = 'Size';
-$l['mint_admin_inventory_types_size_description'] = '';
+$l['mint_admin_inventory_types_slots'] = 'Slots';
+$l['mint_admin_inventory_types_slots_description'] = '';
 $l['mint_admin_inventory_types_title'] = 'Title';
 $l['mint_admin_inventory_types_title_description'] = '';
 

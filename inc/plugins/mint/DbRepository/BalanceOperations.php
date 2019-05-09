@@ -53,7 +53,7 @@ class BalanceOperations extends \mint\DbEntityRepository
         ],
     ];
 
-    public function execute(int $userId, int $value, array $details = [], bool $useTransaction = true, $allowOverdraft = false): bool
+    public function execute(int $userId, int $value, array $details = [], bool $useDbTransaction = true, $allowOverdraft = false): bool
     {
         $operationData = [
             'user_id' => $userId,
@@ -69,7 +69,7 @@ class BalanceOperations extends \mint\DbEntityRepository
             $operationData['currency_termination_point_id'] = $details['currency_termination_point_id'];
         }
 
-        if ($useTransaction) {
+        if ($useDbTransaction) {
             $this->db->write_query('BEGIN');
         }
 
@@ -81,12 +81,12 @@ class BalanceOperations extends \mint\DbEntityRepository
             if ($allowOverdraft || $currentBalance + $value >= 0) {
                 $result = (bool)$this->insert($operationData);
 
-                $result &= (bool)$this->db->update_query('users', [
+                $result &= \mint\updateUser($userId, [
                     'mint_balance' => (int)$operationData['result_balance'],
-                ], 'uid = ' . (int)$userId);
+                ]);
 
                 if ($result) {
-                    if ($useTransaction) {
+                    if ($useDbTransaction) {
                         $this->db->write_query('COMMIT');
                     }
 
@@ -95,7 +95,7 @@ class BalanceOperations extends \mint\DbEntityRepository
             }
         }
 
-        if ($useTransaction) {
+        if ($useDbTransaction) {
             $this->db->write_query('ROLLBACK');
         }
 

@@ -38,26 +38,26 @@
 .mint-hub__section { flex: 1; width: 100%; }
 .mint-hub__section:nth-child(1) { margin-right: 4px; }
 .mint-hub__section:nth-child(2) { margin-left: 4px; }
-.mint-hub__section--inventory { --color: #3473DF; --stroke-color: #FFFFFF; }
-.mint-hub__section--balance { --color: #79eeba; --stroke-color: #1e534b; }
+.mint-hub__section--items { --color: #3473DF; --stroke-color: #FFFFFF; }
+.mint-hub__section--currency { --color: #79eeba; --stroke-color: #1e534b; }
 .mint-hub__section__header { display: flex; align-items: center; padding: 15px 18px 20px; height: 80px; background: var(--color); color: var(--stroke-color); }
 .mint-hub__section:nth-child(1) .mint-hub__section__header__nav { order: 2; }
 .mint-hub__section:nth-child(2) .mint-hub__section__header { justify-content: flex-end; text-align: right; }
 .mint-hub__section__header__nav, .mint-hub__section__header__status { padding: 0 10px; }
 .mint-hub__section__header__nav__link { padding: 6px; border: solid 2px var(--stroke-color); border-radius: 6px; font-weight: bold; }
 a.mint-hub__section__header__nav__link { color: inherit; }
-.mint-hub__section__header__status__note { font-size: 14px; }
-.mint-hub__section__header__status__balance { font-size: 16px; }
-.mint-hub__section__header__status__balance .mint__currency__value { font-size: 24px; }
+.mint-hub__section__header__status__note { font-size: 13px; }
+.mint-hub__section__header__status__counter { font-size: 16px; }
+.mint-hub__section__header__status__counter span { font-size: 24px; }
 
 .mint-hub__service-nav { margin: -10px 0 8px; }
 .mint-hub__section:nth-child(2) .mint-hub__service-nav { text-align: right; }
-.mint-hub__service-nav__container { padding: 4px 8px 4px 0; background: #FFFFFF; border-radius: 0 16px 0; display: inline-block; }
+.mint-hub__service-nav__container { padding: 4px 8px 4px 0; background: #FFFFFF; border-radius: 0 18px 0; display: inline-block; }
 .mint-hub__service-nav__container:empty { display: none; }
-.mint-hub__section:nth-child(2) .mint-hub__service-nav__container { padding: 4px 0 4px 8px; border-radius: 16px 0 0; }
+.mint-hub__section:nth-child(2) .mint-hub__service-nav__container { padding: 4px 0 4px 8px; border-radius: 18px 0 0; }
 .mint-hub__service-nav__link { display: inline-block; margin: 4px 0; padding: 8px 12px; background: #EEEEEE; border-radius: 12px; font-size: 14px; color: #222222; }
-.mint-hub__section:nth-child(1) .mint-hub__service-nav__link:not(:last-child) { margin-right: 2px; }
-.mint-hub__section:nth-child(2) .mint-hub__service-nav__link:not(:first-child) { margin-left: 2px; }
+.mint-hub__section:nth-child(1) .mint-hub__service-nav__link:not(:last-child) { margin-right: 6px; }
+.mint-hub__section:nth-child(2) .mint-hub__service-nav__link:not(:first-child) { margin-left: 6px; }
 a.mint-hub__service-nav__link { color: inherit; }
 a.mint-hub__service-nav__link:hover { background-color: var(--color); color: var(--stroke-color); }
 

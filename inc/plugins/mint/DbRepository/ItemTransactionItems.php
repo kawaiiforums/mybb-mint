@@ -2,11 +2,11 @@
 
 namespace mint\DbRepository;
 
-class UserItemTransactions extends \mint\DbEntityRepository
+class ItemTransactionItems extends \mint\DbEntityRepository
 {
-    public const TABLE_NAME = 'mint_user_item_transactions';
+    public const TABLE_NAME = 'mint_item_transaction_items';
     public const COLUMNS = [
-        'transaction_id' => [
+        'item_transaction_id' => [
             'type' => 'integer',
             'primaryKey' => true,
             'foreignKeys' => [
@@ -21,7 +21,7 @@ class UserItemTransactions extends \mint\DbEntityRepository
             'primaryKey' => true,
             'foreignKeys' => [
                 [
-                    'table' => 'mint_user_items',
+                    'table' => 'mint_items',
                     'column' => 'id',
                 ],
             ],

@@ -43,18 +43,29 @@ function admin_load()
 
             $controller->run();
         } elseif ($mybb->input['action'] == 'item_types') {
+            $itemCategories = \mint\queryResultAsArray(ItemCategories::with($db)->get(), 'id', 'title');
+
             $controller = new AcpEntityManagementController('item_types', ItemTypes::class);
 
             $controller->setColumns([
                 'id' => [],
                 'category_id' => [
                     'listed' => false,
-                    'formElement' => function (\Form $form, array $entity) use ($db) {
+                    'formElement' => function (\Form $form, array $entity) use ($itemCategories) {
                         return $form->generate_select_box(
                             'category_id',
-                            \mint\queryResultAsArray(ItemCategories::with($db)->get(), 'id', 'title'),
+                            $itemCategories,
                             $entity['category_id'] ?? 0
                         );
+                    },
+                    'validator' => function (?string $value) use ($lang, $itemCategories): array {
+                        $errors = [];
+
+                        if (!array_key_exists($value, $itemCategories)) {
+                            $errors['item_category_invalid'] = [];
+                        }
+
+                        return $errors;
                     },
                 ],
                 'category' => [
@@ -88,25 +99,43 @@ function admin_load()
 
             $controller->run();
         } elseif ($mybb->input['action'] == 'shop_items') {
+            $itemTypes = \mint\queryResultAsArray(ItemTypes::with($db)->get(), 'id', 'title');
+
             $controller = new AcpEntityManagementController('shop_items', ShopItems::class);
 
             $controller->setColumns([
                 'id' => [],
-                'item_type' => [
-                    'dataColumn' => 'item_type_title',
-                    'formElement' => function (\Form $form, array $entity) use ($db) {
+                'item_type_id' => [
+                    'listed' => false,
+                    'formElement' => function (\Form $form, array $entity) use ($itemTypes) {
                         return $form->generate_select_box(
                             'item_type_id',
-                            \mint\queryResultAsArray(ItemTypes::with($db)->get(), 'id', 'title'),
+                            $itemTypes,
                             $entity['item_type_id'] ?? 0
                         );
                     },
+                    'validator' => function (?string $value) use ($lang, $itemTypes): array {
+                        $errors = [];
+
+                        if (!array_key_exists($value, $itemTypes)) {
+                            $errors['item_type_invalid'] = [];
+                        }
+
+                        return $errors;
+                    },
+                ],
+                'item_type' => [
+                    'customizable' => false,
+                    'dataColumn' => 'item_type_title',
                 ],
                 'ask_price' => [
                     'formMethod' => 'generate_numeric_field',
                 ],
-                'amount' => [
+                'limit' => [
                     'formMethod' => 'generate_numeric_field',
+                ],
+                'times_purchased' => [
+                    'customizable' => false,
                 ],
             ]);
             $controller->addForeignKeyData([
@@ -126,7 +155,7 @@ function admin_load()
             $controller->setColumns([
                 'id' => [],
                 'title' => [],
-                'size' => [
+                'slots' => [
                     'formMethod' => 'generate_numeric_field',
                 ],
             ]);
