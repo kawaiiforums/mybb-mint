@@ -24,7 +24,7 @@ class ShopItems extends \mint\DbEntityRepository
             'type' => 'integer',
             'notNull' => true,
         ],
-        'limit' => [
+        'sales_limit' => [
             'type' => 'integer',
         ],
         'times_purchased' => [

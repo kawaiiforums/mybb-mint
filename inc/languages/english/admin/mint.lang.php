@@ -70,8 +70,8 @@ $l['mint_admin_shop_items_item_type_id'] = 'Item Type';
 $l['mint_admin_shop_items_item_type_id_description'] = '';
 $l['mint_admin_shop_items_ask_price'] = 'Price';
 $l['mint_admin_shop_items_ask_price_description'] = '';
-$l['mint_admin_shop_items_limit'] = 'Limit';
-$l['mint_admin_shop_items_limit_description'] = 'Choose how many times the item can be sold.';
+$l['mint_admin_shop_items_sales_limit'] = 'Limit';
+$l['mint_admin_shop_items_sales_limit_description'] = 'Choose how many times the item can be sold.';
 $l['mint_admin_shop_items_times_purchased'] = 'Sales';
 $l['mint_admin_shop_items_times_purchased_description'] = '';
 

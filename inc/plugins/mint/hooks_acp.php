@@ -131,7 +131,7 @@ function admin_load()
                 'ask_price' => [
                     'formMethod' => 'generate_numeric_field',
                 ],
-                'limit' => [
+                'sales_limit' => [
                     'formMethod' => 'generate_numeric_field',
                 ],
                 'times_purchased' => [

@@ -252,7 +252,7 @@ function buildCreateTableQuery(string $tableName, array $columns): string
                     }
                 }
 
-                if (!empty($column['default'])) {
+                if (isset($column['default'])) {
                     $columnDefinition .= ' DEFAULT ' . $column['default'];
                 }
 
@@ -304,7 +304,7 @@ function buildCreateTableQuery(string $tableName, array $columns): string
                     }
                 }
 
-                if (!empty($column['default'])) {
+                if (isset($column['default'])) {
                     $columnDefinition .= ' DEFAULT ' . $column['default'];
                 }
 
@@ -356,7 +356,7 @@ function buildCreateTableQuery(string $tableName, array $columns): string
                     }
                 }
 
-                if (!empty($column['default'])) {
+                if (isset($column['default'])) {
                     $columnDefinition .= ' DEFAULT ' . $column['default'];
                 }
 

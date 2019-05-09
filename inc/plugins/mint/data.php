@@ -540,8 +540,14 @@ function getRequiredUserInventorySlotsForItems(int $userId, array $items): int
     $distinctUserItemTypeIds = \mint\getDistinctUserItemTypeIds($userId);
 
     foreach ($items as $item) {
-        if (!$item['stacked'] || !in_array($item['item_type_id'], $distinctUserItemTypeIds)) {
+        $inArray = in_array($item['item_type_id'], $distinctUserItemTypeIds);
+
+        if (!$item['stacked'] || !$inArray) {
             $slotsRequired++;
+        }
+
+        if (!$inArray) {
+            $distinctUserItemTypeIds[] = $item['item_type_id'];
         }
     }
 

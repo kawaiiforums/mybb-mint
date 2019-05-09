@@ -434,7 +434,7 @@ function xmlhttp()
 
         $data = [];
 
-        $query = $db->simple_select('mint_item_types', 'id, title', "title LIKE '" . $likeString . "'", [
+        $query = $db->simple_select('mint_item_types', 'id, title', "LOWER(title) LIKE '" . $likeString . "'", [
             'order_by' => 'title',
             'order_dir' => 'asc',
             'limit' => $limit,
