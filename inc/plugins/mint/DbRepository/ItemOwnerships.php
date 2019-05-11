@@ -2,9 +2,9 @@
 
 namespace mint\DbRepository;
 
-class ItemUsers extends \mint\DbEntityRepository
+class ItemOwnerships extends \mint\DbEntityRepository
 {
-    public const TABLE_NAME = 'mint_item_users';
+    public const TABLE_NAME = 'mint_item_ownerships';
     public const COLUMNS = [
         'id' => [
             'type' => 'integer',
@@ -109,7 +109,7 @@ class ItemUsers extends \mint\DbEntityRepository
         $activeItemUsers = \mint\queryResultAsArray(
             $this->get(
                 'user_id',
-                'item_id = ' . (int)$itemId . ' AND active = 1'
+                'WHERE item_id = ' . (int)$itemId . ' AND active = 1'
             )
         );
 
@@ -120,7 +120,7 @@ class ItemUsers extends \mint\DbEntityRepository
         ];
 
         foreach ($activeItemUsers as $entry) {
-            $result &= ItemUsers::with($this->db)->remove($items, $entry['user_id']);
+            $result &= ItemOwnerships::with($this->db)->remove($items, $entry['user_id']);
         }
 
         return $result;

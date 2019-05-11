@@ -1,0 +1,1 @@
+<a href="{$url}" class="mint-hub__action-links__entry">{$title}</a>

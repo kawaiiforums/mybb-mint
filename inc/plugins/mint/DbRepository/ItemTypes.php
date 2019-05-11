@@ -10,7 +10,7 @@ class ItemTypes extends \mint\DbEntityRepository
             'type' => 'integer',
             'primaryKey' => true,
         ],
-        'category_id' => [
+        'item_category_id' => [
             'type' => 'integer',
             'foreignKeys' => [
                 [

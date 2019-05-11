@@ -5,7 +5,7 @@
             <input type="text" name="user_name" id="user_name" class="textbox" />
         </label>
         <label class="mint-hub__form__element mint-hub__form__element--major">
-            <p class="mint-hub__form__element__title">{$lang->mint_balance_transfer_currency_amount}</p>
+            <p class="mint-hub__form__element__title">{$lang->mint_amount}</p>
             <input type="number" name="amount" class="textbox" min="{$minAmount}" max="{$maxAmount}" /> {$currencyTitle}
         </label>
         <label class="mint-hub__form__element">

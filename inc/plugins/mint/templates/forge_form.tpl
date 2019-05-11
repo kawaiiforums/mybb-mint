@@ -9,7 +9,7 @@
             <input type="text" name="item_type_id" id="item_type_id" class="textbox" />
         </label>
         <label class="mint-hub__form__element">
-            <p class="mint-hub__form__element__title">{$lang->mint_balance_transfer_currency_amount}</p>
+            <p class="mint-hub__form__element__title">{$lang->mint_amount}</p>
             <input type="number" name="amount" class="textbox" value="1" max="{$maxAmount}" />
         </label>
         <input type="submit" class="button" value="Submit" />

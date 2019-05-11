@@ -4,7 +4,7 @@
 require MYBB_ROOT . 'inc/plugins/mint/common.php';
 require MYBB_ROOT . 'inc/plugins/mint/data.php';
 require MYBB_ROOT . 'inc/plugins/mint/core.php';
-require MYBB_ROOT . 'inc/plugins/mint/ui.php';
+require MYBB_ROOT . 'inc/plugins/mint/rendering.php';
 
 // hook files
 require MYBB_ROOT . 'inc/plugins/mint/hooks_frontend.php';
@@ -69,7 +69,7 @@ function mint_install()
             'mint_inventory_slots_bonus' => 'integer NOT NULL DEFAULT 0',
             'mint_inventory_slots_occupied' => 'integer NOT NULL DEFAULT 0',
         ],
-    ]);
+    ], true);
 
     \mint\createTables([
         \mint\DbRepository\BalanceTransfers::class,
@@ -82,7 +82,7 @@ function mint_install()
         \mint\DbRepository\ItemCategories::class,
         \mint\DbRepository\ItemTypes::class,
         \mint\DbRepository\Items::class,
-        \mint\DbRepository\ItemUsers::class,
+        \mint\DbRepository\ItemOwnerships::class,
         \mint\DbRepository\ShopItems::class,
         \mint\DbRepository\ItemTransactions::class,
         \mint\DbRepository\ItemTransactionItems::class,
@@ -147,7 +147,7 @@ function mint_uninstall()
         \mint\DbRepository\ItemCategories::class,
         \mint\DbRepository\ItemTypes::class,
         \mint\DbRepository\Items::class,
-        \mint\DbRepository\ItemUsers::class,
+        \mint\DbRepository\ItemOwnerships::class,
         \mint\DbRepository\ShopItems::class,
         \mint\DbRepository\ItemTransactions::class,
         \mint\DbRepository\ItemTransactionItems::class,
@@ -226,6 +226,12 @@ function mint_activate()
             'description' => '',
             'optionscode' => 'text',
             'value'       => ' C',
+        ],
+        'management_groups' => [
+            'title'       => 'Management Groups',
+            'description' => 'Select which user groups are allowed to manage individual users\' items.',
+            'optionscode' => 'groupselect',
+            'value'       => '4',
         ],
         'mint_groups' => [
             'title'       => 'Mint Groups',

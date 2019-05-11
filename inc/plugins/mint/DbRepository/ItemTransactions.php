@@ -93,8 +93,8 @@ class ItemTransactions extends \mint\DbEntityRepository
                     false
                 );
 
-                $result &= ItemUsers::with($this->db)->remove($transactionItems, $transaction['ask_user_id']);
-                $result &= ItemUsers::with($this->db)->assign($transactionItems, $transaction['bid_user_id']);
+                $result &= ItemOwnerships::with($this->db)->remove($transactionItems, $transaction['ask_user_id']);
+                $result &= ItemOwnerships::with($this->db)->assign($transactionItems, $transaction['bid_user_id']);
 
                 $transaction['active'] = 0;
                 $transaction['completed'] = 1;

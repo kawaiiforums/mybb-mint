@@ -34,6 +34,11 @@
 .mint-hub__form .mint-hub__form__element--major .mint-hub__form__element__title { font-weight: bold; }
 .mint-hub__form .button { margin: 8px 0; }
 
+.mint-hub__action-links { margin-top: 20px; padding: 10px; border-top: solid 1px #FAFAFA; }
+.mint-hub__action-links:empty { display: none; }
+a.mint-hub__action-links__entry { display: inline-block; margin-right: 10px; padding: 6px; border: solid 2px #DDD; border-radius: 6px; font-weight: bold; color: inherit; text-decoration: none; transition: 0.2s; }
+a.mint-hub__action-links__entry:hover, a.mint-hub__action-links__entry:focus { border-color: #111; background-color: #111; color: #FAFAFA; }
+
 .mint-hub__sections { display: flex; }
 .mint-hub__section { flex: 1; width: 100%; }
 .mint-hub__section:nth-child(1) { margin-right: 4px; }
@@ -79,3 +84,26 @@ a.mint-hub__service-nav__link:hover { background-color: var(--color); color: var
 
 .mint-hub__reward-sources-legend__reward { padding: 4px; color: #AAA; }
 .mint-hub__reward-sources-legend__title { margin: 0 2px; padding: 10px; }
+
+.mint-hub__grid { display: grid; grid-gap: 30px; justify-items: center; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+
+.mint-hub__inventory { margin: 10px 0; padding: 10px; }
+.mint-hub__inventory--small { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); }
+.mint-hub__inventory a { text-decoration: none; color: inherit; }
+.mint-hub__inventory__item { display: flex; justify-content: space-around; height: 80px; width: 80px; background: #EEE; background-size: cover; background-position: center center; border-radius: 30%; opacity: 0.7; transition: 0.2s; }
+.mint-hub__inventory--small .mint-hub__inventory__item { height: 60px; width: 60px; }
+.mint-hub__inventory__item:hover, .mint-hub__inventory__item:focus { opacity: 1; }
+.mint-hub__inventory__item__stacked-amount { display: inline-block; align-self: flex-end; margin-bottom: -10px; padding: 2px 8px; background: #FFF; border-radius: 10px; transition: 0.2s; }
+.mint-hub__inventory--small .mint-hub__inventory__item__stacked-amount { font-size: 11px; }
+.mint-hub__inventory__item:hover .mint-hub__inventory__item__stacked-amount, .mint-hub__inventory__item:focus .mint-hub__inventory__item__stacked-amount { margin-bottom: -15px; }
+.mint-hub__inventory__item__stacked-amount:empty { display: none; }
+
+.mint-hub__item-card { display: flex; margin-top: 10px; }
+.mint-hub__item-card__visual { flex: 1; align-self: center; text-align: center; }
+.mint-hub__item-card__details { flex: 11; margin-left: 20px; }
+.mint-hub__item-card__image { height: 100px; width: 100px; background: #EEE; background-size: cover; background-position: center center; border-radius: 30%; }
+.mint-hub__item-card__stacked-amount { display: inline-block; margin-top: -6px; padding: 4px 10px; background: #FFF; border-radius: 20px; font-size: 16px; transition: 0.2s; }
+.mint-hub__item-card__stacked-amount:empty { display: none; }
+
+.mint-hub__item-card__title { margin: 8px; font-size: 16px; font-weight: bold; }
+.mint-hub__item-card__category { margin: 8px; font-size: 14px; font-weight: bold; color: #767676; }

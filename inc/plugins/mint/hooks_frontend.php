@@ -120,6 +120,13 @@ function misc_start()
 
             $itemsServiceLinks = \mint\getRenderedServiceLinks($links);
 
+            if ($userItemsCount > 0) {
+                $items = \mint\getItemOwnershipsWithDetailsByUser($mybb->user['uid'], null, 10);
+                $inventoryPreview = \mint\getRenderedInventory($items, 'small');
+            } else {
+                $inventoryPreview = \mint\getRenderedMessage($lang->mint_no_entries);
+            }
+
             eval('$page = "' . \mint\tpl('hub') . '";');
             \output_page($page);
         } else {
@@ -339,11 +346,12 @@ function misc_start()
     } elseif ($mybb->get_input('action') == 'economy_items_forge') {
         if ($mybb->user['uid'] != 0 && \is_member(\mint\getCsvSettingValues('forge_groups'))) {
             \add_breadcrumb($lang->mint_hub, 'misc.php?action=economy');
-            \add_breadcrumb($lang->mint_forge);
+            \add_breadcrumb($lang->mint_forge_items);
 
             $maxAmount = 1000;
 
             $messages = null;
+            $form = null;
 
             if (isset($mybb->input['item_type_id']) && \verify_post_check($mybb->get_input('my_post_key'))) {
                 $amount = $mybb->get_input('amount', \MyBB::INPUT_INT);
@@ -361,7 +369,7 @@ function misc_start()
                             ]);
 
                             if (\mint\countAvailableUserInventorySlotsWithItems($user['uid'], $items) >= 0) {
-                                $result = \mint\createUserItemsWithTerminationPoint($itemType['id'], $amount, $user['uid'], 'forge');
+                                $result = \mint\createItemsWithTerminationPoint($itemType['id'], $amount, $user['uid'], 'forge');
 
                                 if ($result) {
                                     $messages .= \mint\getRenderedMessage($lang->sprintf(
@@ -386,9 +394,6 @@ function misc_start()
                 }
             }
 
-            $currencyTitle = \mint\getSettingValue('currency_name');
-
-            $minAmount = null;
             $maxAmount = null;
 
             eval('$form = "' . \mint\tpl('forge_form') . '";');
@@ -398,7 +403,127 @@ function misc_start()
         } else {
             \error_no_permission();
         }
+    } elseif ($mybb->get_input('action') == 'economy_items_melt') {
+        if ($mybb->user['uid'] != 0 && \is_member(\mint\getCsvSettingValues('forge_groups'))) {
+            \add_breadcrumb($lang->mint_hub, 'misc.php?action=economy');
+            \add_breadcrumb($lang->mint_melt_items);
 
+            $messages = null;
+            $form = null;
+
+            $item = \mint\getItemOwnershipWithDetails($mybb->get_input('item_ownership_id', \MyBB::INPUT_INT));
+
+            if ($item !== null) {
+                if ($item['item_type_stacked']) {
+                    $maxAmount = $item['stacked_amount'];
+                    $amountFieldAttributes = null;
+                } else {
+                    $maxAmount = 1;
+                    $amountFieldAttributes = 'disabled="disabled"';
+                }
+
+                if (isset($mybb->input['amount']) && \verify_post_check($mybb->get_input('my_post_key'))) {
+                    $amount = $mybb->get_input('amount', \MyBB::INPUT_INT);
+
+                    if ($amount <= $maxAmount) {
+                        $result = \mint\removeItemsWithTerminationPoint($item['id'], $amount, 'melt');
+
+                        if ($result) {
+                            $messages .= \mint\getRenderedMessage($lang->sprintf(
+                                $lang->mint_melt_melted,
+                                (int)$amount
+                            ), 'success');
+                        } else {
+                            $messages .= \mint\getRenderedMessage($lang->sprintf(
+                                $lang->mint_melt_melted,
+                                (int)$amount
+                            ), 'error');
+                        }
+                    }
+                }
+
+                $profileLink = \build_profile_link($item['user_username'], $item['user_id']);
+                $itemTypeTitle = \htmlspecialchars_uni($item['item_type_title']);
+
+                eval('$form = "' . \mint\tpl('melt_form') . '";');
+            } else {
+                $messages = \mint\getRenderedMessage($lang->mint_user_item_not_found, 'error');
+            }
+
+            eval('$page = "' . \mint\tpl('melt') . '";');
+            \output_page($page);
+        } else {
+            \error_no_permission();
+        }
+    } elseif ($mybb->get_input('action') == 'economy_user_inventory') {
+        \add_breadcrumb($lang->mint_hub, 'misc.php?action=economy');
+        \add_breadcrumb($lang->mint_items_inventory);
+
+        if (isset($mybb->input['user_id'])) {
+            $user = get_user($mybb->get_input('user_id', \MyBB::INPUT_INT));
+        } elseif ($mybb->user['uid'] != 0) {
+            $user = $mybb->user;
+        } else {
+            $user = null;
+        }
+
+        if ($user) {
+            $items = \mint\getItemOwnershipsWithDetailsByUser($user['uid']);
+
+            $itemsNum = count($items);
+
+            $pageTitle = $lang->sprintf(
+                $lang->mint_items_user_inventory,
+                \htmlspecialchars_uni($user['username']),
+                $itemsNum
+            );
+
+            if ($itemsNum > 0) {
+                $content = \mint\getRenderedInventory($items);
+            } else {
+                $content = \mint\getRenderedMessage($lang->mint_no_entries);
+            }
+
+        } else {
+            $pageTitle = $lang->mint_items_inventory;
+            $pagination = null;
+
+            $content = \mint\getRenderedMessage($lang->mint_user_not_found, 'error');
+        }
+
+        eval('$page = "' . \mint\tpl('user_inventory') . '";');
+        \output_page($page);
+    } elseif ($mybb->get_input('action') == 'economy_item_ownership') {
+        \add_breadcrumb($lang->mint_hub, 'misc.php?action=economy');
+        \add_breadcrumb($lang->mint_item_ownership);
+
+        $pageTitle = $lang->mint_item_ownership;
+
+        $item = \mint\getItemOwnershipWithDetails($mybb->get_input('id', \MyBB::INPUT_INT));
+
+        $actionLinks = null;
+
+        if ($item !== null) {
+            $content = \mint\getRenderedItemCard($item);
+
+            $links = [];
+
+            if (is_member(\mint\getSettingValue('forge_groups'))) {
+                $links['melt'] = [
+                    'url' => 'misc.php?action=economy_items_melt&item_ownership_id=' . $item['id'],
+                    'title' => $lang->mint_melt,
+                ];
+            }
+
+            if ($links) {
+                $actionLinks = \mint\getRenderedActionLinks($links);
+            }
+        } else {
+            $content = \mint\getRenderedMessage($lang->mint_user_item_not_found, 'error');
+        }
+
+        eval('$page = "' . \mint\tpl('item_ownership') . '";');
+        \output_page($page);
     }
 }
 

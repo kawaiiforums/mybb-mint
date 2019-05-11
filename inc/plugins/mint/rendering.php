@@ -148,3 +148,95 @@ function getRenderedServiceLinks(array $links): ?string
 
     return $output;
 }
+
+function getRenderedInventory(array $items, string $type = 'standard'): ?string
+{
+    global $mybb;
+
+    $entries = null;
+
+    $inventoryType = $type;
+
+    foreach ($items as $item) {
+        $userItemId = $item['item_user_id'];
+        $title = \htmlspecialchars_uni($item['item_type_title']);
+
+        if ($item['item_type_stacked']) {
+            $type = 'stacked';
+        } else {
+            $type = 'standard';
+        }
+
+        if ($item['stacked_amount']) {
+            $stackedAmount = \my_number_format($item['stacked_amount']);
+        } else {
+            $stackedAmount = null;
+        }
+
+        if ($item['item_type_image']) {
+            $imageUrl = $mybb->get_asset_url($item['item_type_image']);
+        } else {
+            $imageUrl = null;
+        }
+
+        eval('$entries .= "' . \mint\tpl('inventory_entry') . '";');
+    }
+
+    eval('$output = "' . \mint\tpl('inventory') . '";');
+
+    return $output;
+}
+
+function getRenderedItemCard(array $item): ?string
+{
+    global $mybb, $lang;
+
+    $title = \htmlspecialchars_uni($item['item_type_title']);
+
+    $categoryTitle = \htmlspecialchars_uni($item['item_category_title']);
+
+    if ($item['stacked_amount']) {
+        $stackedAmount = \my_number_format($item['stacked_amount']);
+        $stackedAmountText = $lang->sprintf(
+            $lang->mint_items_in_stack,
+            $stackedAmount
+        );
+    } else {
+        $stackedAmount = null;
+        $stackedAmountText = null;
+    }
+
+    if ($item['item_type_image']) {
+        $imageUrl = $mybb->get_asset_url($item['item_type_image']);
+    } else {
+        $imageUrl = null;
+    }
+
+    $profileLink = \build_profile_link($item['user_username'], $item['user_id']);
+
+    $ownedBy = $lang->sprintf(
+        $lang->mint_item_owned_by_since,
+        $profileLink,
+        \my_date('normal', $item['activation_date'])
+    );
+
+    $itemActivationDate = \my_date('normal', $item['item_activation_date']);
+
+    eval('$output = "' . \mint\tpl('item_card') . '";');
+
+    return $output;
+}
+
+function getRenderedActionLinks(array $links): ?string
+{
+    $output = null;
+
+    foreach ($links as $serviceName => $service) {
+        $url = \htmlspecialchars_uni($service['url']);
+        $title = \htmlspecialchars_uni($service['title']);
+
+        eval('$output .= "' . \mint\tpl('action_link') . '";');
+    }
+
+    return $output;
+}

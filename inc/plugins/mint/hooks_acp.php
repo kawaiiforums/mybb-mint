@@ -49,13 +49,13 @@ function admin_load()
 
             $controller->setColumns([
                 'id' => [],
-                'category_id' => [
+                'item_category_id' => [
                     'listed' => false,
                     'formElement' => function (\Form $form, array $entity) use ($itemCategories) {
                         return $form->generate_select_box(
-                            'category_id',
+                            'item_category_id',
                             $itemCategories,
-                            $entity['category_id'] ?? 0
+                            $entity['item_category_id'] ?? 0
                         );
                     },
                     'validator' => function (?string $value) use ($lang, $itemCategories): array {
@@ -68,13 +68,17 @@ function admin_load()
                         return $errors;
                     },
                 ],
-                'category' => [
+                'item_category' => [
                     'customizable' => false,
                     'dataColumn' => 'category_title',
                 ],
                 'name' => [],
                 'title' => [],
-                'image' => [],
+                'image' => [
+                    'presenter' => function (?string $value) use ($mybb) {
+                        return $value ? '<img src="' . $mybb->get_asset_url($value) . '" style="max-width: 40px; max-height: 40px" />' : null;
+                    },
+                ],
                 'stacked' => [
                     'formElement' => function (\Form $form, array $entity) use ($db) {
                         return $form->generate_yes_no_radio(

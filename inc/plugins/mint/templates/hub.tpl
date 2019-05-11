@@ -28,7 +28,12 @@
             <nav class="mint-hub__service-nav">
                 <div class="mint-hub__service-nav__container">{$itemsServiceLinks}</div>
             </nav>
-            {$itemsInventory}
+            <div class="mint-hub__block">
+                <p class="mint-hub__block__title"><a href="misc.php?action=economy_user_inventory">{$lang->mint_items_inventory_preview}</a></p>
+                <div class="mint-hub__table">
+                    {$inventoryPreview}
+                </div>
+            </div>
         </section>
 
         <section class="mint-hub__section mint-hub__section--currency">

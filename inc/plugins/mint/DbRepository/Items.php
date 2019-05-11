@@ -71,7 +71,7 @@ class Items extends \mint\DbEntityRepository
             'deactivation_item_termination_point_id' => $terminationPointId,
         ]);
 
-        $result &= ItemUsers::with($this->db)->removeByItemId($itemId);
+        $result &= ItemOwnerships::with($this->db)->removeByItemId($itemId);
 
         return $result;
     }

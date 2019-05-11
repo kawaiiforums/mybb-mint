@@ -447,19 +447,21 @@ function dropTables(array $tableNames, bool $onlyIfExists = false, bool $cascade
     }
 }
 
-function createColumns(array $tables, bool $overwrite = true): void
+function createColumns(array $tables, bool $dropIfExists = true): void
 {
     global $db;
 
     foreach ($tables as $tableName => $tableColumns) {
         foreach ($tableColumns as $columnName => $columnDefinition) {
             if ($db->field_exists($columnName, $tableName)) {
-                if ($overwrite === true) {
+                if ($dropIfExists === true) {
+                    $db->drop_column($tableName, $columnName);
+                } else {
                     $db->modify_column($tableName, $columnName, $columnDefinition);
                 }
-            } else {
-                $db->add_column($tableName, $columnName, $columnDefinition);
             }
+
+            $db->add_column($tableName, $columnName, $columnDefinition);
         }
     }
 }
