@@ -70,7 +70,7 @@ function admin_load()
                 ],
                 'item_category' => [
                     'customizable' => false,
-                    'dataColumn' => 'category_title',
+                    'dataColumn' => 'item_category_title',
                 ],
                 'name' => [],
                 'title' => [],
@@ -143,7 +143,7 @@ function admin_load()
                 ],
             ]);
             $controller->addForeignKeyData([
-                'mint_shop_items' => [
+                'mint_item_types' => [
                     'title',
                 ],
             ]);
