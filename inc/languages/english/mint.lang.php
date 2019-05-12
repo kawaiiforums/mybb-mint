@@ -1,7 +1,5 @@
 <?php
 
-$l['mint_hub'] = 'Economy Hub';
-
 $l['mint_no_entries'] = 'Nothing to show yet.';
 $l['mint_recipient_username'] = 'Recipient Username';
 $l['mint_user_not_found'] = 'Could not find specified user.';
@@ -17,13 +15,16 @@ $l['mint_items_no_inventory'] = 'No inventory available';
 $l['mint_items_not_enough_inventory_slots'] = 'Not enough inventory slots available.';
 $l['mint_amount'] = 'Amount';
 
-$l['mint_mint'] = 'Mint';
-$l['mint_mint_currency'] = 'Mint Currency';
+$l['mint_page_economy_hub'] = 'Economy Hub';
+$l['mint_service_currency_mint'] = 'Mint';
+$l['mint_service_items_forge'] = 'Forge';
+
+$l['mint_page_economy_currency_mint'] = 'Mint Currency';
 $l['mint_mint_minted'] = 'Successfully minted {1} of currency.';
 $l['mint_mint_burned'] = 'Successfully burned {1} of currency.';
 $l['mint_mint_error'] = 'Could not execute the minting operation.';
 
-$l['mint_balance_transfer'] = 'Transfer';
+$l['mint_page_economy_balance_transfer'] = 'Transfer';
 $l['mint_balance_transfer_new'] = 'New Transfer';
 $l['mint_balance_transfer_note'] = 'Note';
 $l['mint_balance_transfer_note_placeholder'] = 'Optional message for this transaction';
@@ -31,30 +32,31 @@ $l['mint_balance_transfer_private'] = 'Private';
 $l['mint_balance_transfer_transferred'] = 'Successfully transferred {1} of currency.';
 $l['mint_balance_transfer_error'] = 'Could not execute the transfer.';
 
-$l['mint_balance_operations'] = 'Balance Operations';
-$l['mint_user_balance_operations'] = '{1}\'s Balance Operations ({2})';
+$l['mint_page_economy_balance_operations'] = 'Balance Operations';
+$l['mint_page_economy_balance_operations_user'] = '{1}\'s Balance Operations ({2})';
 $l['mint_balance_operations_recent'] = 'Recent Balance Operations';
 $l['mint_balance_operations_termination_point'] = 'system operation (<code>{1}</code>)';
 $l['mint_balance_operations_to_user'] = 'to {1}';
 $l['mint_balance_operations_from_user'] = 'from {1}';
 
-$l['mint_forge'] = 'Forge';
-$l['mint_melt'] = 'Melt';
-$l['mint_forge_items'] = 'Forge Items';
+$l['mint_page_economy_items_forge'] = 'Forge Items';
 $l['mint_forge_forged'] = 'Successfully forged {1} item(s).';
 $l['mint_forge_error'] = 'Could not execute the forging operation.';
-$l['mint_melt_items'] = 'Melt Items';
+
+$l['mint_page_economy_items_melt'] = 'Melt Items';
 $l['mint_melt_melted'] = 'Successfully melted {1} item(s).';
 $l['mint_melt_error'] = 'Could not execute the melting operation.';
 
-$l['mint_items_inventory'] = 'Inventory';
+$l['mint_page_economy_user_inventory'] = 'Inventory';
+$l['mint_page_economy_user_inventory_user'] = '{1}\'s Inventory ({2})';
 $l['mint_items_inventory_preview'] = 'Inventory Preview';
-$l['mint_items_user_inventory'] = '{1}\'s Inventory ({2})';
-$l['mint_item_ownership'] = 'User Item Details';
+
+$l['mint_page_economy_item_ownership'] = 'User Item Details';
 $l['mint_item_activation_date'] = 'Created on';
 $l['mint_item_owner'] = 'Owned by';
 $l['mint_item_owned_by_since'] = '{1} since {2}';
 $l['mint_items_in_stack'] = '{1} in stack';
+$l['mint_items_action_melt'] = 'Melt';
 
 $l['mint_items_transaction'] = 'Items Transaction';
 $l['mint_items_transaction_new'] = 'New Transaction';

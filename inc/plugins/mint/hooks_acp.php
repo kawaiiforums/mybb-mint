@@ -3,9 +3,18 @@
 namespace mint\Hooks;
 
 use mint\AcpEntityManagementController;
-use mint\DbRepository\{BalanceOperations, BalanceTransfers, ContentEntityRewards, InventoryTypes, ItemCategories, ItemTransactions, ItemTypes, ShopItems, Items};
+use mint\DbRepository\BalanceOperations;
+use mint\DbRepository\BalanceTransfers;
+use mint\DbRepository\ContentEntityRewards;
+use mint\DbRepository\InventoryTypes;
+use mint\DbRepository\ItemCategories;
+use mint\DbRepository\ItemOwnerships;
+use mint\DbRepository\ItemTransactions;
+use mint\DbRepository\ItemTypes;
+use mint\DbRepository\ShopItems;
+use mint\DbRepository\Items;
 
-function admin_load()
+function admin_load(): void
 {
     global $mybb, $db, $lang, $run_module, $action_file, $page, $sub_tabs, $pageUrl;
 
@@ -396,6 +405,12 @@ function admin_user_users_merge_commit(): void
         ],
         [
             'class' => ContentEntityRewards::class,
+            'columns' => [
+                'user_id',
+            ],
+        ],
+        [
+            'class' => ItemOwnerships::class,
             'columns' => [
                 'user_id',
             ],

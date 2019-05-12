@@ -1,15 +1,15 @@
 <form action="" method="post">
-    <div class="mint-hub__form">
-        <label class="mint-hub__form__element">
-            <p class="mint-hub__form__element__title">{$lang->mint_recipient_username}</p>
+    <div class="mint__form">
+        <label class="mint__form__element">
+            <p class="mint__form__element__title">{$lang->mint_recipient_username}</p>
             <input type="text" name="user_name" id="user_name" class="textbox" />
         </label>
-        <label class="mint-hub__form__element">
-            <p class="mint-hub__form__element__title">{$lang->mint_item_type}</p>
+        <label class="mint__form__element">
+            <p class="mint__form__element__title">{$lang->mint_item_type}</p>
             <input type="text" name="item_type_id" id="item_type_id" class="textbox" />
         </label>
-        <label class="mint-hub__form__element">
-            <p class="mint-hub__form__element__title">{$lang->mint_amount}</p>
+        <label class="mint__form__element">
+            <p class="mint__form__element__title">{$lang->mint_amount}</p>
             <input type="number" name="amount" class="textbox" value="1" max="{$maxAmount}" />
         </label>
         <input type="submit" class="button" value="Submit" />
@@ -65,7 +65,7 @@
             maximumSelectionSize: 5,
             multiple: false,
             ajax: { // instead of writing the function to execute the request we use Select2's convenient helper
-                url: "xmlhttp.php?action=mint_get_item_type",
+                url: "xmlhttp.php?action=economy_get_item_type",
                 dataType: 'json',
                 data: function (term, page) {
                     return {

@@ -1,11 +1,11 @@
 <form action="" method="post">
-    <div class="mint-hub__form">
-        <label class="mint-hub__form__element">
-            <p class="mint-hub__form__element__title">{$lang->mint_recipient_username}</p>
+    <div class="mint__form">
+        <label class="mint__form__element">
+            <p class="mint__form__element__title">{$lang->mint_recipient_username}</p>
             <input type="text" name="user_name" id="user_name" class="textbox" />
         </label>
-        <label class="mint-hub__form__element">
-            <p class="mint-hub__form__element__title">{$lang->mint_amount}</p>
+        <label class="mint__form__element">
+            <p class="mint__form__element__title">{$lang->mint_amount}</p>
             <input type="number" name="amount" class="textbox" min="{$minAmount}" max="{$maxAmount}" /> {$currencyTitle}
         </label>
         <input type="submit" class="button" value="Submit" />

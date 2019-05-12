@@ -6,9 +6,9 @@
 <body>
 {$header}
 
-<div class="mint-hub">
-    <div class="mint-hub__page-title">{$pageTitle}</div>
-    <div class="mint-hub__table">
+<div class="mint">
+    <div class="mint__page-title">{$pageTitle}</div>
+    <div class="mint__table">
         {$entries}
     </div>
 

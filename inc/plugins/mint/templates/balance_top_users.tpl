@@ -1,6 +1,6 @@
-<div class="mint-hub__block">
-    <p class="mint-hub__block__title">{$lang->mint_balance_top_users}</p>
-    <div class="mint-hub__table mint-hub__balance-top-users">
+<div class="mint__block">
+    <p class="mint__block__title">{$lang->mint_balance_top_users}</p>
+    <div class="mint__table mint__balance-top-users">
         {$entries}
     </div>
 </div>

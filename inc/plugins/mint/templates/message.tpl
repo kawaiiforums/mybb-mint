@@ -1,3 +1,3 @@
-<div class="mint-hub__message mint-hub__message--{$type}">
+<div class="mint__message mint__message--{$type}">
     {$content}
 </div>

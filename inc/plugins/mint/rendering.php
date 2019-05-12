@@ -135,7 +135,23 @@ function getRenderedRewardSourceLegend(array $legendEntries): ?string
     return $output;
 }
 
-function getRenderedServiceLinks(array $links): ?string
+function getRenderedServiceLinks(array $links, string $sectionName): ?string
+{
+    global $lang;
+
+    $output = null;
+
+    foreach ($links as $serviceName => $service) {
+        $url = \htmlspecialchars_uni($service['url']);
+        $title = $lang->{'mint_service_' . $sectionName . '_' . $serviceName};
+
+        eval('$output .= "' . \mint\tpl('hub_service_link') . '";');
+    }
+
+    return $output;
+}
+
+function getRenderedActionLinks(array $links): ?string
 {
     $output = null;
 
@@ -143,7 +159,7 @@ function getRenderedServiceLinks(array $links): ?string
         $url = \htmlspecialchars_uni($service['url']);
         $title = \htmlspecialchars_uni($service['title']);
 
-        eval('$output .= "' . \mint\tpl('hub_service_link') . '";');
+        eval('$output .= "' . \mint\tpl('action_link') . '";');
     }
 
     return $output;
@@ -223,20 +239,6 @@ function getRenderedItemCard(array $item): ?string
     $itemActivationDate = \my_date('normal', $item['item_activation_date']);
 
     eval('$output = "' . \mint\tpl('item_card') . '";');
-
-    return $output;
-}
-
-function getRenderedActionLinks(array $links): ?string
-{
-    $output = null;
-
-    foreach ($links as $serviceName => $service) {
-        $url = \htmlspecialchars_uni($service['url']);
-        $title = \htmlspecialchars_uni($service['title']);
-
-        eval('$output .= "' . \mint\tpl('action_link') . '";');
-    }
 
     return $output;
 }

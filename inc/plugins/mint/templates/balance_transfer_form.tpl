@@ -1,18 +1,18 @@
 <form action="" method="post">
-    <div class="mint-hub__form">
-        <label class="mint-hub__form__element mint-hub__form__element--major">
-            <p class="mint-hub__form__element__title">{$lang->mint_recipient_username}</p>
+    <div class="mint__form">
+        <label class="mint__form__element mint__form__element--major">
+            <p class="mint__form__element__title">{$lang->mint_recipient_username}</p>
             <input type="text" name="user_name" id="user_name" class="textbox" />
         </label>
-        <label class="mint-hub__form__element mint-hub__form__element--major">
-            <p class="mint-hub__form__element__title">{$lang->mint_amount}</p>
+        <label class="mint__form__element mint__form__element--major">
+            <p class="mint__form__element__title">{$lang->mint_amount}</p>
             <input type="number" name="amount" class="textbox" min="{$minAmount}" max="{$maxAmount}" /> {$currencyTitle}
         </label>
-        <label class="mint-hub__form__element">
-            <p class="mint-hub__form__element__title">{$lang->mint_balance_transfer_note}</p>
+        <label class="mint__form__element">
+            <p class="mint__form__element__title">{$lang->mint_balance_transfer_note}</p>
             <input type="text" name="note" class="textbox" maxlength="100" placeholder="{$lang->mint_balance_transfer_note_placeholder}" style="width: 300px;" />
         </label>
-        <label class="mint-hub__form__element">
+        <label class="mint__form__element">
             <input type="checkbox" name="private" class="textbox"{$privateCheckboxAttributes} /> {$lang->mint_balance_transfer_private}
         </label>
         <input type="submit" class="button" value="Submit" />

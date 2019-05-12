@@ -2,9 +2,7 @@
 
 namespace mint;
 
-use \mint\DbRepository\{
-    CurrencyTerminationPoints
-};
+use mint\DbRepository\BalanceOperations;
 
 // modules
 function getModuleNames(bool $useCache = true): array
@@ -60,6 +58,11 @@ function getRegisteredSettings(): array
     }
 
     return $settings;
+}
+
+function loadModuleLanguageFile(string $moduleName, string $section): void
+{
+    \mint\loadExternalLanguageFile('inc/plugins/mint/modules/' . $moduleName . '/languages', $section);
 }
 
 function registerCurrencyTerminationPoints(array $names): void
@@ -138,11 +141,6 @@ function getRegisteredRewardSourceLegendEntries(): array
     return $mintRuntimeRegistry['rewardSourceLegendEntries'] ?? [];
 }
 
-function loadModuleLanguageFile(string $moduleName, string $section): void
-{
-    \mint\loadExternalLanguageFile('inc/plugins/mint/modules/' . $moduleName . '/languages', $section);
-}
-
 function registerRewardSources(array $rewardSources): void
 {
     global $mintRuntimeRegistry;
@@ -206,15 +204,103 @@ function resolveRegisteredRewardSources(): void
     \mint\registerRewardSources($rewardSources);
 }
 
-// users
-function userOnIgnoreList(int $subjectUserId, $targetUser): bool
+// actions
+function verifyBalanceOperationsDataIntegrity(bool $attemptToFix = false)
 {
-    if (!is_array($targetUser)) {
-        $targetUser = \get_user($targetUser);
+    global $db;
+
+    $events = [];
+
+    $db->write_query('BEGIN');
+
+    if (in_array($db->type, ['pgsql', 'mysql'])) {
+        if ($attemptToFix) {
+            $transactionCharacteristics = 'ISOLATION LEVEL SERIALIZABLE';
+        } else {
+            $transactionCharacteristics = 'ISOLATION LEVEL SERIALIZABLE, READ ONLY';
+        }
+
+        $db->write_query('SET TRANSACTION ' . $transactionCharacteristics);
     }
 
-    return (
-        !empty($targetUser['ignorelist']) &&
-        strpos(',' . $targetUser['ignorelist'] . ',', ',' . $subjectUserId . ',') !== false
+    // sum of balance operations
+    $query = BalanceOperations::with($db)->get(
+        'user_id, SUM(value) AS balance_sum',
+        'GROUP BY user_id'
     );
+
+    $userBalanceSums = \mint\queryResultAsArray($query, 'user_id', 'balance_sum');
+
+    $userIds = array_keys($userBalanceSums);
+
+    // verify result_balance of most recent operation
+    $query = $db->write_query("
+        SELECT
+            bo.user_id, bo.result_balance
+        FROM
+            " . TABLE_PREFIX . "mint_balance_operations bo
+            LEFT JOIN " . TABLE_PREFIX . "mint_balance_operations bo2
+                ON bo.user_id = bo2.user_id AND bo2.id > bo.id
+         WHERE bo2.id IS NULL
+    ");
+
+    while ($row = $db->fetch_array($query)) {
+        $balanceSum = $userBalanceSums[$row['user_id']];
+
+        if ($row['result_balance'] != $balanceSum) {
+            $events['result_balance_inconsistency'] = [
+                'balance_sum' => $balanceSum,
+                'latest_result_balance' => $row['result_balance'],
+            ];
+
+            break;
+        }
+    }
+
+    // verify users.mint_balance
+    $query = $db->simple_select('users', 'uid, mint_balance', 'uid IN (' . implode(',', array_map('intval', $userIds)) . ')');
+
+    while ($row = $db->fetch_array($query)) {
+        $balanceSum = $userBalanceSums[$row['uid']];
+
+        if ($row['mint_balance'] != $balanceSum) {
+            $events['user_balance_inconsistency'] = [
+                'balance_sum' => $balanceSum,
+                'user_balance' => $row['mint_balance'],
+            ];
+
+            if ($attemptToFix) {
+                $db->update_query('users', [
+                    'mint_balance' => $balanceSum,
+                ], 'uid = ' . (int)$row['uid']);
+            }
+
+            break;
+        }
+    }
+
+    $db->write_query('COMMIT');
+
+    if (!empty($events)) {
+        foreach ($events as $eventType => $data) {
+            \mint\addUniqueLogEvent($eventType, $data);
+        }
+
+        if (\mint\getSettingValue('disable_manual_balance_operations_on_inconsistency')) {
+            \mint\updateSettingValue('manual_balance_operations', 0);
+        }
+
+        return false;
+    } else {
+        $events = \mint\getCacheValue('unique_log_events');
+
+        unset($events['result_balance_inconsistency']);
+        unset($events['user_balance_inconsistency']);
+
+        \mint\updateCache([
+            'unique_log_events' => $events,
+        ]);
+
+        return true;
+    }
 }

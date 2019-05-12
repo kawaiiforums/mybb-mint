@@ -2,6 +2,7 @@
 
 namespace mint;
 
+// hooks
 function addHooks(array $hooks, string $namespace = null): void
 {
     global $plugins;
@@ -42,21 +43,7 @@ function addHooksNamespace(string $namespace): void
     }
 }
 
-function getClassMethodsNamesMatching($class, string $pattern): array
-{
-    $methodNames = [];
-
-    $methods = get_class_methods($class);
-
-    foreach ($methods as $method) {
-        if (preg_match($pattern, $method, $matches)) {
-            $methodNames[] = $matches[1];
-        }
-    }
-
-    return $methodNames;
-}
-
+// settings
 function getSettingValue(string $name): string
 {
     global $mybb;
@@ -99,6 +86,56 @@ function updateSettingValue(string $name, string $value): bool
     return $result;
 }
 
+// datacache
+function getCacheValue(string $key)
+{
+    global $cache;
+
+    return $cache->read(__NAMESPACE__)[$key] ?? null;
+}
+
+function updateCache(array $values, bool $overwrite = false): void
+{
+    global $cache;
+
+    if ($overwrite) {
+        $cacheContent = $values;
+    } else {
+        $cacheContent = $cache->read(__NAMESPACE__);
+        $cacheContent = array_merge($cacheContent, $values);
+    }
+
+    $cache->update(__NAMESPACE__, $cacheContent);
+}
+
+function addUniqueLogEvent(string $type, array $data): void
+{
+    $log = \mint\getCacheValue('unique_log_events') ?? [];
+
+    $log[$type] = array_merge([
+        'date' => \TIME_NOW,
+    ], $data);
+
+    \mint\updateCache([
+        'unique_log_events' => $log,
+    ]);
+}
+
+// languages
+function loadExternalLanguageFile(string $languagesDirectory, string $section): void
+{
+    global $lang;
+
+    if ($lang->language) {
+        $language = $lang->language;
+    } else {
+        $language = $lang->fallback;
+    }
+
+    $lang->load('../../../' . $languagesDirectory . '/' . str_replace('/admin', null, $language) . '/' . $section, true);
+}
+
+// themes
 function loadTemplates(array $templates, string $prefix = null): void
 {
     global $templatelist;
@@ -146,45 +183,7 @@ function replaceInTemplate(string $title, string $find, string $replace): bool
     return \find_replace_templatesets($title, '#' . preg_quote($find, '#') . '#', $replace);
 }
 
-function getArrayWithColumnAsKey(array $array, string $column): array
-{
-    return array_combine(array_column($array, $column), $array);
-}
-
-function getCacheValue(string $key)
-{
-    global $cache;
-
-    return $cache->read(__NAMESPACE__)[$key] ?? null;
-}
-
-function updateCache(array $values, bool $overwrite = false): void
-{
-    global $cache;
-
-    if ($overwrite) {
-        $cacheContent = $values;
-    } else {
-        $cacheContent = $cache->read(__NAMESPACE__);
-        $cacheContent = array_merge($cacheContent, $values);
-    }
-
-    $cache->update(__NAMESPACE__, $cacheContent);
-}
-
-function addUniqueLogEvent(string $type, array $data): void
-{
-    $log = \mint\getCacheValue('unique_log_events') ?? [];
-
-    $log[$type] = array_merge([
-        'date' => \TIME_NOW,
-    ], $data);
-
-    \mint\updateCache([
-        'unique_log_events' => $log,
-    ]);
-}
-
+// filesystem
 function getFilesContentInDirectory(string $path, string $fileNameSuffix): array
 {
     $contents = [];
@@ -202,6 +201,7 @@ function getFilesContentInDirectory(string $path, string $fileNameSuffix): array
     return $contents;
 }
 
+// database
 function createTables(array $tables): void
 {
     global $db;
@@ -507,19 +507,55 @@ function queryResultAsArray($result, ?string $keyColumn = null, ?string $valueCo
     return $array;
 }
 
-function loadExternalLanguageFile(string $languagesDirectory, string $section): void
+// users
+function userOnIgnoreList(int $subjectUserId, $targetUser): bool
 {
-    global $lang;
-
-    if ($lang->language) {
-        $language = $lang->language;
-    } else {
-        $language = $lang->fallback;
+    if (!is_array($targetUser)) {
+        $targetUser = \get_user($targetUser);
     }
 
-    $lang->load('../../../' . $languagesDirectory . '/' . str_replace('/admin', null, $language) . '/' . $section, true);
+    return (
+        !empty($targetUser['ignorelist']) &&
+        strpos(',' . $targetUser['ignorelist'] . ',', ',' . $subjectUserId . ',') !== false
+    );
 }
 
+function updateUser(int $userId, array $data): bool
+{
+    global $mybb, $db;
+
+    $result = (bool)$db->update_query('users', $data, 'uid = ' . (int)$userId);
+
+    if ($userId != 0 && $mybb->user['uid'] == $userId) {
+        $mybb->user = array_merge($mybb->user, $data);
+    }
+
+    return $result;
+}
+
+// data
+function getArrayWithColumnAsKey(array $array, string $column): array
+{
+    return array_combine(array_column($array, $column), $array);
+}
+
+// reflection
+function getClassMethodsNamesMatching($class, string $pattern): array
+{
+    $methodNames = [];
+
+    $methods = get_class_methods($class);
+
+    foreach ($methods as $method) {
+        if (preg_match($pattern, $method, $matches)) {
+            $methodNames[] = $matches[1];
+        }
+    }
+
+    return $methodNames;
+}
+
+// 3rd party
 function loadPluginLibrary(): void
 {
     global $lang, $PL;
@@ -537,17 +573,4 @@ function loadPluginLibrary(): void
     } elseif (!$PL) {
         require_once PLUGINLIBRARY;
     }
-}
-
-function updateUser(int $userId, array $data): bool
-{
-    global $mybb, $db;
-
-    $result = (bool)$db->update_query('users', $data, 'uid = ' . (int)$userId);
-
-    if ($userId != 0 && $mybb->user['uid'] == $userId) {
-        $mybb->user = array_merge($mybb->user, $data);
-    }
-
-    return $result;
 }
