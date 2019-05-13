@@ -32,6 +32,7 @@ class ContentEntityRewards extends \mint\DbEntityRepository
                 [
                     'table' => 'mint_currency_termination_points',
                     'column' => 'id',
+                    'onDelete' => 'restrict',
                 ],
             ],
             'uniqueKey' => 1,

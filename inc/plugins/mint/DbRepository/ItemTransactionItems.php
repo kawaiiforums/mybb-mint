@@ -13,6 +13,7 @@ class ItemTransactionItems extends \mint\DbEntityRepository
                 [
                     'table' => 'mint_item_transactions',
                     'column' => 'id',
+                    'onDelete' => 'cascade',
                 ],
             ],
         ],
@@ -23,6 +24,7 @@ class ItemTransactionItems extends \mint\DbEntityRepository
                 [
                     'table' => 'mint_items',
                     'column' => 'id',
+                    'onDelete' => 'cascade',
                 ],
             ],
         ],

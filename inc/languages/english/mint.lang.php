@@ -65,4 +65,4 @@ $l['mint_recent_public_balance_transfers'] = 'Recent Public Transfers';
 $l['mint_balance_top_users'] = 'Top Users by Balance';
 $l['mint_reward_sources_legend'] = 'Activity Rewards';
 
-$l['mint_integrity_task_ran'] = 'The Mint Integrity task successfully ran.';
+$l['mint_integrity_task_ran'] = 'The Mint: Integrity Check task successfully ran.';

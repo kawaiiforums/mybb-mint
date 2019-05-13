@@ -37,6 +37,7 @@ class Items extends \mint\DbEntityRepository
                 [
                     'table' => 'mint_item_termination_points',
                     'column' => 'id',
+                    'onDelete' => 'restrict',
                 ],
             ],
         ],
@@ -46,6 +47,7 @@ class Items extends \mint\DbEntityRepository
                 [
                     'table' => 'mint_item_termination_points',
                     'column' => 'id',
+                    'onDelete' => 'restrict',
                 ],
             ],
         ],

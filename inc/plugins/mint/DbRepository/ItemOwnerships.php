@@ -71,10 +71,8 @@ class ItemOwnerships extends \mint\DbEntityRepository
                     ]);
                 }
 
-                $slotsOccupiedAfterOperation = \mint\countOccupiedUserInventorySlots($userId, false);
-
-                $result &= \mint\updateUser($userId, [
-                    'mint_inventory_slots_occupied' => (int)$slotsOccupiedAfterOperation,
+                \mint\recountOccupiedUserInventorySlots([
+                    $userId,
                 ]);
 
                 return $result;
@@ -93,10 +91,8 @@ class ItemOwnerships extends \mint\DbEntityRepository
             ], 'item_id = ' . (int)$item['item_id'] . ' AND user_id = ' . (int)$userId);
         }
 
-        $slotsOccupiedAfterOperation = \mint\countOccupiedUserInventorySlots($userId, false);
-
-        $result &= \mint\updateUser($userId, [
-            'mint_inventory_slots_occupied' => (int)$slotsOccupiedAfterOperation,
+        \mint\recountOccupiedUserInventorySlots([
+            $userId,
         ]);
 
         return $result;

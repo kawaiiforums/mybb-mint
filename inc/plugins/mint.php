@@ -98,7 +98,7 @@ function mint_install()
 
     // tasks
     $new_task = [
-        'title'       => 'Mint: Integrity',
+        'title'       => 'Mint: Integrity Check',
         'description' => 'Performs data integrity verification for the Mint extension.',
         'file'        => 'mint_integrity',
         'minute'      => '0',

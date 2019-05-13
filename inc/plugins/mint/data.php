@@ -344,7 +344,7 @@ function getUserInventoryData($user): ?array
     return $userInventoryData;
 }
 
-function countOccupiedUserInventorySlots(int $userId, bool $cached = true, bool $forUpdate = false): ?int
+function getOccupiedUserInventorySlots(int $userId, bool $cached = true, bool $forUpdate = false): ?int
 {
     global $mybb, $db;
 
@@ -367,31 +367,80 @@ function countOccupiedUserInventorySlots(int $userId, bool $cached = true, bool 
             }
         }
     } else {
-        $query = $db->query("
-            SELECT SUM(n) AS n FROM
-            (
-                SELECT
-                    COUNT(io.id) AS n
-                    FROM
-                        " . TABLE_PREFIX . "mint_item_ownerships io
-                        INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
-                        INNER JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
-                    WHERE user_id = " . (int)$userId . " AND it.stacked = 0 AND io.active = 1
-                UNION ALL
-                SELECT
-                    COUNT(DISTINCT item_type_id) AS n
-                    FROM
-                        " . TABLE_PREFIX . "mint_item_ownerships io
-                        INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
-                        INNER JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
-                    WHERE user_id = " . (int)$userId . " AND it.stacked = 1 AND io.active = 1
-            ) itemCountsByStackedStatus
-        ");
+        $query = \mint\countOccupiedUserInventorySlots([
+            $userId,
+        ]);
 
-        $count = $db->fetch_field($query, 'n');
+        $count = $db->fetch_array($query, 'n');
     }
 
     return $count;
+}
+
+function recountOccupiedUserInventorySlots(?array $userIds = null, ?array $itemTypeId = null): void
+{
+    global $db;
+
+    $query = \mint\countOccupiedUserInventorySlots($userIds, $itemTypeId);
+
+    if ($query !== null) {
+        while ($entry = $db->fetch_array($query)) {
+            \mint\updateUser($entry['user_id'], [
+                'mint_inventory_slots_occupied' => $entry['n'],
+            ]);
+        }
+    }
+}
+
+function countOccupiedUserInventorySlots(?array $userIds = null, ?array $itemTypeId = null)
+{
+    global $db;
+
+    if ($userIds === [] || $itemTypeId === []) {
+        return null;
+    }
+
+    $whereConditions = [
+        'io.active = 1',
+    ];
+
+    if ($userIds !== null) {
+        $where[] = 'io.user_id IN (' . implode(',', array_map('intval', $userIds)) . ')';
+    }
+
+    if ($itemTypeId !== null) {
+        $where[] = 'it.id IN (' . implode(',', array_map('intval', $itemTypeId)) . ')';
+    }
+
+    $where = implode(' AND ', $whereConditions);
+
+    $query = $db->query("
+        SELECT
+            user_id, SUM(n) AS n
+            FROM
+                (
+                    SELECT
+                        io.user_id, COUNT(io.id) AS n
+                        FROM
+                            " . TABLE_PREFIX . "mint_item_ownerships io
+                            INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
+                            INNER JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
+                        WHERE it.stacked = 0 AND {$where}
+                        GROUP BY io.user_id
+                    UNION ALL
+                    SELECT
+                        io.user_id, COUNT(DISTINCT it.id) AS n
+                        FROM
+                            " . TABLE_PREFIX . "mint_item_ownerships io
+                            INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
+                            INNER JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
+                        WHERE it.stacked = 1 AND {$where}
+                        GROUP BY io.user_id
+                ) itemCountsByStackedStatus
+            GROUP BY user_id
+    ");
+
+    return $query;
 }
 
 // items

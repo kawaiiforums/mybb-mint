@@ -16,6 +16,7 @@ class ItemTypes extends \mint\DbEntityRepository
                 [
                     'table' => 'mint_item_categories',
                     'column' => 'id',
+                    'onDelete' => 'restrict',
                 ],
             ],
         ],
@@ -36,4 +37,28 @@ class ItemTypes extends \mint\DbEntityRepository
             'notNull' => true,
         ],
     ];
+
+    public function updateById(int $id, array $data): bool
+    {
+        $result = parent::updateById($id, $data);
+
+        if (array_key_exists('stacked', $data)) {
+            \mint\recountOccupiedUserInventorySlots(null, [
+                $id,
+            ]);
+        }
+
+        return $result;
+    }
+
+    public function deleteById(int $id): bool
+    {
+        $result = parent::deleteById($id);
+
+        \mint\recountOccupiedUserInventorySlots(null, [
+            $id,
+        ]);
+
+        return $result;
+    }
 }

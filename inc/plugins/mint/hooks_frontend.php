@@ -448,7 +448,7 @@ function misc_start(): void
                         $amountFieldAttributes = null;
                     } else {
                         $maxAmount = 1;
-                        $amountFieldAttributes = 'disabled="disabled"';
+                        $amountFieldAttributes = 'readonly="readonly"';
                     }
 
                     if (isset($mybb->input['amount']) && \verify_post_check($mybb->get_input('my_post_key'))) {
