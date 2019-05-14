@@ -500,6 +500,8 @@ function misc_start(): void
                 }
 
                 if ($user) {
+                    $userInventoryData = \mint\getUserInventoryData($user);
+
                     $items = \mint\getItemOwnershipsWithDetailsByUser($user['uid']);
 
                     $itemsNum = count($items);
@@ -511,7 +513,7 @@ function misc_start(): void
                     );
 
                     if ($itemsNum > 0) {
-                        $content = \mint\getRenderedInventory($items);
+                        $content = \mint\getRenderedInventory($items, 'standard', $userInventoryData['slots']);
                     } else {
                         $content = \mint\getRenderedMessage($lang->mint_no_entries);
                     }

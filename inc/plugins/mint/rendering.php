@@ -76,7 +76,7 @@ function getRenderedBalanceOperationEntries($query, ?int $contextUserId = null, 
             $flagType = 'private';
             $flagContent = $lang->mint_balance_transfer_private;
 
-            eval('$flags .= "' . \mint\tpl('balance_operations_entry_flag') . '";');
+            eval('$flags .= "' . \mint\tpl('flag') . '";');
         }
 
         eval('$output .= "' . \mint\tpl('balance_operations_entry') . '";');
@@ -165,7 +165,7 @@ function getRenderedActionLinks(array $links): ?string
     return $output;
 }
 
-function getRenderedInventory(array $items, string $type = 'standard'): ?string
+function getRenderedInventory(array $items, string $type = 'standard', ?int $placeholders = null): ?string
 {
     global $mybb;
 
@@ -177,11 +177,23 @@ function getRenderedInventory(array $items, string $type = 'standard'): ?string
         $userItemId = $item['item_user_id'];
         $title = \htmlspecialchars_uni($item['item_type_title']);
 
+        $elementClass = 'mint__inventory__item';
+
+        $classes = [
+            $elementClass,
+        ];
+
         if ($item['item_type_stacked']) {
-            $type = 'stacked';
+            $classes[] = $elementClass . '--stacked';
         } else {
-            $type = 'standard';
+            $classes[] = $elementClass . '--standard';
         }
+
+        if (!$item['transferable']) {
+            $classes[] = $elementClass . '--non-transferable';
+        }
+
+        $classes = implode(' ', $classes);
 
         if ($item['stacked_amount']) {
             $stackedAmount = \my_number_format($item['stacked_amount']);
@@ -198,6 +210,14 @@ function getRenderedInventory(array $items, string $type = 'standard'): ?string
         eval('$entries .= "' . \mint\tpl('inventory_entry') . '";');
     }
 
+    if ($placeholders !== null) {
+        $slotsAvailable = $placeholders - count($items);
+
+        for ($i = 1; $i <= $slotsAvailable; $i++) {
+            eval('$entries .= "' . \mint\tpl('inventory_slot') . '";');
+        }
+    }
+
     eval('$output = "' . \mint\tpl('inventory') . '";');
 
     return $output;
@@ -210,6 +230,24 @@ function getRenderedItemCard(array $item): ?string
     $title = \htmlspecialchars_uni($item['item_type_title']);
 
     $categoryTitle = \htmlspecialchars_uni($item['item_category_title']);
+
+    $elementClass = 'mint__inventory__item';
+
+    $classes = [
+    $elementClass,
+    ];
+
+    if ($item['item_type_stacked']) {
+        $classes[] = $elementClass . '--stacked';
+    } else {
+        $classes[] = $elementClass . '--standard';
+    }
+
+    if (!$item['transferable']) {
+        $classes[] = $elementClass . '--non-transferable';
+    }
+
+    $classes = implode(' ', $classes);
 
     if ($item['stacked_amount']) {
         $stackedAmount = \my_number_format($item['stacked_amount']);
@@ -237,6 +275,15 @@ function getRenderedItemCard(array $item): ?string
     );
 
     $itemActivationDate = \my_date('normal', $item['item_activation_date']);
+
+    $flags = null;
+
+    if ($item['transferable'] == false) {
+        $flagType = 'non-transferable';
+        $flagContent = $lang->mint_item_non_transferable;
+
+        eval('$flags .= "' . \mint\tpl('flag') . '";');
+    }
 
     eval('$output = "' . \mint\tpl('item_card') . '";');
 

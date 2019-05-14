@@ -56,6 +56,7 @@ $l['mint_item_activation_date'] = 'Created on';
 $l['mint_item_owner'] = 'Owned by';
 $l['mint_item_owned_by_since'] = '{1} since {2}';
 $l['mint_items_in_stack'] = '{1} in stack';
+$l['mint_item_non_transferable'] = 'Non-transferable';
 $l['mint_items_action_melt'] = 'Melt';
 
 $l['mint_items_transaction'] = 'Items Transaction';

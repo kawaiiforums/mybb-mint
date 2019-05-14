@@ -99,6 +99,17 @@ function admin_load(): void
                         return $value ? $lang->yes : $lang->no;
                     },
                 ],
+                'transferable' => [
+                    'formElement' => function (\Form $form, array $entity) use ($db) {
+                        return $form->generate_yes_no_radio(
+                            'transferable',
+                            $entity['transferable'] ?? 0
+                        );
+                    },
+                    'presenter' => function (string $value) use ($lang) {
+                        return $value ? $lang->yes : $lang->no;
+                    },
+                ],
             ]);
             $controller->addForeignKeyData([
                 'mint_item_categories' => [

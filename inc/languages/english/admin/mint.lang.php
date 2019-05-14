@@ -17,7 +17,7 @@ $l['mint_admin_item_categories_list'] = 'Item Categories ({1})';
 $l['mint_admin_item_categories_description'] = 'Here you can manage item categories.';
 $l['mint_admin_item_categories_id'] = 'ID';
 $l['mint_admin_item_categories_title'] = 'Title';
-$l['mint_admin_item_categories_title_description'] = '';
+$l['mint_admin_item_categories_title_description'] = 'Title that will be used within the interface.';
 
 $l['mint_admin_item_categories_empty'] = 'No item categories added.';
 
@@ -37,15 +37,17 @@ $l['mint_admin_item_types_id'] = 'ID';
 $l['mint_admin_item_types_name'] = 'Name';
 $l['mint_admin_item_types_name_description'] = 'Choose an internal identifier that may be used by custom modules.';
 $l['mint_admin_item_types_title'] = 'Title';
-$l['mint_admin_item_types_title_description'] = '';
+$l['mint_admin_item_types_title_description'] = 'Title that will be used within the interface.';
 $l['mint_admin_item_types_item_category_id'] = 'Item Category';
 $l['mint_admin_item_types_item_category_id_description'] = '';
 $l['mint_admin_item_types_item_category'] = 'Category';
 $l['mint_admin_item_types_item_category_description'] = '';
 $l['mint_admin_item_types_image'] = 'Image';
-$l['mint_admin_item_types_image_description'] = '';
+$l['mint_admin_item_types_image_description'] = 'Path to an image representing the item type. Paths relative to the forum root directory are supported.';
 $l['mint_admin_item_types_stacked'] = 'Stacked';
-$l['mint_admin_item_types_stacked_description'] = '';
+$l['mint_admin_item_types_stacked_description'] = 'Choose whether items of this type should only take one slot in users\' inventories.';
+$l['mint_admin_item_types_transferable'] = 'Transferable';
+$l['mint_admin_item_types_transferable_description'] = 'Choose whether users can arrange transactions including items of this type.';
 
 $l['mint_admin_item_types_empty'] = 'No item types added.';
 
