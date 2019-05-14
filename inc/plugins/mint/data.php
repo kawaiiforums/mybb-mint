@@ -623,7 +623,7 @@ function getUserItemOwnershipsDetails(array $itemOwnershipIds): array
                     io.id AS item_user_id, io.item_id, io.user_id, io.active AS item_user_active, io.activation_date, io.deactivation_date,
                     u.username AS user_username,
                     i.item_type_id, i.active AS item_active, i.activation_date AS item_activation_date,
-                    it.title AS item_type_title, it.image AS item_type_image, it.stacked AS item_type_stacked, it.transferable,
+                    it.title AS item_type_title, it.description AS item_type_description, it.image AS item_type_image, it.stacked AS item_type_stacked, it.transferable AS item_type_transferable,
                     ic.title AS item_category_title 
                     FROM
                         " . TABLE_PREFIX . "mint_item_ownerships io

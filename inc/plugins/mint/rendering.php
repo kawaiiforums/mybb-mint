@@ -189,7 +189,7 @@ function getRenderedInventory(array $items, string $type = 'standard', ?int $pla
             $classes[] = $elementClass . '--standard';
         }
 
-        if (!$item['transferable']) {
+        if (!$item['item_type_transferable']) {
             $classes[] = $elementClass . '--non-transferable';
         }
 
@@ -228,14 +228,18 @@ function getRenderedItemCard(array $item): ?string
     global $mybb, $lang;
 
     $title = \htmlspecialchars_uni($item['item_type_title']);
+    $description = \htmlspecialchars_uni($item['item_type_description']);
 
     $categoryTitle = \htmlspecialchars_uni($item['item_category_title']);
+
+    $flags = null;
 
     $elementClass = 'mint__inventory__item';
 
     $classes = [
-    $elementClass,
+        $elementClass,
     ];
+
 
     if ($item['item_type_stacked']) {
         $classes[] = $elementClass . '--stacked';
@@ -243,8 +247,13 @@ function getRenderedItemCard(array $item): ?string
         $classes[] = $elementClass . '--standard';
     }
 
-    if (!$item['transferable']) {
+    if (!$item['item_type_transferable']) {
         $classes[] = $elementClass . '--non-transferable';
+
+        $flagType = 'non-transferable';
+        $flagContent = $lang->mint_item_non_transferable;
+
+        eval('$flags .= "' . \mint\tpl('flag') . '";');
     }
 
     $classes = implode(' ', $classes);
@@ -275,15 +284,6 @@ function getRenderedItemCard(array $item): ?string
     );
 
     $itemActivationDate = \my_date('normal', $item['item_activation_date']);
-
-    $flags = null;
-
-    if ($item['transferable'] == false) {
-        $flagType = 'non-transferable';
-        $flagContent = $lang->mint_item_non_transferable;
-
-        eval('$flags .= "' . \mint\tpl('flag') . '";');
-    }
 
     eval('$output = "' . \mint\tpl('item_card') . '";');
 

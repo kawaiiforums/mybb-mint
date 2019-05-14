@@ -101,8 +101,11 @@ a.mint__service-nav__link:hover { background-color: var(--color); color: var(--s
 .mint__item-card { display: flex; margin-top: 10px; }
 .mint__item-card__visual { flex: 1; align-self: center; text-align: center; }
 .mint__item-card__details { flex: 11; margin-left: 20px; }
-.mint__item-card__title { display: inline-block; margin: 8px; font-size: 16px; font-weight: bold; }
 .mint__item-card__category { margin: 8px; font-size: 14px; font-weight: bold; color: #767676; }
+.mint__item-card__title { display: inline-block; margin: 8px; font-size: 16px; font-weight: bold; }
+.mint__item-card__description { margin: 8px; max-width: 500px; font-size: 11px; color: #767676; line-height: 1.6; white-space: pre-wrap; }
+.mint__item-card .mint__flowing-list { margin-top: 12px; }
+
 .mint__recent-public-transfers .mint__balance-operation__value { color: inherit; }
 
 .mint__balance-top-users .mint__currency { color: #888; }

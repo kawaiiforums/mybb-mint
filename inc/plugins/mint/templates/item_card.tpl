@@ -10,6 +10,7 @@
     <div class="mint__item-card__details">
         <p class="mint__item-card__category">{$categoryTitle}</p>
         <p class="mint__item-card__title">{$title}</p>{$flags}
+        <p class="mint__item-card__description">{$description}</p>
 
         <div class="mint__flowing-list">
             <div class="mint__flowing-list__entry">

@@ -83,6 +83,10 @@ function admin_load(): void
                 ],
                 'name' => [],
                 'title' => [],
+                'description' => [
+                    'listed' => false,
+                    'formMethod' => 'generate_text_area',
+                ],
                 'image' => [
                     'presenter' => function (?string $value) use ($mybb) {
                         return $value ? '<img src="' . $mybb->get_asset_url($value) . '" style="max-width: 40px; max-height: 40px" />' : null;
@@ -103,7 +107,7 @@ function admin_load(): void
                     'formElement' => function (\Form $form, array $entity) use ($db) {
                         return $form->generate_yes_no_radio(
                             'transferable',
-                            $entity['transferable'] ?? 0
+                            $entity['transferable'] ?? 1
                         );
                     },
                     'presenter' => function (string $value) use ($lang) {

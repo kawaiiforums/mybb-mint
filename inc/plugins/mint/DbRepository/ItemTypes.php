@@ -28,6 +28,9 @@ class ItemTypes extends \mint\DbEntityRepository
             'type' => 'varchar',
             'length' => 255,
         ],
+        'description' => [
+            'type' => 'text',
+        ],
         'image' => [
             'type' => 'varchar',
             'length' => 255,
