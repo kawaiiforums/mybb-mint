@@ -215,7 +215,7 @@ function addContentEntityReward(string $rewardSourceName, int $contentEntityId, 
                     user_id = " . (int)$userId . " AND
                     content_type = '" . $db->escape_string($rewardSource['contentType']) . "' AND
                     content_entity_id = " . (int)$contentEntityId . " AND
-                    termination_point_id = " . (int)$terminationPointId . "
+                    currency_termination_point_id = " . (int)$terminationPointId . "
                 ")
             );
 
