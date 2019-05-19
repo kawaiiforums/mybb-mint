@@ -54,7 +54,7 @@ function getBalanceOperations(?string $conditions = null)
     $query = $db->query("
         SELECT
             bo.*,
-            bt.note, bt.private,
+            bt.note, bt.private, bt.handler,
             tp.name AS currency_termination_point_name,
             u_from.uid AS from_user_id, u_from.username AS from_username,
             u_to.uid AS to_user_id, u_to.username AS to_username
@@ -215,7 +215,7 @@ function addContentEntityReward(string $rewardSourceName, int $contentEntityId, 
                     user_id = " . (int)$userId . " AND
                     content_type = '" . $db->escape_string($rewardSource['contentType']) . "' AND
                     content_entity_id = " . (int)$contentEntityId . " AND
-                    termination_point_id = " . (int)$terminationPointId . "
+                    currency_termination_point_id = " . (int)$terminationPointId . "
                 ")
             );
 
@@ -443,6 +443,37 @@ function countOccupiedUserInventorySlots(?array $userIds = null, ?array $itemTyp
     return $query;
 }
 
+function getRequiredUserInventorySlotsForItems(int $userId, array $items): int
+{
+    $slotsRequired = 0;
+
+    $distinctUserItemTypeIds = \mint\getDistinctItemTypeIdsByUser($userId);
+
+    foreach ($items as $item) {
+        $inArray = in_array($item['item_type_id'], $distinctUserItemTypeIds);
+
+        if (!$item['item_type_stacked'] || !$inArray) {
+            $slotsRequired++;
+        }
+
+        if (!$inArray) {
+            $distinctUserItemTypeIds[] = $item['item_type_id'];
+        }
+    }
+
+    return $slotsRequired;
+}
+
+function countAvailableUserInventorySlotsWithItems(int $userId, array $items): int
+{
+    $bidUserInventory = \mint\getUserInventoryData($userId);
+    $slotsRequired = \mint\getRequiredUserInventorySlotsForItems($userId, $items);
+
+    $slotsWithItems = $bidUserInventory['slotsAvailable'] - $slotsRequired;
+
+    return $slotsWithItems;
+}
+
 // items
 function getItemsById(array $ids, bool $forUpdate = false)
 {
@@ -485,7 +516,7 @@ function getItemOwnershipsById(array $ids, bool $forUpdate = false)
 
 function getItemOwnershipWithDetails(int $id): ?array
 {
-    $items = \mint\getItemOwnershipsWithDetailsByUser(null, [
+    $items = \mint\getItemOwnershipsWithDetails(null, [
         $id,
     ]);
 
@@ -498,24 +529,31 @@ function getItemOwnershipWithDetails(int $id): ?array
     return $item;
 }
 
-function getItemOwnershipsWithDetailsByUser(?int $userId, ?array $itemOwnershipIds = null, ?int $mostRecent = null): array
+function getItemOwnershipsWithDetails(?int $userId, ?array $itemOwnershipIds = null, ?int $mostRecent = null, bool $groupByTransactionStatus = false, bool $showUserStack = true, bool $activeOnly = true): array
 {
     $itemOwnerships = [];
 
-    $userItemOwnershipsWithStackedAmount = \mint\getUserItemOwnershipsWithStackedAmount($userId, $itemOwnershipIds, $mostRecent);
+    $userItemOwnershipsWithStackedAmount = \mint\getItemOwnershipsWithStackedAmount(
+        $userId,
+        $itemOwnershipIds,
+        $mostRecent,
+        $groupByTransactionStatus,
+        $showUserStack,
+        $activeOnly
+    );
 
-    $userItemOwnershipsDetails = \mint\getUserItemOwnershipsDetails(
+    $userItemOwnershipsDetails = \mint\getItemOwnershipsDetails(
         array_keys($userItemOwnershipsWithStackedAmount)
     );
 
     foreach ($userItemOwnershipsWithStackedAmount as $entry) {
-        $itemOwnerships[] = array_merge($entry, $userItemOwnershipsDetails[$entry['id']]);
+        $itemOwnerships[] = array_merge($entry, $userItemOwnershipsDetails[$entry['item_ownership_id']]);
     }
 
     return $itemOwnerships;
 }
 
-function getUserItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwnershipIds = null, ?int $mostRecent = null): array
+function getItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwnershipIds = null, ?int $mostRecent = null, bool $groupByTransactionStatus = false, bool $showUserStack = true, bool $activeOnly = true): array
 {
     global $db;
 
@@ -524,7 +562,7 @@ function getUserItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwners
 
         $query = $db->query("
             SELECT
-                io.id, io.user_id, i.item_type_id, it.stacked
+                io.id AS item_ownership_id, io.user_id, i.item_type_id, it.stacked AS item_type_stacked
                 FROM
                     " . TABLE_PREFIX . "mint_item_ownerships io
                     INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
@@ -537,18 +575,22 @@ function getUserItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwners
         $nonStackedItemUserIds = [];
 
         while ($row = $db->fetch_array($query)) {
-            if ($row['stacked']) {
+            if ($row['item_type_stacked']) {
                 $stackedTypeIds[] = (int)$row['item_type_id'];
                 $userIds[] = (int)$row['user_id'];
             } else {
-                $nonStackedItemUserIds[] = (int)$row['id'];
+                $nonStackedItemUserIds[] = (int)$row['item_ownership_id'];
             }
         }
 
         if ($stackedTypeIds && $userIds) {
-            $stackedWhereConditions = 'AND (
-            it.id IN (' . implode(',', $stackedTypeIds) . ') AND io.user_id IN (' . implode(',', $userIds) . ')
-        )';
+            if ($showUserStack) {
+                $stackedWhereConditions = 'AND (
+                    it.id IN (' . implode(',', $stackedTypeIds) . ') AND io.user_id IN (' . implode(',', $userIds) . ')
+                )';
+            } else {
+                $stackedWhereConditions = 'AND io.id IN (' . implode(',', $itemOwnershipIds) . ')';
+            }
         } else {
             $stackedWhereConditions = null;
         }
@@ -565,28 +607,47 @@ function getUserItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwners
 
     $unionQueries = [];
 
+    if ($activeOnly) {
+        $activeWhereConditions = ' AND io.active = 1';
+    } else {
+        $activeWhereConditions = null;
+    }
+
     if ($nonStackedWhereConditions) {
         $unionQueries[] = "(
             SELECT
-                io.id, io.activation_date, NULL AS stacked_amount
+                io.id AS item_ownership_id, io.activation_date, NULL AS stacked_amount
                 FROM
                     " . TABLE_PREFIX . "mint_item_ownerships io
                     INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
                     INNER JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
-                WHERE it.stacked = 0 AND io.active = 1 {$nonStackedWhereConditions}
+                WHERE it.stacked = 0 {$activeWhereConditions} {$nonStackedWhereConditions}
         )";
     }
 
     if ($stackedWhereConditions) {
+        if ($groupByTransactionStatus) {
+            $joins = "
+                LEFT JOIN (
+                    " . TABLE_PREFIX . "mint_item_transaction_items iTrI
+                    INNER JOIN " . TABLE_PREFIX . "mint_item_transactions iTr ON iTrI.item_transaction_id = iTr.id AND iTr.active = 1 
+                ) ON iTrI.item_id = i.id";
+            $groupBy = 'i.item_type_id, iTr.active';
+        } else {
+            $joins = null;
+            $groupBy = 'i.item_type_id';
+        }
+
         $unionQueries[] = "(
             SELECT
-                MIN(io.id) AS id, MAX(io.activation_date) AS activation_date, COUNT(io.id) AS stacked_amount
+                MIN(io.id) AS item_ownership_id, MAX(io.activation_date) AS activation_date, COUNT(io.id) AS stacked_amount
                 FROM
                     " . TABLE_PREFIX . "mint_item_ownerships io
                     INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
                     INNER JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
-                WHERE it.stacked = 1 AND io.active = 1 {$stackedWhereConditions}
-                GROUP BY i.item_type_id
+                    {$joins}
+                WHERE it.stacked = 1 {$activeWhereConditions} {$stackedWhereConditions}
+                GROUP BY {$groupBy}
         )";
     }
 
@@ -601,7 +662,7 @@ function getUserItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwners
 
         $result = \mint\queryResultAsArray(
             $db->query($query . $conditions),
-            'id'
+            'item_ownership_id'
         );
     } else {
         $result = [];
@@ -610,7 +671,40 @@ function getUserItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwners
     return $result;
 }
 
-function getUserItemOwnershipsDetails(array $itemOwnershipIds): array
+function getItemsDetails(array $itemIds): array
+{
+    global $db;
+
+    if (!empty($itemIds)) {
+        $csv = implode(',', array_map('intval', $itemIds));
+
+        return \mint\queryResultAsArray(
+            $db->query("
+                SELECT
+                    i.id AS item_id, i.item_type_id, i.active AS item_active, i.activation_date AS item_activation_date,
+                    io.id AS item_ownership_id, io.item_id, io.user_id, io.active AS item_ownership_active, io.activation_date, io.deactivation_date,
+                    iTy.title AS item_type_title, iTy.description AS item_type_description, iTy.image AS item_type_image, iTy.stacked AS item_type_stacked, iTy.transferable AS item_type_transferable, iTy.discardable AS item_type_discardable,
+                    ic.title AS item_category_title,
+                    iTr.id AS item_transaction_id
+                    FROM
+                        " . TABLE_PREFIX . "mint_items i
+                        INNER JOIN " . TABLE_PREFIX . "mint_item_types iTy ON i.item_type_id = iTy.id
+                        INNER JOIN " . TABLE_PREFIX . "mint_item_categories ic ON iTy.item_category_id = ic.id
+                        LEFT JOIN " . TABLE_PREFIX . "mint_item_ownerships io ON i.id = io.item_id
+                        LEFT JOIN (
+                            " . TABLE_PREFIX . "mint_item_transaction_items iTrI
+                            INNER JOIN " . TABLE_PREFIX . "mint_item_transactions iTr ON iTrI.item_transaction_id = iTr.id AND iTr.active = 1 
+                        ) ON iTrI.item_id = i.id
+                    WHERE i.id IN (" . $csv . ")
+            "),
+            'item_id'
+        );
+    } else {
+        return [];
+    }
+}
+
+function getItemOwnershipsDetails(array $itemOwnershipIds): array
 {
     global $db;
 
@@ -620,42 +714,96 @@ function getUserItemOwnershipsDetails(array $itemOwnershipIds): array
         return \mint\queryResultAsArray(
             $db->query("
                 SELECT
-                    io.id AS item_user_id, io.item_id, io.user_id, io.active AS item_user_active, io.activation_date, io.deactivation_date,
+                    io.id AS item_ownership_id, io.item_id, io.user_id, io.active AS item_ownership_active, io.activation_date, io.deactivation_date,
                     u.username AS user_username,
                     i.item_type_id, i.active AS item_active, i.activation_date AS item_activation_date,
-                    it.title AS item_type_title, it.description AS item_type_description, it.image AS item_type_image, it.stacked AS item_type_stacked, it.transferable AS item_type_transferable,
-                    ic.title AS item_category_title 
+                    iTy.title AS item_type_title, iTy.description AS item_type_description, iTy.image AS item_type_image, iTy.stacked AS item_type_stacked, iTy.transferable AS item_type_transferable, iTy.discardable AS item_type_discardable,
+                    ic.title AS item_category_title,
+                    iTr.id AS item_transaction_id
                     FROM
                         " . TABLE_PREFIX . "mint_item_ownerships io
                         INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
-                        INNER JOIN " . TABLE_PREFIX . "users u ON io.user_Id = u.uid
-                        INNER JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
-                        INNER JOIN " . TABLE_PREFIX . "mint_item_categories ic ON it.item_category_id = ic.id
+                        INNER JOIN " . TABLE_PREFIX . "users u ON io.user_id = u.uid
+                        INNER JOIN " . TABLE_PREFIX . "mint_item_types iTy ON i.item_type_id = iTy.id
+                        INNER JOIN " . TABLE_PREFIX . "mint_item_categories ic ON iTy.item_category_id = ic.id
+                        LEFT JOIN (
+                            " . TABLE_PREFIX . "mint_item_transaction_items iTrI
+                            INNER JOIN " . TABLE_PREFIX . "mint_item_transactions iTr ON iTrI.item_transaction_id = iTr.id AND iTr.active = 1 
+                        ) ON iTrI.item_id = i.id
                     WHERE io.id IN (" . $csv . ")
             "),
-            'item_user_id'
+            'item_ownership_id'
         );
     } else {
         return [];
     }
 }
 
-function getItemOwnershipsByItemTypeAndUser(int $itemTypeId, int $userId): array
+function getItemIdsByResolvedStackedAmount(array $itemOwnershipIdsWithStackedAmount): ?array
+{
+    $items = [];
+
+    $userItemOwnershipsDetails = \mint\getItemOwnershipsDetails(
+        array_keys($itemOwnershipIdsWithStackedAmount)
+    );
+
+    foreach ($itemOwnershipIdsWithStackedAmount as $itemOwnershipId => $stackedAmount) {
+        $itemOwnershipDetails = &$userItemOwnershipsDetails[$itemOwnershipId];
+
+        if (isset($itemOwnershipDetails)) {
+            if ($itemOwnershipDetails['item_type_stacked']) {
+                $itemTypeOwnerships = \mint\getItemOwnershipsInStackByItemTypeAndUser($itemOwnershipDetails['item_type_id'], $itemOwnershipDetails['user_id'], $stackedAmount);
+
+                if (count($itemTypeOwnerships) != $stackedAmount) {
+                    return null;
+                } else {
+                    foreach ($itemTypeOwnerships as $itemTypeOwnership) {
+                        $items[] = [
+                            'item_ownership_id' => $itemTypeOwnership['item_ownership_id'],
+                            'item_id' => $itemTypeOwnership['item_id'],
+                        ];
+                    }
+                }
+            } else {
+                $items[] = [
+                    'item_ownership_id' => $itemOwnershipDetails['item_ownership_id'],
+                    'item_id' => $itemOwnershipDetails['item_id'],
+                ];
+            }
+
+        } else {
+            return null;
+        }
+    }
+
+    return $items;
+}
+
+function getItemOwnershipsInStackByItemTypeAndUser(int $itemTypeId, int $userId, ?int $limit = null): array
 {
     global $db;
+
+    $conditions = [];
+
+    if ($limit !== null) {
+        $conditions[] = 'LIMIT ' . (int)$limit;
+    }
+
+    $conditions = implode(' ', $conditions);
 
     return \mint\queryResultAsArray(
         $db->query("
             SELECT
-                io.id, i.id AS item_id, it.id AS item_type_id
+                io.id AS item_ownership_id, i.id AS item_id, it.id AS item_type_id
                 FROM
                     " . TABLE_PREFIX . "mint_item_ownerships io
                     INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
                     INNER JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
                 WHERE it.id = " . (int)$itemTypeId . " AND io.user_id = " . (int)$userId . " AND io.active = 1
                 ORDER BY io.activation_date DESC
+                {$conditions}
         "),
-        'id'
+        'item_ownership_id'
     );
 }
 
@@ -675,37 +823,6 @@ function getDistinctItemTypeIdsByUser(int $userId): array
         null,
         'item_type_id'
     );
-}
-
-function getRequiredUserInventorySlotsForItems(int $userId, array $items): int
-{
-    $slotsRequired = 0;
-
-    $distinctUserItemTypeIds = \mint\getDistinctItemTypeIdsByUser($userId);
-
-    foreach ($items as $item) {
-        $inArray = in_array($item['item_type_id'], $distinctUserItemTypeIds);
-
-        if (!$item['stacked'] || !$inArray) {
-            $slotsRequired++;
-        }
-
-        if (!$inArray) {
-            $distinctUserItemTypeIds[] = $item['item_type_id'];
-        }
-    }
-
-    return $slotsRequired;
-}
-
-function countAvailableUserInventorySlotsWithItems(int $userId, array $items): int
-{
-    $bidUserInventory = \mint\getUserInventoryData($userId);
-    $slotsRequired = \mint\getRequiredUserInventorySlotsForItems($userId, $items);
-
-    $slotsWithItems = $bidUserInventory['slotsAvailable'] - $slotsRequired;
-
-    return $slotsWithItems;
 }
 
 function createItemsWithTerminationPoint(int $itemTypeId, int $amount, int $userId, string $terminationPointName, bool $useDbTransaction = true): bool
@@ -733,7 +850,7 @@ function createItemsWithTerminationPoint(int $itemTypeId, int $amount, int $user
                     $items[] = [
                         'item_id' => $itemId,
                         'item_type_id' => $itemTypeId,
-                        'stacked' => $itemType['stacked'],
+                        'item_type_stacked' => $itemType['stacked'],
                     ];
                 } else {
                     $result &= false;
@@ -777,9 +894,9 @@ function removeItemsWithTerminationPoint(int $itemOwnershipId, int $stackedAmoun
             }
 
             if ($itemOwnershipDetails['item_type_stacked']) {
-                $itemTypeOwnerships = \mint\getItemOwnershipsByItemTypeAndUser($itemOwnershipDetails['item_type_id'], $itemOwnershipDetails['user_id']);
+                $itemTypeOwnerships = \mint\getItemOwnershipsInStackByItemTypeAndUser($itemOwnershipDetails['item_type_id'], $itemOwnershipDetails['user_id'], $stackedAmount);
 
-                $itemIds = array_slice(array_column($itemTypeOwnerships, 'item_id'), 0, $stackedAmount);
+                $itemIds = array_column($itemTypeOwnerships, 'item_id');
             } else {
                 $itemIds = [
                     $itemOwnershipDetails['item_id']
@@ -831,6 +948,29 @@ function getItemTransactionById(int $transactionId, bool $forUpdate = false): ?a
     }
 }
 
+function getItemTransactionDetails(int $transactionId): ?array
+{
+    global $db;
+
+    $query = $db->query("
+        SELECT
+            iTr.*,
+            ask_u.username AS ask_user_username,
+            bid_u.username AS bid_user_username
+            FROM
+                " . TABLE_PREFIX . "mint_item_transactions iTr
+                LEFT JOIN " . TABLE_PREFIX . "users ask_u ON iTr.ask_user_id = ask_u.uid 
+                LEFT JOIN " . TABLE_PREFIX . "users bid_u ON iTr.bid_user_id = bid_u.uid
+            WHERE iTr.id = " . (int)$transactionId . "
+    ");
+
+    if ($db->num_rows($query) == 1) {
+        return $db->fetch_array($query);
+    } else {
+        return null;
+    }
+}
+
 function getItemTransactionItems(int $transactionId): array
 {
     global $db;
@@ -838,12 +978,13 @@ function getItemTransactionItems(int $transactionId): array
     return \mint\queryResultAsArray(
         $db->query("
             SELECT
-                iti.item_id, i.item_type_id, io.user_id, it.stacked
+                iTrI.item_id,
+                i.item_type_id, i.active AS item_active,
+                io.id AS item_ownership_id, io.user_id, io.active AS item_ownership_active
                 FROM
-                    " . TABLE_PREFIX . "mint_item_transaction_items iti
-                    LEFT JOIN " . TABLE_PREFIX . "mint_items i ON iti.item_id = i.id
-                    LEFT JOIN " . TABLE_PREFIX . "mint_items_users iu ON iti.item_id = i.id AND io.active = 1
-                    LEFT JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
+                    " . TABLE_PREFIX . "mint_item_transaction_items iTrI
+                    INNER JOIN " . TABLE_PREFIX . "mint_items i ON iTrI.item_id = i.id
+                    LEFT JOIN " . TABLE_PREFIX . "mint_item_ownerships io ON i.id = io.item_id AND io.active = 1
                 WHERE item_transaction_id = " . (int)$transactionId . "
         ")
     );

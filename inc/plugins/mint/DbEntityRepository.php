@@ -32,7 +32,8 @@ abstract class DbEntityRepository
     {
         $this->db->insert_query(
             static::TABLE_NAME,
-            $this->getEscapedArray($data, false)
+            $this->getEscapedArray($data, false),
+            false // DB_PgSQL only
         );
 
         if ($this->db->type == 'pgsql') {

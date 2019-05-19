@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>{$mybb->settings['bbname']} - {$lang->mint_hub}</title>
+    <title>{$mybb->settings['bbname']} - {$lang->mint_page_economy_hub}</title>
     {$headerinclude}
 </head>
 <body>
@@ -11,7 +11,7 @@
         <section class="mint__section mint__section--items">
             <header class="mint__section__header">
                 <nav class="mint__section__header__nav">
-                    <a href="misc.php?action=economy_item_transaction" class="mint__section__header__nav__link">{$lang->mint_items_transaction_new}</a>
+                    <a href="misc.php?action=economy_new_items_transaction" class="mint__section__header__nav__link">{$lang->mint_item_transaction_new}</a>
                 </nav>
                 <div class="mint__section__header__status">
                     <p class="mint__section__header__status__counter">

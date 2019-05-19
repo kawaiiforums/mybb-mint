@@ -15,7 +15,7 @@
         <label class="mint__form__element">
             <input type="checkbox" name="private" class="textbox"{$privateCheckboxAttributes} /> {$lang->mint_balance_transfer_private}
         </label>
-        <input type="submit" class="button" value="Submit" />
+        <input type="submit" class="button" value="{$lang->mint_submit}" />
     </div>
     <input type="hidden" name="my_post_key" value="{$mybb->post_code}" />
 </form>

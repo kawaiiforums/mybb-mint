@@ -2,11 +2,6 @@
 
 <div class="mint__flowing-list">
     <div class="mint__flowing-list__entry">
-        <span class="mint__flowing-list__entry__title">{$lang->mint_item_owner}</span>
-        <span class="mint__flowing-list__entry__value">{$profileLink}</span>
-    </div>
-    <br />
-    <div class="mint__flowing-list__entry">
         <span class="mint__flowing-list__entry__title">{$lang->mint_item_type}</span>
         <span class="mint__flowing-list__entry__value">{$itemTypeTitle}</span>
     </div>

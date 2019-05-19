@@ -195,6 +195,7 @@ function mint_activate()
     \mint\registerItemTerminationPoints([
         'forge',
         'melt',
+        'discard',
     ]);
 
     \mint\addNewTerminationPoints(

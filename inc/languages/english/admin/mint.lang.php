@@ -50,6 +50,8 @@ $l['mint_admin_item_types_stacked'] = 'Stacked';
 $l['mint_admin_item_types_stacked_description'] = 'Choose whether items of this type should only take one slot in users\' inventories.';
 $l['mint_admin_item_types_transferable'] = 'Transferable';
 $l['mint_admin_item_types_transferable_description'] = 'Choose whether users can arrange transactions including items of this type.';
+$l['mint_admin_item_types_discardable'] = 'Discardable';
+$l['mint_admin_item_types_discardable_description'] = 'Choose whether users can abandon items of this type on their own.';
 
 $l['mint_admin_item_types_empty'] = 'No item types added.';
 

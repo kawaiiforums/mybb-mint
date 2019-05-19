@@ -237,7 +237,9 @@ function buildCreateTableQuery(string $tableName, array $columns): string
                 $columnDefinition = $columnName;
 
                 if (!empty($column['primaryKey'])) {
-                    $columnDefinition .= ' serial';
+                    if ($columnName == 'id') {
+                        $columnDefinition .= ' serial';
+                    }
 
                     $keys['primary'][] = $columnName;
                 } else {

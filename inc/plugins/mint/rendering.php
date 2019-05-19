@@ -79,6 +79,13 @@ function getRenderedBalanceOperationEntries($query, ?int $contextUserId = null, 
             eval('$flags .= "' . \mint\tpl('flag') . '";');
         }
 
+        if (!empty($entry['handler'])) {
+            $flagType = 'automated';
+            $flagContent = $lang->mint_balance_transfer_automated;
+
+            eval('$flags .= "' . \mint\tpl('flag') . '";');
+        }
+
         eval('$output .= "' . \mint\tpl('balance_operations_entry') . '";');
     }
 
@@ -155,11 +162,18 @@ function getRenderedActionLinks(array $links): ?string
 {
     $output = null;
 
-    foreach ($links as $serviceName => $service) {
-        $url = \htmlspecialchars_uni($service['url']);
-        $title = \htmlspecialchars_uni($service['title']);
+    foreach ($links as $linkName => $link) {
+        $title = \htmlspecialchars_uni($link['title']);
 
-        eval('$output .= "' . \mint\tpl('action_link') . '";');
+        if (isset($link['url'])) {
+            $url = \htmlspecialchars_uni($link['url']);
+
+            eval('$output .= "' . \mint\tpl('action_link') . '";');
+        } else {
+            $name = \htmlspecialchars_uni($linkName);
+
+            eval('$output .= "' . \mint\tpl('action_link_button') . '";');
+        }
     }
 
     return $output;
@@ -174,7 +188,7 @@ function getRenderedInventory(array $items, string $type = 'standard', ?int $pla
     $inventoryType = $type;
 
     foreach ($items as $item) {
-        $userItemId = $item['item_user_id'];
+        $userItemId = $item['item_ownership_id'];
         $title = \htmlspecialchars_uni($item['item_type_title']);
 
         $elementClass = 'mint__inventory__item';
@@ -189,8 +203,16 @@ function getRenderedInventory(array $items, string $type = 'standard', ?int $pla
             $classes[] = $elementClass . '--standard';
         }
 
+        if (!$item['item_type_discardable']) {
+            $classes[] = $elementClass . '--non-discardable';
+        }
+
         if (!$item['item_type_transferable']) {
             $classes[] = $elementClass . '--non-transferable';
+        }
+
+        if ($item['item_transaction_id']) {
+            $classes[] = $elementClass . '--in-transaction';
         }
 
         $classes = implode(' ', $classes);
@@ -205,6 +227,19 @@ function getRenderedInventory(array $items, string $type = 'standard', ?int $pla
             $imageUrl = $mybb->get_asset_url($item['item_type_image']);
         } else {
             $imageUrl = null;
+        }
+
+        if ($type == 'transaction-select' && $item['item_type_transferable'] && !$item['item_transaction_id']) {
+            if ($item['item_type_stacked']) {
+                $max = (int)$item['stacked_amount'];
+                eval('$fields = "' . \mint\tpl('inventory_entry_options_number') . '";');
+            } else {
+                eval('$fields = "' . \mint\tpl('inventory_entry_options_checkbox') . '";');
+            }
+
+            eval('$options = "' . \mint\tpl('inventory_entry_options') . '";');
+        } else {
+            $options = null;
         }
 
         eval('$entries .= "' . \mint\tpl('inventory_entry') . '";');
@@ -240,11 +275,28 @@ function getRenderedItemCard(array $item): ?string
         $elementClass,
     ];
 
-
     if ($item['item_type_stacked']) {
         $classes[] = $elementClass . '--stacked';
     } else {
         $classes[] = $elementClass . '--standard';
+
+        if ($item['item_transaction_id']) {
+            $classes[] = $elementClass . '--in-transaction';
+
+            $flagType = 'in-transaction';
+            $flagContent = $lang->mint_item_in_transaction;
+
+            eval('$flags .= "' . \mint\tpl('flag') . '";');
+        }
+    }
+
+    if (!$item['item_type_discardable']) {
+        $classes[] = $elementClass . '--non-discardable';
+
+        $flagType = 'non-discardable';
+        $flagContent = $lang->mint_item_non_discardable;
+
+        eval('$flags .= "' . \mint\tpl('flag') . '";');
     }
 
     if (!$item['item_type_transferable']) {

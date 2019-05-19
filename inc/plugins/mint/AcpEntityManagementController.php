@@ -444,7 +444,7 @@ class AcpEntityManagementController
                     if ($entity) {
                         $value = $entity[$columnName];
                     } else {
-                        $value = false;
+                        $value = $column['default'] ?? false;
                     }
 
                     $formElement = $form->$formMethod($name, $value);
