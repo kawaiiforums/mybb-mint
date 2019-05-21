@@ -24,6 +24,7 @@ function misc_start(): void
                 // currency
                 $currentBalanceCounter = \mint\getFormattedCurrency(
                     \mint\getUserBalance($mybb->user['uid']),
+                    false,
                     true
                 );
 
@@ -247,7 +248,7 @@ function misc_start(): void
                                             $user['uid'],
                                             $amount,
                                             $details
-                                        );
+                                        ) !== null;
 
                                         if ($result) {
                                             $messages .= \mint\getRenderedMessage($lang->sprintf(
@@ -358,7 +359,8 @@ function misc_start(): void
                     $entries = \mint\getRenderedMessage($lang->mint_user_not_found, 'error');
                 }
 
-                eval('$page = "' . \mint\tpl('balance_operations') . '";');
+                eval('$content = "' . \mint\tpl('balance_operations') . '";');
+                eval('$page = "' . \mint\tpl('page') . '";');
 
                 return $page;
             },
@@ -381,7 +383,7 @@ function misc_start(): void
                 if (isset($mybb->input['item_type_id']) && \verify_post_check($mybb->get_input('my_post_key'))) {
                     $amount = $mybb->get_input('amount', \MyBB::INPUT_INT);
 
-                    if ($amount <= $maxAmount) {
+                    if ($amount > 0 && $amount <= $maxAmount) {
                         $user = \get_user_by_username($mybb->get_input('user_name'));
 
                         if ($user) {
@@ -438,6 +440,8 @@ function misc_start(): void
             'controller' => function (array $globals) {
                 extract($globals);
 
+                $pageTitle = $lang->mint_page_economy_items_melt;
+
                 $messages = null;
                 $form = null;
 
@@ -480,7 +484,9 @@ function misc_start(): void
                     $messages = \mint\getRenderedMessage($lang->mint_user_item_not_found, 'error');
                 }
 
-                eval('$page = "' . \mint\tpl('items_melt') . '";');
+                $content = $messages . $form;
+
+                eval('$page = "' . \mint\tpl('page') . '";');
 
                 return $page;
             },
@@ -494,6 +500,8 @@ function misc_start(): void
             },
             'controller' => function (array $globals) {
                 extract($globals);
+
+                $pageTitle = $lang->mint_page_economy_items_discard;
 
                 $messages = null;
                 $form = null;
@@ -536,7 +544,9 @@ function misc_start(): void
                     $messages = \mint\getRenderedMessage($lang->mint_user_item_not_found, 'error');
                 }
 
-                eval('$page = "' . \mint\tpl('items_discard') . '";');
+                $content = $messages . $form;
+
+                eval('$page = "' . \mint\tpl('page') . '";');
 
                 return $page;
             },
@@ -580,7 +590,7 @@ function misc_start(): void
                     $content = \mint\getRenderedMessage($lang->mint_user_not_found, 'error');
                 }
 
-                eval('$page = "' . \mint\tpl('user_inventory') . '";');
+                eval('$page = "' . \mint\tpl('page') . '";');
 
                 return $page;
             },
@@ -641,7 +651,7 @@ function misc_start(): void
 
                 $userInventoryData = \mint\getUserInventoryData($user);
 
-                $items = \mint\getItemOwnershipsWithDetails($user['uid'], null, null, true);
+                $items = \mint\getItemOwnershipsWithDetails($user['uid'], null, null, false, true, true, true);
 
                 $itemsNum = count($items);
 
@@ -654,15 +664,17 @@ function misc_start(): void
                         if ($userItemSelection) {
                             $items = \mint\getItemIdsByResolvedStackedAmount($userItemSelection);
 
-                            $transactionId = ItemTransactions::with($db)->create([
-                                'ask_user_id' => $mybb->user['uid'],
-                                'ask_price' => $mybb->get_input('ask_price', \MyBB::INPUT_INT),
-                            ], $items);
+                            if (!empty($items)) {
+                                $transactionId = ItemTransactions::with($db)->create([
+                                    'ask_user_id' => $mybb->user['uid'],
+                                    'ask_price' => $mybb->get_input('ask_price', \MyBB::INPUT_INT),
+                                ], $items);
 
-                            if ($transactionId !== null) {
-                                \redirect('misc.php?action=economy_item_transaction&id=' . (int)$transactionId, $lang->mint_item_transaction_new_success);
-                            } else {
-                                $messages .= \mint\getRenderedMessage($lang->mint_item_transaction_new_error, 'error');
+                                if ($transactionId !== null) {
+                                    \redirect('misc.php?action=economy_item_transaction&id=' . (int)$transactionId, $lang->mint_item_transaction_new_success);
+                                } else {
+                                    $messages .= \mint\getRenderedMessage($lang->mint_item_transaction_new_error, 'error');
+                                }
                             }
                         }
 
@@ -673,16 +685,20 @@ function misc_start(): void
                         );
                     }
 
+                    $pageTitle = $lang->mint_page_economy_new_items_transaction;
+
                     eval('$form = "' . \mint\tpl('items_transaction_new_form') . '";');
 
-                    eval('$page = "' . \mint\tpl('items_transaction_new') . '";');
+                    $content = $messages . $form;
+
+                    eval('$page = "' . \mint\tpl('page') . '";');
 
                     return $page;
                 } else {
                     $pageTitle = $lang->sprintf(
                         $lang->mint_page_economy_user_inventory_user,
                         \htmlspecialchars_uni($user['username']),
-                        $itemsNum
+                        $userInventoryData['slotsOccupied']
                     );
 
                     if ($itemsNum > 0) {
@@ -691,7 +707,8 @@ function misc_start(): void
                         $content = \mint\getRenderedMessage($lang->mint_no_entries);
                     }
 
-                    eval('$page = "' . \mint\tpl('items_transaction_new_inventory') . '";');
+                    eval('$content = "' . \mint\tpl('items_transaction_new_inventory') . '";');
+                    eval('$page = "' . \mint\tpl('page') . '";');
 
                     return $page;
                 }
@@ -720,6 +737,7 @@ function misc_start(): void
 
                     if ($transaction['completed'] == 1) {
                         $status = $lang->mint_item_transaction_status_completed;
+
                     } elseif ($transaction['active'] == 1) {
                         $status = $lang->mint_item_transaction_status_active;
                     } else {
@@ -727,11 +745,18 @@ function misc_start(): void
                     }
 
                     $askPrice = \mint\getFormattedCurrency($transaction['ask_price']);
+                    $askPriceSimple = \mint\getFormattedCurrency($transaction['ask_price'], true);
 
                     $askUser = \build_profile_link($transaction['ask_user_username'], $transaction['ask_user_id']);
                     $bidUser = \build_profile_link($transaction['bid_user_username'], $transaction['bid_user_id']);
 
                     $askDate = \my_date('normal', $transaction['ask_date']);
+
+                    if ($transaction['completed'] == 1) {
+                        $completedDate = \my_date('normal', $transaction['completed_date']);
+                    } else {
+                        $completedDate = null;
+                    }
 
                     $links = [];
 
@@ -752,24 +777,34 @@ function misc_start(): void
                             }
 
                             if ($transaction['active'] == 1 && $transaction['ask_user_id'] != $mybb->user['uid']) {
-                                if (isset($mybb->input['complete']) && \verify_post_check($mybb->get_input('my_post_key'))) {
-                                    $inputActionSignature = json_decode($mybb->get_input('action_signature'), true);
+                                if (\mint\getSettingValue('manual_balance_operations')) {
+                                    if (isset($mybb->input['complete']) && \verify_post_check($mybb->get_input('my_post_key'))) {
+                                        $inputActionSignature = json_decode($mybb->get_input('action_signature'), true);
 
-                                    if ($mybb->get_input('action_signature') === $actionSignatureJson) {
-                                        $result = ItemTransactions::with($db)->execute($transaction['id'], $mybb->user['uid']);
+                                        if ($mybb->get_input('action_signature') === $actionSignatureJson) {
+                                            if (\mint\getSettingValue('manual_balance_operations')) {
+                                                if (\mint\getUserBalance($mybb->user['uid']) >= $transaction['ask_price']) {
+                                                    $result = ItemTransactions::with($db)->execute($transaction['id'], $mybb->user['uid']);
 
-                                        if ($result) {
-                                            \redirect('misc.php?action=economy_user_inventory', $lang->mint_item_transaction_complete_success);
+                                                    if ($result) {
+                                                        \redirect('misc.php?action=economy_user_inventory', $lang->mint_item_transaction_complete_success);
+                                                    }
+                                                } else {
+                                                    $messages .= \mint\getRenderedMessage($lang->mint_currency_amount_exceeding_balance, 'error');
+                                                }
+                                            }
                                         }
                                     }
-                                }
 
-                                $links['complete'] = [
-                                    'title' => $lang->sprintf(
-                                        $lang->mint_item_transaction_action_buy_with,
-                                        $askPrice
-                                    ),
-                                ];
+                                    $links['complete'] = [
+                                        'title' => $lang->sprintf(
+                                            $lang->mint_item_transaction_action_buy_with,
+                                            $askPriceSimple
+                                        ),
+                                    ];
+                                } else {
+                                    $messages .= \mint\getRenderedMessage($lang->mint_balance_operations_disabled);
+                                }
                             }
                         }
                     }

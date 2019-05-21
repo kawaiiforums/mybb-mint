@@ -57,13 +57,15 @@ function getBalanceOperations(?string $conditions = null)
             bt.note, bt.private, bt.handler,
             tp.name AS currency_termination_point_name,
             u_from.uid AS from_user_id, u_from.username AS from_username,
-            u_to.uid AS to_user_id, u_to.username AS to_username
+            u_to.uid AS to_user_id, u_to.username AS to_username,
+            iTr.id AS item_transaction_id
             FROM
                 " . TABLE_PREFIX . "mint_balance_operations bo
                 LEFT JOIN " . TABLE_PREFIX . "mint_currency_termination_points tp ON bo.currency_termination_point_id = tp.id
                 LEFT JOIN " . TABLE_PREFIX . "mint_balance_transfers bt ON bo.balance_transfer_id = bt.id 
                 LEFT JOIN " . TABLE_PREFIX . "users u_from ON bt.from_user_id = u_from.uid
                 LEFT JOIN " . TABLE_PREFIX . "users u_to ON bt.to_user_id = u_to.uid
+                LEFT JOIN " . TABLE_PREFIX . "mint_item_transactions iTr ON bt.id = iTr.balance_transfer_id
             {$conditions}
     ");
 
@@ -181,11 +183,13 @@ function getBalanceTransfers(?string $conditions = null)
         SELECT
             bt.*,
             u_from.uid AS from_user_id, u_from.username AS from_username,
-            u_to.uid AS to_user_id, u_to.username AS to_username
+            u_to.uid AS to_user_id, u_to.username AS to_username,
+            iTr.id AS item_transaction_id
             FROM
                 " . TABLE_PREFIX . "mint_balance_transfers bt
                 LEFT JOIN " . TABLE_PREFIX . "users u_from ON bt.from_user_id = u_from.uid
                 LEFT JOIN " . TABLE_PREFIX . "users u_to ON bt.to_user_id = u_to.uid
+                LEFT JOIN " . TABLE_PREFIX . "mint_item_transactions iTr ON bt.id = iTr.balance_transfer_id
             {$conditions}
     ");
 
@@ -529,7 +533,7 @@ function getItemOwnershipWithDetails(int $id): ?array
     return $item;
 }
 
-function getItemOwnershipsWithDetails(?int $userId, ?array $itemOwnershipIds = null, ?int $mostRecent = null, bool $groupByTransactionStatus = false, bool $showUserStack = true, bool $activeOnly = true): array
+function getItemOwnershipsWithDetails(?int $userId, ?array $itemOwnershipIds = null, ?int $mostRecent = null, bool $groupByTransactionStatus = false, bool $showUserStack = true, bool $activeOnly = true, bool $transactionCandidatesOnly = false): array
 {
     $itemOwnerships = [];
 
@@ -539,7 +543,8 @@ function getItemOwnershipsWithDetails(?int $userId, ?array $itemOwnershipIds = n
         $mostRecent,
         $groupByTransactionStatus,
         $showUserStack,
-        $activeOnly
+        $activeOnly,
+        $transactionCandidatesOnly
     );
 
     $userItemOwnershipsDetails = \mint\getItemOwnershipsDetails(
@@ -553,7 +558,7 @@ function getItemOwnershipsWithDetails(?int $userId, ?array $itemOwnershipIds = n
     return $itemOwnerships;
 }
 
-function getItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwnershipIds = null, ?int $mostRecent = null, bool $groupByTransactionStatus = false, bool $showUserStack = true, bool $activeOnly = true): array
+function getItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwnershipIds = null, ?int $mostRecent = null, bool $groupByTransactionStatus = false, bool $showUserStack = true, bool $activeOnly = true, bool $transactionCandidatesOnly = false): array
 {
     global $db;
 
@@ -607,10 +612,26 @@ function getItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwnershipI
 
     $unionQueries = [];
 
+    $groupByColumns = [];
+    $tableJoins = null;
+    $whereConditions = null;
+    $groupBy = null;
+
+    if ($groupByTransactionStatus || $transactionCandidatesOnly) {
+        $tableJoins = "
+            LEFT JOIN (
+                " . TABLE_PREFIX . "mint_item_transaction_items iTrI
+                INNER JOIN " . TABLE_PREFIX . "mint_item_transactions iTr ON iTrI.item_transaction_id = iTr.id AND iTr.active = 1 
+            ) ON iTrI.item_id = i.id";
+        $groupByColumns[] = 'iTr.active';
+    }
+
     if ($activeOnly) {
-        $activeWhereConditions = ' AND io.active = 1';
-    } else {
-        $activeWhereConditions = null;
+        $whereConditions .= ' AND io.active = 1';
+    }
+
+    if ($transactionCandidatesOnly) {
+        $whereConditions .= ' AND it.transferable = 1 AND iTr.active IS NULL';
     }
 
     if ($nonStackedWhereConditions) {
@@ -621,22 +642,15 @@ function getItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwnershipI
                     " . TABLE_PREFIX . "mint_item_ownerships io
                     INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
                     INNER JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
-                WHERE it.stacked = 0 {$activeWhereConditions} {$nonStackedWhereConditions}
+                    {$tableJoins}
+                WHERE it.stacked = 0 {$whereConditions} {$nonStackedWhereConditions}
         )";
     }
 
     if ($stackedWhereConditions) {
-        if ($groupByTransactionStatus) {
-            $joins = "
-                LEFT JOIN (
-                    " . TABLE_PREFIX . "mint_item_transaction_items iTrI
-                    INNER JOIN " . TABLE_PREFIX . "mint_item_transactions iTr ON iTrI.item_transaction_id = iTr.id AND iTr.active = 1 
-                ) ON iTrI.item_id = i.id";
-            $groupBy = 'i.item_type_id, iTr.active';
-        } else {
-            $joins = null;
-            $groupBy = 'i.item_type_id';
-        }
+        $groupByColumns[] = 'i.item_type_id';
+
+        $groupBy = 'GROUP BY ' . implode(',', $groupByColumns);
 
         $unionQueries[] = "(
             SELECT
@@ -645,9 +659,9 @@ function getItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwnershipI
                     " . TABLE_PREFIX . "mint_item_ownerships io
                     INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
                     INNER JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
-                    {$joins}
-                WHERE it.stacked = 1 {$activeWhereConditions} {$stackedWhereConditions}
-                GROUP BY {$groupBy}
+                    {$tableJoins}
+                WHERE it.stacked = 1 {$whereConditions} {$stackedWhereConditions}
+                {$groupBy}
         )";
     }
 

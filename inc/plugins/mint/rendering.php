@@ -2,15 +2,25 @@
 
 namespace mint;
 
-function getFormattedCurrency(int $value, bool $useHtml = false): string
+function getFormattedCurrency(int $value, bool $simple = false, bool $useHtml = false): string
 {
+    global $lang;
+
     $formattedValue = my_number_format($value);
 
-    if ($useHtml) {
-        $formattedValue = '<span class="mint__currency__value">' . $formattedValue . '</span>';
-    }
+    if ($simple) {
+        $string = $lang->sprintf(
+            $lang->mint_currency_simple,
+            $formattedValue,
+            \mint\getSettingValue('currency_name')
+        );
+    } else {
+        if ($useHtml) {
+            $formattedValue = '<span class="mint__currency__value">' . $formattedValue . '</span>';
+        }
 
-    $string = \mint\getSettingValue('currency_prefix') . $formattedValue . \mint\getSettingValue('currency_suffix');
+        $string = \mint\getSettingValue('currency_prefix') . $formattedValue . \mint\getSettingValue('currency_suffix');
+    }
 
     return $string;
 }
@@ -68,6 +78,10 @@ function getRenderedBalanceOperationEntries($query, ?int $contextUserId = null, 
             );
         }
 
+        if ($entry['item_transaction_id']) {
+            $details[] = '<a href="misc.php?action=economy_item_transaction&amp;id=' . $entry['item_transaction_id'] . '">' . $lang->mint_balance_operations_item_transaction . '</a>';
+        }
+
         $details = implode(' &middot; ', $details);
 
         $flags = null;
@@ -103,7 +117,7 @@ function getRenderedBalanceTopUserEntries($query): ?string
             \format_name($entry['username'], $entry['usergroup'], $entry['displaygroup']),
             $entry['uid']
         );
-        $balance = \mint\getFormattedCurrency($entry['mint_balance'], true);
+        $balance = \mint\getFormattedCurrency($entry['mint_balance'], false, true);
 
         eval('$entries .= "' . \mint\tpl('balance_top_users_entry') . '";');
     }

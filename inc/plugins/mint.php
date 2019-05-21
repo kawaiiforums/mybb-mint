@@ -218,13 +218,13 @@ function mint_activate()
         ],
         'currency_prefix' => [
             'title'       => 'Currency Prefix',
-            'description' => '',
+            'description' => 'Supports HTML.',
             'optionscode' => 'text',
             'value'       => '',
         ],
         'currency_suffix' => [
             'title'       => 'Currency Suffix',
-            'description' => '',
+            'description' => 'Supports HTML.',
             'optionscode' => 'text',
             'value'       => ' C',
         ],

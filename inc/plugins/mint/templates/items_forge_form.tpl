@@ -10,7 +10,7 @@
         </label>
         <label class="mint__form__element">
             <p class="mint__form__element__title">{$lang->mint_amount}</p>
-            <input type="number" name="amount" class="textbox" value="1" max="{$maxAmount}" />
+            <input type="number" name="amount" class="textbox" min="1" max="{$maxAmount}" value="1" />
         </label>
         <input type="submit" class="button" value="{$lang->mint_submit}" />
     </div>

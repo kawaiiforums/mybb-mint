@@ -51,7 +51,7 @@ class BalanceTransfers extends \mint\DbEntityRepository
         ],
     ];
 
-    public function execute(int $fromUserId, int $toUserId, int $value, array $details = [], bool $useDbTransaction = true): bool
+    public function execute(int $fromUserId, int $toUserId, int $value, array $details = [], bool $useDbTransaction = true): ?int
     {
         if ($value < 0) {
             return false;
@@ -96,13 +96,13 @@ class BalanceTransfers extends \mint\DbEntityRepository
                 $this->db->write_query('COMMIT');
             }
 
-            return true;
+            return $transferId;
         } else {
             if ($useDbTransaction) {
                 $this->db->write_query('ROLLBACK');
             }
 
-            return false;
+            return null;
         }
     }
 }

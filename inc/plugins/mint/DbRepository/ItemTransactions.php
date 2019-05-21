@@ -50,6 +50,16 @@ class ItemTransactions extends \mint\DbEntityRepository
         'completed_date' => [
             'type' => 'integer',
         ],
+        'balance_transfer_id' => [
+            'type' => 'integer',
+            'foreignKeys' => [
+                [
+                    'table' => 'balance_transfers',
+                    'column' => 'id',
+                ]
+            ],
+            'uniqueKey' => 1,
+        ],
     ];
 
     public function create(array $data, array $items, bool $useDbTransaction = true): ?int
@@ -176,7 +186,7 @@ class ItemTransactions extends \mint\DbEntityRepository
 
             if ($result == true) {
                 if ($transaction['ask_price'] != 0) {
-                    $result &= BalanceTransfers::with($this->db)->execute(
+                    $balanceTransferId = BalanceTransfers::with($this->db)->execute(
                         $bidUserId,
                         $transaction['ask_user_id'],
                         $transaction['ask_price'],
@@ -185,8 +195,12 @@ class ItemTransactions extends \mint\DbEntityRepository
                         ],
                         false
                     );
-                }
 
+                    $result = $balanceTransferId !== null;
+                }
+            }
+
+            if ($result == true) {
                 $result &= ItemOwnerships::with($this->db)->remove($transactionItems, $transaction['ask_user_id']);
                 $result &= ItemOwnerships::with($this->db)->assign($transactionItems, $bidUserId);
 
@@ -194,6 +208,7 @@ class ItemTransactions extends \mint\DbEntityRepository
                 $transaction['active'] = 0;
                 $transaction['completed'] = 1;
                 $transaction['completed_date'] = TIME_NOW;
+                $transaction['balance_transfer_id'] = $balanceTransferId;
 
                 $result &= $this->updateById($transaction['id'], $transaction);
             }
