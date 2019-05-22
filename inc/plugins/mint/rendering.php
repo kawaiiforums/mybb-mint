@@ -156,6 +156,25 @@ function getRenderedRewardSourceLegend(array $legendEntries): ?string
     return $output;
 }
 
+function getRenderedUserActiveTransactions($query): ?string
+{
+    global $db, $lang;
+
+    $entries = null;
+
+    while ($entry = $db->fetch_array($query)) {
+        $id = (int)$entry['id'];
+        $url = 'misc.php?action=economy_item_transaction&amp;id=' . $id;
+        $askDate = \my_date('normal', $entry['ask_date']);
+
+        eval('$entries .= "' . \mint\tpl('user_active_transactions_entry') . '";');
+    }
+
+    eval('$output = "' . \mint\tpl('user_active_transactions') . '";');
+
+    return $output;
+}
+
 function getRenderedServiceLinks(array $links, string $sectionName): ?string
 {
     global $lang;

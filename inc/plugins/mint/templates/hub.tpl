@@ -34,6 +34,7 @@
                     {$inventoryPreview}
                 </div>
             </div>
+            {$userActiveTransactions}
         </section>
 
         <section class="mint__section mint__section--currency">

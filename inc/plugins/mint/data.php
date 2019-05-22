@@ -8,6 +8,7 @@ use mint\DbRepository\CurrencyTerminationPoints;
 use mint\DbRepository\InventoryTypes;
 use mint\DbRepository\Items;
 use mint\DbRepository\ItemTerminationPoints;
+use mint\DbRepository\ItemTransactions;
 use mint\DbRepository\ItemTypes;
 use mint\DbRepository\ItemOwnerships;
 
@@ -960,6 +961,18 @@ function getItemTransactionById(int $transactionId, bool $forUpdate = false): ?a
     } else {
         return null;
     }
+}
+
+function getUserActiveTransactions(int $userId)
+{
+    global $db;
+
+    $query = ItemTransactions::with($db)->get(
+        'id, ask_date',
+        'WHERE active = 1 AND ask_user_id = ' . (int)$userId
+    );
+
+    return $query;
 }
 
 function getItemTransactionDetails(int $transactionId): ?array

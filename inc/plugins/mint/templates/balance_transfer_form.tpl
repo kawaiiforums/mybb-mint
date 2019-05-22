@@ -2,15 +2,15 @@
     <div class="mint__form">
         <label class="mint__form__element mint__form__element--major">
             <p class="mint__form__element__title">{$lang->mint_recipient_username}</p>
-            <input type="text" name="user_name" id="user_name" class="textbox" />
+            <input type="text" name="user_name" id="user_name" value="{$username}" class="textbox" />
         </label>
         <label class="mint__form__element mint__form__element--major">
             <p class="mint__form__element__title">{$lang->mint_amount}</p>
-            <input type="number" name="amount" class="textbox" min="{$minAmount}" max="{$maxAmount}" /> {$currencyTitle}
+            <input type="number" name="amount" class="textbox" min="{$minAmount}" max="{$maxAmount}" value="{$amount}" /> {$currencyTitle}
         </label>
         <label class="mint__form__element">
             <p class="mint__form__element__title">{$lang->mint_balance_transfer_note}</p>
-            <input type="text" name="note" class="textbox" maxlength="100" placeholder="{$lang->mint_balance_transfer_note_placeholder}" style="width: 300px;" />
+            <input type="text" name="note" class="textbox" maxlength="100" placeholder="{$lang->mint_balance_transfer_note_placeholder}" value="{$note}" style="width: 300px;" />
         </label>
         <label class="mint__form__element">
             <input type="checkbox" name="private" class="textbox"{$privateCheckboxAttributes} /> {$lang->mint_balance_transfer_private}
@@ -43,21 +43,13 @@
                     return {results: data};
                 }
             },
-            initSelection: function (element, callback) {
-                var query = $(element).val();
-                if (query !== "") {
-                    var newqueries = [];
-                    exp_queries = query.split(",");
-                    $.each(exp_queries, function (index, value) {
-                        if (value.replace(/\s/g, '') != "") {
-                            var newquery = {
-                                id: value.replace(/,\s?/g, ", "),
-                                text: value.replace(/,\s?/g, ", ")
-                            };
-                            newqueries.push(newquery);
-                        }
+            initSelection: function(element, callback) {
+                var value = $(element).val();
+                if (value !== "") {
+                    callback({
+                        id: value,
+                        text: value
                     });
-                    callback(newqueries);
                 }
             },
         });

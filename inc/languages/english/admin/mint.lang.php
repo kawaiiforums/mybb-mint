@@ -8,6 +8,10 @@ $l['mint_admin_pluginlibrary_missing'] = 'Mint requires <a href="https://github.
 // common
 $l['mint_admin_submit'] = 'Submit';
 
+// Users
+$l['mint_inventory_type'] = 'Inventory Type';
+$l['mint_inventory_slots_bonus'] = 'Bonus Inventory Slots';
+
 // Mint
 $l['mint_admin'] = 'Mint';
 

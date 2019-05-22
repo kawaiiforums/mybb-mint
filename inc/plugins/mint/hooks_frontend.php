@@ -125,12 +125,23 @@ function misc_start(): void
 
                 $itemsServiceLinks = \mint\getRenderedServiceLinks($links, 'items');
 
+
                 if ($userItemsCount > 0) {
                     $items = \mint\getItemOwnershipsWithDetails($mybb->user['uid'], null, 10);
                     $inventoryPreview = \mint\getRenderedInventory($items, 'small');
                 } else {
                     $inventoryPreview = \mint\getRenderedMessage($lang->mint_no_entries);
                 }
+
+
+                $activeTransactions = \mint\getUserActiveTransactions($mybb->user['uid']);
+
+                if ($db->num_rows($activeTransactions) != 0) {
+                    $userActiveTransactions = \mint\getRenderedUserActiveTransactions($activeTransactions);
+                } else {
+                    $userActiveTransactions = null;
+                }
+
 
                 eval('$page = "' . \mint\tpl('hub') . '";');
 
@@ -217,7 +228,7 @@ function misc_start(): void
                 $messages = null;
 
                 if (\mint\getSettingValue('manual_balance_operations')) {
-                    if (isset($mybb->input['amount']) && \verify_post_check($mybb->get_input('my_post_key'))) {
+                    if ($mybb->request_method == 'post' && isset($mybb->input['amount']) && \verify_post_check($mybb->get_input('my_post_key'))) {
                         $amount = $mybb->get_input('amount', \MyBB::INPUT_INT);
 
                         if ($amount > 0) {
@@ -269,6 +280,10 @@ function misc_start(): void
                             }
                         }
                     }
+
+                    $username = \htmlspecialchars_uni($mybb->input['username'] ?? null);
+                    $amount = (int)($mybb->input['amount'] ?? 1);
+                    $note = \htmlspecialchars_uni($mybb->input['note'] ?? null);
 
                     $currencyTitle = \mint\getSettingValue('currency_name');
 

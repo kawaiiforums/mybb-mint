@@ -411,6 +411,64 @@ function admin_tools_menu_logs(array &$sub_menu): void
     ];
 }
 
+
+function admin_user_users_edit_graph_tabs(&$tabs): void
+{
+    global $lang;
+
+    $tabs['mint'] = $lang->mint_admin;
+}
+
+function admin_user_users_edit_graph(): void
+{
+    global $mybb, $db, $lang, $form, $form_container, $user;
+
+    $inventoryTypes = \mint\queryResultAsArray(InventoryTypes::with($db)->get(), 'id', 'title');
+
+    echo '<div id="tab_mint">';
+
+    $form_container = new \FormContainer($lang->mint_admin . ': ' . \htmlspecialchars_uni($user['username']));
+
+    $form_container->output_row(
+        $lang->mint_inventory_type,
+        null,
+        $form->generate_select_box(
+            'mint_inventory_type_id',
+            $inventoryTypes,
+            $mybb->input['mint_inventory_type_id']
+        )
+    );
+
+    $form_container->output_row(
+        $lang->mint_inventory_slots_bonus,
+        null,
+        $form->generate_numeric_field(
+            'mint_inventory_slots_bonus',
+            $mybb->input['mint_inventory_slots_bonus']
+        )
+    );
+
+    $form_container->end();
+
+    echo '</div>';
+}
+
+function admin_user_users_edit_commit_start(): void
+{
+    global $mybb, $db, $user, $extra_user_updates;
+
+    $inventoryTypeIds = \mint\queryResultAsArray(InventoryTypes::with($db)->get(), null, 'id');
+
+    $inputInventoryTypeId = $mybb->get_input('mint_inventory_type_id', \MyBB::INPUT_INT);
+
+    if (in_array($inputInventoryTypeId, $inventoryTypeIds)) {
+        $extra_user_updates['mint_inventory_type_id'] = $inputInventoryTypeId;
+    }
+
+    $extra_user_updates['mint_inventory_slots_bonus'] = $mybb->get_input('mint_inventory_slots_bonus', \MyBB::INPUT_INT);
+}
+
+
 function admin_user_users_merge_commit(): void
 {
     global $db, $source_user, $destination_user;

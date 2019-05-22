@@ -56,7 +56,7 @@ class ItemTransactions extends \mint\DbEntityRepository
                 [
                     'table' => 'balance_transfers',
                     'column' => 'id',
-                ]
+                ],
             ],
             'uniqueKey' => 1,
         ],
