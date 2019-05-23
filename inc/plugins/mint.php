@@ -283,7 +283,7 @@ function mint_activate()
             'value'       => '3',
         ],
         'recent_item_transactions_entries' => [
-            'title'       => 'Recent Item Trensactions to Display',
+            'title'       => 'Recent Item Transactions to Display',
             'description' => 'Choose how many recently completed item transactions should be shown on the Hub page.',
             'optionscode' => 'numeric',
             'value'       => '3',
