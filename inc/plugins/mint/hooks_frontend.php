@@ -924,7 +924,14 @@ function misc_start(): void
 
 function member_profile_end(): void
 {
-    global $mybb, $db, $lang, $memprofile, $theme, $mintRecentBalanceOperations, $mintInventoryPreview;
+    global $mybb, $db, $lang, $memprofile, $theme,
+    $mintContextUserBalance, $mintContextUserInventoryStatus, $mintRecentBalanceOperations, $mintInventoryPreview;
+
+    $mintContextUserBalance = \mint\getFormattedCurrency($memprofile['mint_balance']);
+    $mintContextUserInventoryStatus = $lang->sprintf(
+        $lang->mint_items_count,
+        (int)$memprofile['mint_inventory_slots_occupied']
+    );
 
     $query = \mint\getUserPublicBalanceOperations(
         $memprofile['uid'],
@@ -933,7 +940,6 @@ function member_profile_end(): void
         ],
         'LIMIT ' . \mint\getSettingValue('recent_balance_operations_entries')
     );
-
     $mintRecentBalanceOperations = \mint\getRenderedRecentBalanceOperations($query);
 
     $items = \mint\getItemOwnershipsWithDetails($memprofile['uid'], null, 10);

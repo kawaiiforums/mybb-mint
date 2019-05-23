@@ -29,6 +29,8 @@ Selected user groups are able to _forge_ amounts of an Item Type to be assigned 
 - `{$mintInventoryStatus}` - number of occupied slots in inventory of the currently logged in user; empty if guest (`global_start` hook)
 
 ##### User Profiles
+- `{$mintContextUserBalance}` - formatted balance of the user (`member_profile_end` hook)
+- `{$mintContextUserInventoryStatus}` - number of occupied slots in inventory of the user (`member_profile_end` hook)
 - `{$mintRecentBalanceOperations}` - recent Balance Operations widget on user profiles (`member_profile_end` hook)
 - `{$mintInventoryPreview}` - Inventory preview widget on user profiles (`member_profile_end` hook)
 - `{$mint}`
