@@ -288,6 +288,12 @@ function mint_activate()
             'optionscode' => 'numeric',
             'value'       => '3',
         ],
+        'inventory_preview_entries' => [
+            'title'       => 'Inventory Preview Items to Display',
+            'description' => 'Choose how many items should be shown in Inventory preview blocks.',
+            'optionscode' => 'numeric',
+            'value'       => '10',
+        ],
         'top_users_entries' => [
             'title'       => 'Top Users by Balance to Display',
             'description' => 'Choose how many users should be listed in the <i>Top Users by Balance</i> ranking.',

@@ -155,7 +155,11 @@ function misc_start(): void
                 $itemsServiceLinks = \mint\getRenderedServiceLinks($links, 'items');
 
 
-                $items = \mint\getItemOwnershipsWithDetails($mybb->user['uid'], null, 10);
+                $items = \mint\getItemOwnershipsWithDetails(
+                    $mybb->user['uid'],
+                    null,
+                    \mint\getSettingValue('inventory_preview_entries')
+                );
                 $inventoryPreview = \mint\getRenderedInventoryPreview($items, $mybb->user['uid']);
 
 
@@ -942,7 +946,11 @@ function member_profile_end(): void
     );
     $mintRecentBalanceOperations = \mint\getRenderedRecentBalanceOperations($query, $memprofile['uid']);
 
-    $items = \mint\getItemOwnershipsWithDetails($memprofile['uid'], null, 10);
+    $items = \mint\getItemOwnershipsWithDetails(
+        $memprofile['uid'],
+        null,
+        \mint\getSettingValue('inventory_preview_entries')
+    );
     $mintInventoryPreview = \mint\getRenderedInventoryPreview($items, $memprofile['uid']);
 }
 
