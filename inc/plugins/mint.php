@@ -282,9 +282,9 @@ function mint_activate()
             'optionscode' => 'numeric',
             'value'       => '3',
         ],
-        'recent_public_balance_transfers_entries' => [
-            'title'       => 'Recent Public Balance Transfers to Display',
-            'description' => 'Choose how many public balance transfers should be shown on the Hub page.',
+        'recent_item_transactions_entries' => [
+            'title'       => 'Recent Item Trensactions to Display',
+            'description' => 'Choose how many recently completed item transactions should be shown on the Hub page.',
             'optionscode' => 'numeric',
             'value'       => '3',
         ],

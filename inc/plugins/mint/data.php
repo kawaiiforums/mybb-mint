@@ -111,10 +111,7 @@ function getUserPublicBalanceOperations(int $userId, array $includePrivateWithUs
     $whereString = 'bo.user_id = ' . (int)$userId;
 
     if (!empty($includePrivateWithUserIds)) {
-        $csv = implode(
-            ',',
-            array_map('intval', $includePrivateWithUserIds)
-        );
+        $csv = \mint\getIntegerCsv($includePrivateWithUserIds);
 
         $whereString .= ' AND (
             private IS NULL OR
@@ -134,10 +131,7 @@ function countUserPublicBalanceOperations(int $userId, array $includePrivateWith
     $whereString = 'bo.user_id = ' . (int)$userId;
 
     if (!empty($includePrivateWithUserIds)) {
-        $csv = implode(
-            ',',
-            array_map('intval', $includePrivateWithUserIds)
-        );
+        $csv = \mint\getIntegerCsv($includePrivateWithUserIds);
 
         $whereString .= ' AND (
             private IS NULL OR
@@ -410,11 +404,11 @@ function countOccupiedUserInventorySlots(?array $userIds = null, ?array $itemTyp
     ];
 
     if ($userIds !== null) {
-        $where[] = 'io.user_id IN (' . implode(',', array_map('intval', $userIds)) . ')';
+        $where[] = 'io.user_id IN (' . \mint\getIntegerCsv($userIds) . ')';
     }
 
     if ($itemTypeId !== null) {
-        $where[] = 'it.id IN (' . implode(',', array_map('intval', $itemTypeId)) . ')';
+        $where[] = 'it.id IN (' . \mint\getIntegerCsv($itemTypeId) . ')';
     }
 
     $where = implode(' AND ', $whereConditions);
@@ -485,7 +479,7 @@ function getItemsById(array $ids, bool $forUpdate = false)
     global $db;
 
     if (!empty($ids)) {
-        $conditions = 'id IN (' . implode(',', array_map('intval', $ids)) . ')';
+        $conditions = 'id IN (' . \mint\getIntegerCsv($ids) . ')';
 
         if ($forUpdate && in_array($db->type, ['pgsql', 'mysql'])) {
             $conditions .= ' FOR UPDATE';
@@ -505,7 +499,7 @@ function getItemOwnershipsById(array $ids, bool $forUpdate = false)
     global $db;
 
     if (!empty($ids)) {
-        $conditions = 'id IN (' . implode(',', array_map('intval', $ids)) . ')';
+        $conditions = 'id IN (' . \mint\getIntegerCsv($ids) . ')';
 
         if ($forUpdate && in_array($db->type, ['pgsql', 'mysql'])) {
             $conditions .= ' FOR UPDATE';
@@ -564,7 +558,7 @@ function getItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwnershipI
     global $db;
 
     if (!empty($itemOwnershipIds)) {
-        $csv = implode(',', array_map('intval', $itemOwnershipIds));
+        $csv = \mint\getIntegerCsv($itemOwnershipIds);
 
         $query = $db->query("
             SELECT
@@ -691,7 +685,7 @@ function getItemsDetails(array $itemIds): array
     global $db;
 
     if (!empty($itemIds)) {
-        $csv = implode(',', array_map('intval', $itemIds));
+        $csv = \mint\getIntegerCsv($itemIds);
 
         return \mint\queryResultAsArray(
             $db->query("
@@ -724,7 +718,7 @@ function getItemOwnershipsDetails(array $itemOwnershipIds): array
     global $db;
 
     if (!empty($itemOwnershipIds)) {
-        $csv = implode(',', array_map('intval', $itemOwnershipIds));
+        $csv = \mint\getIntegerCsv($itemOwnershipIds);
 
         return \mint\queryResultAsArray(
             $db->query("
@@ -963,19 +957,7 @@ function getItemTransactionById(int $transactionId, bool $forUpdate = false): ?a
     }
 }
 
-function getUserActiveTransactions(int $userId)
-{
-    global $db;
-
-    $query = ItemTransactions::with($db)->get(
-        'id, ask_date',
-        'WHERE active = 1 AND ask_user_id = ' . (int)$userId
-    );
-
-    return $query;
-}
-
-function getItemTransactionDetails(int $transactionId): ?array
+function getItemTransactionsDetails(?string $conditions)
 {
     global $db;
 
@@ -988,8 +970,17 @@ function getItemTransactionDetails(int $transactionId): ?array
                 " . TABLE_PREFIX . "mint_item_transactions iTr
                 LEFT JOIN " . TABLE_PREFIX . "users ask_u ON iTr.ask_user_id = ask_u.uid 
                 LEFT JOIN " . TABLE_PREFIX . "users bid_u ON iTr.bid_user_id = bid_u.uid
-            WHERE iTr.id = " . (int)$transactionId . "
+            " . $conditions . "
     ");
+
+    return $query;
+}
+
+function getItemTransactionDetails(int $transactionId): ?array
+{
+    global $db;
+
+    $query = \mint\getItemTransactionsDetails('WHERE iTr.id = ' . (int)$transactionId);
 
     if ($db->num_rows($query) == 1) {
         return $db->fetch_array($query);
@@ -998,6 +989,45 @@ function getItemTransactionDetails(int $transactionId): ?array
     }
 }
 
+function getUserActiveTransactions(int $userId): array
+{
+    global $db;
+
+    $entries = \mint\queryResultAsArray(
+        \mint\getItemTransactionsDetails('WHERE active = 1 AND ask_user_id = ' . (int)$userId),
+        'id'
+    );
+
+    $counts = \mint\countItemTransactionsItems(
+        array_keys($entries)
+    );
+
+    foreach ($counts as $transactionId => $count) {
+        $entries[$transactionId]['transactionItemsCount'] = $count;
+    }
+
+    return $entries;
+}
+
+function getRecentPublicItemTransactions(int $limit): array
+{
+    $entries = \mint\queryResultAsArray(
+        \mint\getItemTransactionsDetails('WHERE iTr.completed = 1 ORDER BY iTr.completed_date LIMIT ' . (int)$limit),
+        'id'
+    );
+
+    $counts = \mint\countItemTransactionsItems(
+        array_keys($entries)
+    );
+
+    foreach ($counts as $transactionId => $count) {
+        $entries[$transactionId]['transactionItemsCount'] = $count;
+    }
+
+    return $entries;
+}
+
+// item transaction items
 function getItemTransactionItems(int $transactionId): array
 {
     global $db;
@@ -1015,4 +1045,30 @@ function getItemTransactionItems(int $transactionId): array
                 WHERE item_transaction_id = " . (int)$transactionId . "
         ")
     );
+}
+
+function countItemTransactionsItems(array $transactionIds): array
+{
+    global $db;
+
+    $counts = array_fill_keys($transactionIds, null);
+
+    if ($transactionIds) {
+        $results = \mint\queryResultAsArray(
+            $db->query("
+                SELECT
+                    item_transaction_id, COUNT(*) AS n
+                    FROM
+                        " . TABLE_PREFIX . "mint_item_transaction_items iTrI
+                    WHERE iTrI.item_transaction_id IN (" . \mint\getIntegerCsv($transactionIds) . ")
+                    GROUP BY item_transaction_id
+            "),
+            'item_transaction_id',
+            'n'
+        );
+
+        $counts = $results + $counts;
+    }
+
+    return $counts;
 }

@@ -543,6 +543,14 @@ function getArrayWithColumnAsKey(array $array, string $column): array
     return array_combine(array_column($array, $column), $array);
 }
 
+function getIntegerCsv(array $values): string
+{
+    return implode(
+        ',',
+        array_map('intval', $values)
+    );
+}
+
 // reflection
 function getClassMethodsNamesMatching($class, string $pattern): array
 {

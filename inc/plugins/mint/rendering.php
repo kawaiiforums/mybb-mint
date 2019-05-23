@@ -2,6 +2,7 @@
 
 namespace mint;
 
+// common
 function getFormattedCurrency(int $value, bool $simple = false, bool $useHtml = false): string
 {
     global $lang;
@@ -30,149 +31,6 @@ function getRenderedMessage(string $content, string $type = 'note'): string
     eval('$message = "' . \mint\tpl('message') . '";');
 
     return $message;
-}
-
-function getRenderedBalanceOperationEntries($query, ?int $contextUserId = null, bool $showSigns = true): ?string
-{
-    global $mybb, $db, $lang;
-
-    $output = null;
-
-    while ($entry = $db->fetch_array($query)) {
-        $amount = \mint\getFormattedCurrency(abs($entry['value']));
-        $date = \my_date('normal', $entry['date']);
-        $note = \htmlspecialchars_uni($entry['note']);
-
-        if ($entry['value'] < 0) {
-            $sign = '-';
-            $type = 'negative';
-        } else {
-            $sign = '+';
-            $type = 'positive';
-        }
-
-        if (!$showSigns) {
-            $sign = null;
-        }
-
-        $details = [];
-
-        if ($entry['currency_termination_point_name']) {
-            $details[] = $lang->sprintf(
-                $lang->mint_balance_operations_termination_point,
-                \htmlspecialchars_uni($entry['currency_termination_point_name'])
-            );
-        }
-
-        if ($entry['from_user_id'] && $entry['from_user_id'] != $contextUserId) {
-            $details[] = $lang->sprintf(
-                $lang->mint_balance_operations_from_user,
-                \build_profile_link($entry['from_username'], $entry['from_user_id'])
-            );
-        }
-
-        if ($entry['to_user_id'] && $entry['to_user_id'] != $contextUserId) {
-            $details[] = $lang->sprintf(
-                $lang->mint_balance_operations_to_user,
-                \build_profile_link($entry['to_username'], $entry['to_user_id'])
-            );
-        }
-
-        if ($entry['item_transaction_id']) {
-            $details[] = '<a href="misc.php?action=economy_item_transaction&amp;id=' . $entry['item_transaction_id'] . '">' . $lang->mint_balance_operations_item_transaction . '</a>';
-        }
-
-        $details = implode(' &middot; ', $details);
-
-        $flags = null;
-
-        if ($entry['private'] == true) {
-            $flagType = 'private';
-            $flagContent = $lang->mint_balance_transfer_private;
-
-            eval('$flags .= "' . \mint\tpl('flag') . '";');
-        }
-
-        if (!empty($entry['handler'])) {
-            $flagType = 'automated';
-            $flagContent = $lang->mint_balance_transfer_automated;
-
-            eval('$flags .= "' . \mint\tpl('flag') . '";');
-        }
-
-        eval('$output .= "' . \mint\tpl('balance_operations_entry') . '";');
-    }
-
-    return $output;
-}
-
-function getRenderedBalanceTopUserEntries($query): ?string
-{
-    global $db, $lang;
-
-    $entries = null;
-
-    while ($entry = $db->fetch_array($query)) {
-        $profileLink = \build_profile_link(
-            \format_name($entry['username'], $entry['usergroup'], $entry['displaygroup']),
-            $entry['uid']
-        );
-        $balance = \mint\getFormattedCurrency($entry['mint_balance'], false, true);
-
-        eval('$entries .= "' . \mint\tpl('balance_top_users_entry') . '";');
-    }
-
-    eval('$output = "' . \mint\tpl('balance_top_users') . '";');
-
-    return $output;
-}
-
-function getRenderedRewardSourceLegend(array $legendEntries): ?string
-{
-    global $lang;
-
-    $entries = null;
-
-    foreach ($legendEntries as $legendEntry) {
-        $title = \htmlspecialchars_uni($legendEntry['title']);
-
-        if (isset($legendEntry['reward'])) {
-            if (is_callable($legendEntry['reward'])) {
-                $reward = $legendEntry['reward']();
-            } else {
-                $reward = $legendEntry['reward'];
-            }
-
-            $reward = my_number_format($reward);
-        } else {
-            $reward = null;
-        }
-
-        eval('$entries .= "' . \mint\tpl('reward_sources_legend_entry') . '";');
-    }
-
-    eval('$output = "' . \mint\tpl('reward_sources_legend') . '";');
-
-    return $output;
-}
-
-function getRenderedUserActiveTransactions($query): ?string
-{
-    global $db, $lang;
-
-    $entries = null;
-
-    while ($entry = $db->fetch_array($query)) {
-        $id = (int)$entry['id'];
-        $url = 'misc.php?action=economy_item_transaction&amp;id=' . $id;
-        $askDate = \my_date('normal', $entry['ask_date']);
-
-        eval('$entries .= "' . \mint\tpl('user_active_transactions_entry') . '";');
-    }
-
-    eval('$output = "' . \mint\tpl('user_active_transactions') . '";');
-
-    return $output;
 }
 
 function getRenderedServiceLinks(array $links, string $sectionName): ?string
@@ -208,6 +66,59 @@ function getRenderedActionLinks(array $links): ?string
             eval('$output .= "' . \mint\tpl('action_link_button') . '";');
         }
     }
+
+    return $output;
+}
+
+// blocks
+function getRenderedRecentBalanceOperations($query, ?int $contextUserId = null): ?string
+{
+    global $db, $lang;
+
+    $output = null;
+
+    if ($db->num_rows($query) != 0) {
+        $entries = \mint\getRenderedBalanceOperationEntries($query, $contextUserId);
+    } else {
+        $entries = \mint\getRenderedMessage($lang->mint_no_entries);
+    }
+
+    $url = 'misc.php?action=economy_balance_operations';
+
+    if ($contextUserId) {
+        $url .= '&amp;user_id=' . (int)$contextUserId;
+    }
+
+    eval('$output = "' . \mint\tpl('recent_balance_operations') . '";');
+
+    return $output;
+}
+
+function getRenderedRewardSourceLegend(array $legendEntries): ?string
+{
+    global $lang;
+
+    $entries = null;
+
+    foreach ($legendEntries as $legendEntry) {
+        $title = \htmlspecialchars_uni($legendEntry['title']);
+
+        if (isset($legendEntry['reward'])) {
+            if (is_callable($legendEntry['reward'])) {
+                $reward = $legendEntry['reward']();
+            } else {
+                $reward = $legendEntry['reward'];
+            }
+
+            $reward = my_number_format($reward);
+        } else {
+            $reward = null;
+        }
+
+        eval('$entries .= "' . \mint\tpl('reward_sources_legend_entry') . '";');
+    }
+
+    eval('$output = "' . \mint\tpl('reward_sources_legend') . '";');
 
     return $output;
 }
@@ -291,6 +202,30 @@ function getRenderedInventory(array $items, string $type = 'standard', ?int $pla
     return $output;
 }
 
+function getRenderedInventoryPreview(array $items, ?int $contextUserId = null): ?string
+{
+    global $lang;
+
+    $output = null;
+
+    if (count($items) > 0) {
+        $entries = \mint\getRenderedInventory($items, 'small');
+    } else {
+        $entries = \mint\getRenderedMessage($lang->mint_no_entries);
+    }
+
+    $url = 'misc.php?action=economy_user_inventory';
+
+    if ($contextUserId) {
+        $url .= '&amp;user_id=' . (int)$contextUserId;
+    }
+
+    eval('$output = "' . \mint\tpl('inventory_preview') . '";');
+
+    return $output;
+}
+
+// block elements
 function getRenderedItemCard(array $item): ?string
 {
     global $mybb, $lang;
@@ -371,6 +306,152 @@ function getRenderedItemCard(array $item): ?string
     $itemActivationDate = \my_date('normal', $item['item_activation_date']);
 
     eval('$output = "' . \mint\tpl('item_card') . '";');
+
+    return $output;
+}
+
+function getRenderedBalanceOperationEntries($query, ?int $contextUserId = null, bool $showSigns = true): ?string
+{
+    global $mybb, $db, $lang;
+
+    $output = null;
+
+    while ($entry = $db->fetch_array($query)) {
+        $amount = \mint\getFormattedCurrency(abs($entry['value']));
+        $date = \my_date('normal', $entry['date']);
+        $note = \htmlspecialchars_uni($entry['note']);
+
+        if ($entry['value'] < 0) {
+            $sign = '-';
+            $type = 'negative';
+        } else {
+            $sign = '+';
+            $type = 'positive';
+        }
+
+        if (!$showSigns) {
+            $sign = null;
+        }
+
+        $details = [];
+
+        if ($entry['currency_termination_point_name']) {
+            $details[] = $lang->sprintf(
+                $lang->mint_balance_operations_termination_point,
+                \htmlspecialchars_uni($entry['currency_termination_point_name'])
+            );
+        }
+
+        if ($entry['from_user_id'] && $entry['from_user_id'] != $contextUserId) {
+            $details[] = $lang->sprintf(
+                $lang->mint_from_user,
+                \build_profile_link($entry['from_username'], $entry['from_user_id'])
+            );
+        }
+
+        if ($entry['to_user_id'] && $entry['to_user_id'] != $contextUserId) {
+            $details[] = $lang->sprintf(
+                $lang->mint_to_user,
+                \build_profile_link($entry['to_username'], $entry['to_user_id'])
+            );
+        }
+
+        if ($entry['item_transaction_id']) {
+            $details[] = '<a href="misc.php?action=economy_item_transaction&amp;id=' . $entry['item_transaction_id'] . '">' . $lang->mint_balance_operations_item_transaction . '</a>';
+        }
+
+        $details = implode(' &middot; ', $details);
+
+        $flags = null;
+
+        if ($entry['private'] == true) {
+            $flagType = 'private';
+            $flagContent = $lang->mint_balance_transfer_private;
+
+            eval('$flags .= "' . \mint\tpl('flag') . '";');
+        }
+
+        if (!empty($entry['handler'])) {
+            $flagType = 'automated';
+            $flagContent = $lang->mint_balance_transfer_automated;
+
+            eval('$flags .= "' . \mint\tpl('flag') . '";');
+        }
+
+        eval('$output .= "' . \mint\tpl('balance_operations_entry') . '";');
+    }
+
+    return $output;
+}
+
+function getRenderedTransactionEntries($entries): ?string
+{
+    global $db, $lang;
+
+    $output = null;
+
+    foreach ($entries as $entry) {
+        $id = (int)$entry['id'];
+        $url = 'misc.php?action=economy_item_transaction&amp;id=' . $id;
+
+        $askDate = \my_date('normal', $entry['ask_date']);
+
+        if ($entry['completed_date']) {
+            $completedDate = \my_date('normal', $entry['completed_date']);
+            $date = $completedDate;
+        } else {
+            $completedDate = null;
+            $date = $askDate;
+        }
+
+        $details = [];
+
+        if (isset($entry['transactionItemsCount'])) {
+            $details[] = $lang->sprintf(
+                $lang->mint_items_count,
+                (int)$entry['transactionItemsCount']
+            );
+        }
+
+        $details[] = \mint\getFormattedCurrency(abs($entry['ask_price']));
+
+        if ($entry['ask_user_id']) {
+            $details[] = $lang->sprintf(
+                $lang->mint_from_user,
+                \build_profile_link($entry['ask_user_username'], $entry['ask_user_id'])
+            );
+        }
+
+        if ($entry['bid_user_id']) {
+            $details[] = $lang->sprintf(
+                $lang->mint_to_user,
+                \build_profile_link($entry['bid_user_username'], $entry['bid_user_id'])
+            );
+        }
+
+        $details = implode(' &middot; ', $details);
+
+        eval('$output .= "' . \mint\tpl('item_transactions_entry') . '";');
+    }
+
+    return $output;
+}
+
+function getRenderedBalanceTopUserEntries($query): ?string
+{
+    global $db;
+
+    $output = null;
+
+    while ($entry = $db->fetch_array($query)) {
+        $profileLink = \build_profile_link(
+            \format_name($entry['username'], $entry['usergroup'], $entry['displaygroup']),
+            $entry['uid']
+        );
+        $balance = \mint\getFormattedCurrency($entry['mint_balance'], false, true);
+
+        eval('$output .= "' . \mint\tpl('balance_top_users_entry') . '";');
+    }
 
     return $output;
 }

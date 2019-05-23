@@ -18,6 +18,9 @@ $l['mint_amount'] = 'Amount';
 $l['mint_submit'] = 'Submit';
 $l['mint_continue'] = 'Continue';
 $l['mint_currency_simple'] = '{1} {2}';
+$l['mint_to_user'] = 'to {1}';
+$l['mint_from_user'] = 'from {1}';
+$l['mint_items_count'] = '{1} items';
 
 $l['mint_page_economy_hub'] = 'Economy Hub';
 $l['mint_service_currency_mint'] = 'Mint';
@@ -41,8 +44,6 @@ $l['mint_page_economy_balance_operations'] = 'Balance Operations';
 $l['mint_page_economy_balance_operations_user'] = '{1}\'s Balance Operations ({2})';
 $l['mint_balance_operations_recent'] = 'Recent Balance Operations';
 $l['mint_balance_operations_termination_point'] = 'system operation (<code>{1}</code>)';
-$l['mint_balance_operations_to_user'] = 'to {1}';
-$l['mint_balance_operations_from_user'] = 'from {1}';
 $l['mint_balance_operations_item_transaction'] = 'item transaction';
 
 $l['mint_page_economy_items_forge'] = 'Forge Items';
@@ -94,6 +95,7 @@ $l['mint_item_transaction_new_error'] = 'Could not create transaction.';
 $l['mint_item_transaction_new_success'] = 'Successfully created item transaction offer.';
 $l['mint_item_transaction_select_items'] = 'Select items for transaction.';
 $l['mint_active_user_transactions'] = 'Active Transactions';
+$l['mint_recent_public_item_transactions'] = 'Recent Item Transactions';
 
 $l['mint_recent_public_balance_transfers'] = 'Recent Public Transfers';
 $l['mint_balance_top_users'] = 'Top Users by Balance';

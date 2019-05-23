@@ -23,6 +23,20 @@ Manual Item Transactions allow users to exchange currency units and items.
 
 Selected user groups are able to _forge_ amounts of an Item Type to be assigned to individual accounts, inserting it into the economy.
 
+### Widgets & Variables
+##### Global
+- `{$mintBalance}` - formatted balance of the currently logged in user; empty if guest (`global_start` hook)
+- `{$mintInventoryStatus}` - number of occupied slots in inventory of the currently logged in user; empty if guest (`global_start` hook)
+
+##### User Profiles
+- `{$mintRecentBalanceOperations}` - recent Balance Operations widget on user profiles (`member_profile_end` hook)
+- `{$mintInventoryPreview}` - Inventory preview widget on user profiles (`member_profile_end` hook)
+- `{$mint}`
+
+##### Postbit
+- `{$post['mintBalance']}` - formatted balance of the author (`global_start` hook)
+- `{$post['mintInventoryStatus']}` - number of occupied slots in inventory of the author (`global_start` hook)
+
 ### Plugin Management Events
 - **Install:**
   - Database structure created/altered

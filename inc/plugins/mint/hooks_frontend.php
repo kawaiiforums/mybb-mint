@@ -6,12 +6,43 @@ use mint\DbRepository\BalanceTransfers;
 use mint\DbRepository\ItemTransactions;
 use mint\DbRepository\ItemTypes;
 
+function global_start(): void
+{
+    global $mybb, $lang, $mintBalance, $mintInventoryStatus;
+
+    $lang->load('mint');
+
+    switch (\THIS_SCRIPT) {
+        case 'misc.php':
+            if ($mybb->get_input('action') == 'mint_hub') {
+                \itscomplicated\loadTemplates([
+                ], 'mint_');
+            }
+
+            break;
+        case 'member.php':
+            if ($mybb->get_input('action') == 'profile') {
+                \itscomplicated\loadTemplates([
+                ], 'mint_balance');
+            }
+    }
+
+    if ($mybb->user['uid'] != 0) {
+        $mintBalance = \mint\getFormattedCurrency($mybb->user['mint_balance']);
+        $mintInventoryStatus = $lang->sprintf(
+            $lang->mint_items_count,
+            (int)$mybb->user['mint_inventory_slots_occupied']
+        );
+    } else {
+        $mintBalance = null;
+        $mintInventoryStatus = null;
+    }
+}
+
 function misc_start(): void
 {
     global $mybb, $lang, $db,
     $headerinclude, $header, $theme, $usercpnav, $footer;
-
-    $lang->load('mint');
 
     $pages = [
         'economy_hub' => [
@@ -46,15 +77,11 @@ function misc_start(): void
                     \mint\getSettingValue('recent_balance_operations_entries')
                 );
 
-                if ($db->num_rows($query) != 0) {
-                    $recentBalanceOperations = \mint\getRenderedBalanceOperationEntries($query, $mybb->user['uid']);
-                } else {
-                    $recentBalanceOperations = \mint\getRenderedMessage($lang->mint_no_entries);
-                }
+                $recentBalanceOperations = \mint\getRenderedRecentBalanceOperations($query);
 
 
                 $query = \mint\getRecentPublicBalanceTransfers(
-                    \mint\getSettingValue('recent_public_balance_transfers_entries')
+                    \mint\getSettingValue('recent_balance_operations_entries')
                 );
 
                 if ($db->num_rows($query) != 0) {
@@ -68,7 +95,9 @@ function misc_start(): void
                     $query = \mint\getTopUsersByBalance(\mint\getSettingValue('top_users_entries'));
 
                     if ($db->num_rows($query) != 0) {
-                        $balanceTopUsers = \mint\getRenderedBalanceTopUserEntries($query);
+                        $entries = \mint\getRenderedBalanceTopUserEntries($query);
+
+                        eval('$balanceTopUsers = "' . \mint\tpl('balance_top_users') . '";');
                     }
                 } else {
                     $balanceTopUsers = null;
@@ -126,22 +155,30 @@ function misc_start(): void
                 $itemsServiceLinks = \mint\getRenderedServiceLinks($links, 'items');
 
 
-                if ($userItemsCount > 0) {
-                    $items = \mint\getItemOwnershipsWithDetails($mybb->user['uid'], null, 10);
-                    $inventoryPreview = \mint\getRenderedInventory($items, 'small');
-                } else {
-                    $inventoryPreview = \mint\getRenderedMessage($lang->mint_no_entries);
-                }
+                $items = \mint\getItemOwnershipsWithDetails($mybb->user['uid'], null, 10);
+                $inventoryPreview = \mint\getRenderedInventoryPreview($items, $mybb->user['uid']);
 
 
-                $activeTransactions = \mint\getUserActiveTransactions($mybb->user['uid']);
+                $entries = \mint\getUserActiveTransactions($mybb->user['uid']);
 
-                if ($db->num_rows($activeTransactions) != 0) {
-                    $userActiveTransactions = \mint\getRenderedUserActiveTransactions($activeTransactions);
+                if ($entries) {
+                    $entries = \mint\getRenderedTransactionEntries($entries);
+
+                    eval('$userActiveTransactions = "' . \mint\tpl('user_active_item_transactions') . '";');
                 } else {
                     $userActiveTransactions = null;
                 }
 
+
+                $entries = \mint\getRecentPublicItemTransactions(
+                    \mint\getSettingValue('recent_item_transactions_entries')
+                );
+
+                if ($entries) {
+                    $recentItemTransactions = \mint\getRenderedTransactionEntries($entries);
+                } else {
+                    $recentItemTransactions = \mint\getRenderedMessage($lang->mint_no_entries);
+                }
 
                 eval('$page = "' . \mint\tpl('hub') . '";');
 
@@ -591,7 +628,7 @@ function misc_start(): void
                     $pageTitle = $lang->sprintf(
                         $lang->mint_page_economy_user_inventory_user,
                         \htmlspecialchars_uni($user['username']),
-                        $itemsNum
+                        $userInventoryData['slotsOccupied']
                     );
 
                     if ($itemsNum > 0) {
@@ -775,22 +812,22 @@ function misc_start(): void
 
                     $links = [];
 
-                    if ($transactionItems) {
-                        if ($mybb->user['uid'] != 0) {
-                            if ($transaction['active'] == 1 && $transaction['ask_user_id'] == $mybb->user['uid']) {
-                                if (isset($mybb->input['cancel']) && \verify_post_check($mybb->get_input('my_post_key'))) {
-                                    $result = ItemTransactions::with($db)->cancel($transaction['id']);
+                    if ($mybb->user['uid'] != 0) {
+                        if ($transaction['active'] == 1 && $transaction['ask_user_id'] == $mybb->user['uid']) {
+                            if (isset($mybb->input['cancel']) && \verify_post_check($mybb->get_input('my_post_key'))) {
+                                $result = ItemTransactions::with($db)->cancel($transaction['id']);
 
-                                    if ($result) {
-                                        \redirect('misc.php?action=economy_user_inventory', $lang->mint_item_transaction_cancel_success);
-                                    }
+                                if ($result) {
+                                    \redirect('misc.php?action=economy_user_inventory', $lang->mint_item_transaction_cancel_success);
                                 }
-
-                                $links['cancel'] = [
-                                    'title' => $lang->mint_item_transaction_action_cancel,
-                                ];
                             }
 
+                            $links['cancel'] = [
+                                'title' => $lang->mint_item_transaction_action_cancel,
+                            ];
+                        }
+
+                        if ($transactionItems) {
                             if ($transaction['active'] == 1 && $transaction['ask_user_id'] != $mybb->user['uid']) {
                                 if (\mint\getSettingValue('manual_balance_operations')) {
                                     if (isset($mybb->input['complete']) && \verify_post_check($mybb->get_input('my_post_key'))) {
@@ -883,6 +920,57 @@ function misc_start(): void
 
         \output_page($content);
     }
+}
+
+function member_profile_end(): void
+{
+    global $mybb, $db, $lang, $memprofile, $theme, $mintRecentBalanceOperations, $mintInventoryPreview;
+
+    $query = \mint\getUserPublicBalanceOperations(
+        $memprofile['uid'],
+        [
+            $mybb->user['uid'],
+        ],
+        'LIMIT ' . \mint\getSettingValue('recent_balance_operations_entries')
+    );
+
+    $mintRecentBalanceOperations = \mint\getRenderedRecentBalanceOperations($query);
+
+    $items = \mint\getItemOwnershipsWithDetails($memprofile['uid'], null, 10);
+    $mintInventoryPreview = \mint\getRenderedInventoryPreview($items, $memprofile['uid']);
+}
+
+function postbit(array $post): array
+{
+    global $lang;
+
+    if ($post['uid'] != 0) {
+        $post['mintBalance'] = \mint\getFormattedCurrency($post['mint_balance']);
+        $post['mintInventoryStatus'] = $lang->sprintf(
+            $lang->mint_items_count,
+            (int)$post['mint_inventory_slots_occupied']
+        );
+    } else {
+        $post['mintBalance'] = null;
+        $post['mintInventoryStatus'] = null;
+    }
+
+    return $post;
+}
+
+function postbit_prev(array $post): array
+{
+    return postbit($post);
+}
+
+function postbit_pm(array $post): array
+{
+    return postbit($post);
+}
+
+function postbit_announcement(array $post): array
+{
+    return postbit($post);
 }
 
 function xmlhttp(): void

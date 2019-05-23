@@ -28,13 +28,14 @@
             <nav class="mint__service-nav">
                 <div class="mint__service-nav__container">{$itemsServiceLinks}</div>
             </nav>
+            {$inventoryPreview}
+            {$userActiveTransactions}
             <div class="mint__block">
-                <p class="mint__block__title"><a href="misc.php?action=economy_user_inventory">{$lang->mint_items_inventory_preview}</a></p>
+                <p class="mint__block__title">{$lang->mint_recent_public_item_transactions}</p>
                 <div class="mint__table">
-                    {$inventoryPreview}
+                    {$recentItemTransactions}
                 </div>
             </div>
-            {$userActiveTransactions}
         </section>
 
         <section class="mint__section mint__section--currency">
@@ -51,12 +52,7 @@
             <nav class="mint__service-nav">
                 <div class="mint__service-nav__container">{$currencyServiceLinks}</div>
             </nav>
-            <div class="mint__block">
-                <p class="mint__block__title"><a href="misc.php?action=economy_balance_operations">{$lang->mint_balance_operations_recent}</a></p>
-                <div class="mint__table">
-                    {$recentBalanceOperations}
-                </div>
-            </div>
+            {$recentBalanceOperations}
             {$balanceTopUsers}
 
             <div class="mint__block">
