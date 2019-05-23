@@ -15,14 +15,14 @@ function global_start(): void
     switch (\THIS_SCRIPT) {
         case 'misc.php':
             if ($mybb->get_input('action') == 'mint_hub') {
-                \itscomplicated\loadTemplates([
+                \mint\loadTemplates([
                 ], 'mint_');
             }
 
             break;
         case 'member.php':
             if ($mybb->get_input('action') == 'profile') {
-                \itscomplicated\loadTemplates([
+                \mint\loadTemplates([
                 ], 'mint_balance');
             }
     }
