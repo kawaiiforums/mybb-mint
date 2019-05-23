@@ -940,7 +940,7 @@ function member_profile_end(): void
         ],
         'LIMIT ' . \mint\getSettingValue('recent_balance_operations_entries')
     );
-    $mintRecentBalanceOperations = \mint\getRenderedRecentBalanceOperations($query);
+    $mintRecentBalanceOperations = \mint\getRenderedRecentBalanceOperations($query, $memprofile['uid']);
 
     $items = \mint\getItemOwnershipsWithDetails($memprofile['uid'], null, 10);
     $mintInventoryPreview = \mint\getRenderedInventoryPreview($items, $memprofile['uid']);
