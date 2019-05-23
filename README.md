@@ -34,8 +34,8 @@ Selected user groups are able to _forge_ amounts of an Item Type to be assigned 
 - `{$mint}`
 
 ##### Postbit
-- `{$post['mintBalance']}` - formatted balance of the author (`global_start` hook)
-- `{$post['mintInventoryStatus']}` - number of occupied slots in inventory of the author (`global_start` hook)
+- `{$post['mintBalance']}` - formatted balance of the author (`postbit`, `postbit_prev`, `postbit_pm`, `postbit_announcement` hooks)
+- `{$post['mintInventoryStatus']}` - number of occupied slots in inventory of the author (`postbit`, `postbit_prev`, `postbit_pm`, `postbit_announcement` hooks)
 
 ### Plugin Management Events
 - **Install:**
