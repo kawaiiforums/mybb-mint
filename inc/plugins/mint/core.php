@@ -145,9 +145,9 @@ function registerRewardSources(array $rewardSources): void
 {
     global $mintRuntimeRegistry;
 
-    $mintRuntimeRegistry['rewardSources'] = array_unique(
-        array_merge($mintRuntimeRegistry['rewardSources'] ?? [], $rewardSources)
-    );
+    foreach ($rewardSources as $rewardSourceName => $rewardSource) {
+        $mintRuntimeRegistry['rewardSources'][$rewardSourceName] = $rewardSource;
+    }
 }
 
 function getRegisteredRewardSources(): array

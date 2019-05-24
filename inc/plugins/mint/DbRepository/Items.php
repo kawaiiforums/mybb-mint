@@ -75,6 +75,12 @@ class Items extends \mint\DbEntityRepository
 
         $result &= ItemOwnerships::with($this->db)->removeByItemId($itemId);
 
+        $transactionId = \mint\getActiveItemTransactionIdByItemId($itemId);
+
+        if ($transactionId) {
+            $result &= ItemTransactions::with($this->db)->cancel($transactionId);
+        }
+
         return $result;
     }
 }

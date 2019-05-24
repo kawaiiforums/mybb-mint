@@ -158,7 +158,8 @@ function misc_start(): void
                 $items = \mint\getItemOwnershipsWithDetails(
                     $mybb->user['uid'],
                     null,
-                    \mint\getSettingValue('inventory_preview_entries')
+                    \mint\getSettingValue('inventory_preview_entries'),
+                    true
                 );
                 $inventoryPreview = \mint\getRenderedInventoryPreview($items, $mybb->user['uid']);
 
@@ -564,7 +565,7 @@ function misc_start(): void
 
                 $item = \mint\getItemOwnershipWithDetails($mybb->get_input('item_ownership_id', \MyBB::INPUT_INT));
 
-                if ($item !== null && $item['user_id'] == $mybb->user['uid'] && $item['item_type_discardable']) {
+                if ($item !== null && $item['user_id'] == $mybb->user['uid'] && $item['item_type_discardable'] && !$item['item_transaction_id']) {
                     if ($item['item_type_stacked']) {
                         $maxAmount = $item['stacked_amount'];
                         $amountFieldAttributes = null;
@@ -667,7 +668,7 @@ function misc_start(): void
 
                     $links = [];
 
-                    if ($item['user_id'] == $mybb->user['uid'] && $item['item_type_discardable'] == true) {
+                    if ($item['user_id'] == $mybb->user['uid'] && $item['item_type_discardable'] == true && $item['item_transaction_id'] == null) {
                         $links['discard'] = [
                             'url' => 'misc.php?action=economy_items_discard&item_ownership_id=' . $item['item_ownership_id'],
                             'title' => $lang->mint_items_action_discard,
@@ -678,6 +679,13 @@ function misc_start(): void
                         $links['melt'] = [
                             'url' => 'misc.php?action=economy_items_melt&item_ownership_id=' . $item['item_ownership_id'],
                             'title' => $lang->mint_items_action_melt,
+                        ];
+                    }
+
+                    if ($item['item_transaction_id']) {
+                        $links['transaction'] = [
+                            'url' => 'misc.php?action=economy_item_transaction&id=' . $item['item_transaction_id'],
+                            'title' => $lang->mint_items_action_active_transaction,
                         ];
                     }
 
@@ -718,7 +726,7 @@ function misc_start(): void
                         $userItemSelection = json_decode($mybb->get_input('selected_items'), true, 2);
 
                         if ($userItemSelection) {
-                            $items = \mint\getItemIdsByResolvedStackedAmount($userItemSelection);
+                            $items = \mint\getItemIdsByResolvedStackedAmount($userItemSelection, true);
 
                             if (!empty($items)) {
                                 $transactionId = ItemTransactions::with($db)->create([
@@ -949,7 +957,8 @@ function member_profile_end(): void
     $items = \mint\getItemOwnershipsWithDetails(
         $memprofile['uid'],
         null,
-        \mint\getSettingValue('inventory_preview_entries')
+        \mint\getSettingValue('inventory_preview_entries'),
+        true
     );
     $mintInventoryPreview = \mint\getRenderedInventoryPreview($items, $memprofile['uid']);
 }

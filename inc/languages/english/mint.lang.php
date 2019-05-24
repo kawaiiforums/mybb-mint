@@ -70,8 +70,10 @@ $l['mint_items_in_stack'] = '{1} in stack';
 $l['mint_item_non_discardable'] = 'Non-discardable';
 $l['mint_item_in_transaction'] = 'Active transaction';
 $l['mint_item_non_transferable'] = 'Non-transferable';
+$l['mint_item_deactivated'] = 'Deactivated';
 $l['mint_items_action_discard'] = 'Discard';
 $l['mint_items_action_melt'] = 'Melt';
+$l['mint_items_action_active_transaction'] = 'Active Transaction';
 
 $l['mint_page_economy_item_transaction'] = 'Item Transaction';
 $l['mint_item_transaction'] = 'Items Transaction';

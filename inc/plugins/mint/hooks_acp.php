@@ -221,6 +221,7 @@ function admin_load(): void
         $tabControllers = [
             'balance_operations',
             'balance_transfers',
+            'item_transactions',
         ];
 
         foreach ($tabControllers as $tabName) {
@@ -351,6 +352,102 @@ function admin_load(): void
 
                         return $output;
                     },
+                    'filter' => true,
+                ],
+            ]);
+            $controller->addForeignKeyData([
+                'users' => [
+                    'username',
+                ],
+            ]);
+            $controller->insertAllowed(false);
+            $controller->listManagerOptions([
+                'order_dir' => 'desc',
+            ]);
+
+            $controller->run();
+        } elseif ($mybb->input['action'] == 'item_transactions') {
+            $controller = new AcpEntityManagementController('item_transactions', ItemTransactions::class);
+
+            $controller->setColumns([
+                'id' => [],
+                'ask_date' => [
+                    'presenter' => function (string $value) {
+                        return \my_date('normal', $value);
+                    },
+                ],
+                'ask_user' => [
+                    'dataColumn' => 'ask_user_username',
+                    'presenter' => function (?string $value, array $row) {
+                        if ($value !== null) {
+                            return \build_profile_link($value, $row['ask_user_id']);
+                        } else {
+                            return null;
+                        }
+                    },
+                    'filter' => true,
+                    'filterConditionColumn' => 't2.username',
+                ],
+                'bid_user' => [
+                    'dataColumn' => 'bid_user_username',
+                    'presenter' => function (?string $value, array $row) {
+                        if ($value !== null) {
+                            return \build_profile_link($value, $row['bid_user_id']);
+                        } else {
+                            return null;
+                        }
+                    },
+                    'filter' => true,
+                    'filterConditionColumn' => 't3.username',
+                ],
+                'ask_price' => [
+                    'formMethod' => 'generate_numeric_field',
+                    'filter' => true,
+                ],
+                'active' => [
+                    'presenter' => function (string $value) use ($lang) {
+                        return $value ? $lang->yes : $lang->no;
+                    },
+                    'formElement' => function (\Form $form, array $entity, string $name) use ($lang) {
+                        $output = null;
+
+                        $output .= $form->generate_radio_button($name, '1', $lang->yes);
+                        $output .= '<br />';
+                        $output .= $form->generate_radio_button($name, '0', $lang->no);
+
+                        return $output;
+                    },
+                    'filter' => true,
+                ],
+                'completed' => [
+                    'presenter' => function (string $value) use ($lang) {
+                        return $value ? $lang->yes : $lang->no;
+                    },
+                    'formElement' => function (\Form $form, array $entity, string $name) use ($lang) {
+                        $output = null;
+
+                        $output .= $form->generate_radio_button($name, '1', $lang->yes);
+                        $output .= '<br />';
+                        $output .= $form->generate_radio_button($name, '0', $lang->no);
+
+                        return $output;
+                    },
+                    'filter' => true,
+                ],
+                'completed_date' => [
+                    'presenter' => function (?string $value) {
+                        return \my_date('normal', $value);
+                    },
+                ],
+                'balance_transfer_id' => [
+                    'presenter' => function (?int $value) {
+                        if ($value !== null) {
+                            return '#' . (int)$value;
+                        } else {
+                            return null;
+                        }
+                    },
+                    'formMethod' => 'generate_numeric_field',
                     'filter' => true,
                 ],
             ]);

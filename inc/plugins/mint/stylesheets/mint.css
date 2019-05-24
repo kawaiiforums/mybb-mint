@@ -52,6 +52,7 @@ a.mint__action-links__entry { color: inherit; text-decoration: none; }
 .mint__flag--non-discardable { border-color: #e7b3ff; color: #915ca9; }
 .mint__flag--in-transaction { border-style: dashed; border-color: #b7ccde; color: #547694; }
 .mint__flag--non-transferable { border-color: #b7ccde; color: #547694; }
+.mint__flag--deactivated { border-color: #aaa; color: #444; }
 
 .mint .pagination { padding: 20px 0; text-align: center; }
 
@@ -95,12 +96,14 @@ a.mint__service-nav__link:hover { background-color: var(--color); color: var(--s
 .mint__inventory { margin: 10px 0; padding: 10px; --background: #FFF; }
 .mint__inventory--small { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); }
 .mint__inventory a { text-decoration: none; color: inherit; }
-.mint__inventory__item { display: flex; position: relative; justify-content: space-around; height: 80px; width: 80px; background: #EEE; background-size: cover; background-position: center center; border-radius: 30%; opacity: 0.7; transition: 0.2s; }
+.mint__inventory__item { display: flex; position: relative; justify-content: space-around; height: 80px; width: 80px; background: #EEE; background-size: cover; background-position: center center; border-radius: 30%; opacity: 0.8; transition: 0.2s; }
 .mint__inventory__item--slot { background: none; border: dashed 2px rgba(0,0,0,0.1); }
 .mint__inventory__item::before { position: absolute; top: -4px; bottom: -4px; left: -4px; right: -4px; border-radius: 31%; border: 2px transparent; content: ''; }
 .mint__inventory__item--non-discardable::before { border-style: solid; border-color: #e7b3ff; }
 .mint__inventory__item--in-transaction::before { border-style: dashed; border-color: #b7ccde; }
 .mint__inventory__item--non-transferable::before { border-style: solid; border-color: #b7ccde; }
+.mint__inventory__item--deactivated::before { border-style: solid; border-color: #444; }
+.mint__inventory__item--deactivated { opacity: 0.5; }
 .mint__inventory--small .mint__inventory__item { height: 60px; width: 60px; }
 .mint__inventory--small .mint__inventory__item::before { top: -3px; bottom: -3px; left: -3px; right: -3px; border-width: 1px; }
 .mint__item-card .mint__inventory__item { height: 100px; width: 100px; opacity: 1; }

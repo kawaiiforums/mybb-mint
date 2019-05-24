@@ -159,6 +159,10 @@ function getRenderedInventory(array $items, string $type = 'standard', ?int $pla
             $classes[] = $elementClass . '--in-transaction';
         }
 
+        if (!$item['item_active']) {
+            $classes[] = $elementClass . '--deactivated';
+        }
+
         $classes = implode(' ', $classes);
 
         if ($item['stacked_amount']) {
@@ -247,15 +251,6 @@ function getRenderedItemCard(array $item): ?string
         $classes[] = $elementClass . '--stacked';
     } else {
         $classes[] = $elementClass . '--standard';
-
-        if ($item['item_transaction_id']) {
-            $classes[] = $elementClass . '--in-transaction';
-
-            $flagType = 'in-transaction';
-            $flagContent = $lang->mint_item_in_transaction;
-
-            eval('$flags .= "' . \mint\tpl('flag') . '";');
-        }
     }
 
     if (!$item['item_type_discardable']) {
@@ -272,6 +267,24 @@ function getRenderedItemCard(array $item): ?string
 
         $flagType = 'non-transferable';
         $flagContent = $lang->mint_item_non_transferable;
+
+        eval('$flags .= "' . \mint\tpl('flag') . '";');
+    }
+
+    if ($item['item_transaction_id']) {
+        $classes[] = $elementClass . '--in-transaction';
+
+        $flagType = 'in-transaction';
+        $flagContent = $lang->mint_item_in_transaction;
+
+        eval('$flags .= "' . \mint\tpl('flag') . '";');
+    }
+
+    if (!$item['item_active']) {
+        $classes[] = $elementClass . '--deactivated';
+
+        $flagType = 'deactivated';
+        $flagContent = $lang->mint_item_deactivated;
 
         eval('$flags .= "' . \mint\tpl('flag') . '";');
     }

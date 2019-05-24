@@ -41,11 +41,6 @@ class ItemOwnerships extends \mint\DbEntityRepository
         'deactivation_date' => [
             'type' => 'integer',
         ],
-        'inventory_slot' => [
-            'type' => 'integer',
-            'notNull' => true,
-            'default' => 0,
-        ],
     ];
 
     public function assign(array $items, int $userId): bool

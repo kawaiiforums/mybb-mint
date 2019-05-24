@@ -515,9 +515,23 @@ function getItemOwnershipsById(array $ids, bool $forUpdate = false)
 
 function getItemOwnershipWithDetails(int $id): ?array
 {
-    $items = \mint\getItemOwnershipsWithDetails(null, [
+    $keyItem = current(\mint\getItemOwnershipsDetails([
         $id,
-    ]);
+    ]));
+
+    $items = \mint\getItemOwnershipsWithDetails(
+        null,
+        [
+            $id,
+        ],
+        null,
+        true
+    );
+
+
+    $items = array_filter($items, function ($item) use ($keyItem) {
+        return $item['item_transaction_id'] == $keyItem['item_transaction_id'];
+    });
 
     if (count($items) == 1) {
         $item = current($items);
@@ -528,7 +542,7 @@ function getItemOwnershipWithDetails(int $id): ?array
     return $item;
 }
 
-function getItemOwnershipsWithDetails(?int $userId, ?array $itemOwnershipIds = null, ?int $mostRecent = null, bool $groupByTransactionStatus = false, bool $showUserStack = true, bool $activeOnly = true, bool $transactionCandidatesOnly = false): array
+function getItemOwnershipsWithDetails(?int $userId, ?array $itemOwnershipIds = null, ?int $mostRecent = null, bool $groupByTransaction = false, bool $showUserStack = true, bool $activeOnly = true, bool $transactionCandidatesOnly = false): array
 {
     $itemOwnerships = [];
 
@@ -536,7 +550,7 @@ function getItemOwnershipsWithDetails(?int $userId, ?array $itemOwnershipIds = n
         $userId,
         $itemOwnershipIds,
         $mostRecent,
-        $groupByTransactionStatus,
+        $groupByTransaction,
         $showUserStack,
         $activeOnly,
         $transactionCandidatesOnly
@@ -553,7 +567,7 @@ function getItemOwnershipsWithDetails(?int $userId, ?array $itemOwnershipIds = n
     return $itemOwnerships;
 }
 
-function getItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwnershipIds = null, ?int $mostRecent = null, bool $groupByTransactionStatus = false, bool $showUserStack = true, bool $activeOnly = true, bool $transactionCandidatesOnly = false): array
+function getItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwnershipIds = null, ?int $mostRecent = null, bool $groupByTransaction = false, bool $showUserStack = true, bool $activeOnly = true, bool $transactionCandidatesOnly = false): array
 {
     global $db;
 
@@ -562,11 +576,15 @@ function getItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwnershipI
 
         $query = $db->query("
             SELECT
-                io.id AS item_ownership_id, io.user_id, i.item_type_id, it.stacked AS item_type_stacked
+                io.id AS item_ownership_id, io.user_id, i.item_type_id, it.stacked AS item_type_stacked, iTrI.item_transaction_id
                 FROM
                     " . TABLE_PREFIX . "mint_item_ownerships io
                     INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
                     INNER JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
+                    LEFT JOIN (
+                        " . TABLE_PREFIX . "mint_item_transaction_items iTrI
+                        INNER JOIN " . TABLE_PREFIX . "mint_item_transactions iTr ON iTrI.item_transaction_id = iTr.id AND iTr.active = 1 
+                    ) ON iTrI.item_id = i.id
                     WHERE io.id IN (" . $csv . ")
         ");
 
@@ -612,13 +630,13 @@ function getItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwnershipI
     $whereConditions = null;
     $groupBy = null;
 
-    if ($groupByTransactionStatus || $transactionCandidatesOnly) {
+    if ($groupByTransaction || $transactionCandidatesOnly) {
         $tableJoins = "
             LEFT JOIN (
                 " . TABLE_PREFIX . "mint_item_transaction_items iTrI
                 INNER JOIN " . TABLE_PREFIX . "mint_item_transactions iTr ON iTrI.item_transaction_id = iTr.id AND iTr.active = 1 
             ) ON iTrI.item_id = i.id";
-        $groupByColumns[] = 'iTr.active';
+        $groupByColumns[] = 'iTr.id';
     }
 
     if ($activeOnly) {
@@ -748,7 +766,7 @@ function getItemOwnershipsDetails(array $itemOwnershipIds): array
     }
 }
 
-function getItemIdsByResolvedStackedAmount(array $itemOwnershipIdsWithStackedAmount): ?array
+function getItemIdsByResolvedStackedAmount(array $itemOwnershipIdsWithStackedAmount, bool $transactionCandidatesOnly = false): ?array
 {
     $items = [];
 
@@ -761,7 +779,7 @@ function getItemIdsByResolvedStackedAmount(array $itemOwnershipIdsWithStackedAmo
 
         if (isset($itemOwnershipDetails)) {
             if ($itemOwnershipDetails['item_type_stacked']) {
-                $itemTypeOwnerships = \mint\getItemOwnershipsInStackByItemTypeAndUser($itemOwnershipDetails['item_type_id'], $itemOwnershipDetails['user_id'], $stackedAmount);
+                $itemTypeOwnerships = \mint\getItemOwnershipsInStackByItemTypeAndUser($itemOwnershipDetails['item_type_id'], $itemOwnershipDetails['user_id'], $stackedAmount, $transactionCandidatesOnly);
 
                 if (count($itemTypeOwnerships) != $stackedAmount) {
                     return null;
@@ -788,11 +806,23 @@ function getItemIdsByResolvedStackedAmount(array $itemOwnershipIdsWithStackedAmo
     return $items;
 }
 
-function getItemOwnershipsInStackByItemTypeAndUser(int $itemTypeId, int $userId, ?int $limit = null): array
+function getItemOwnershipsInStackByItemTypeAndUser(int $itemTypeId, int $userId, ?int $limit = null, bool $transactionCandidatesOnly = false): array
 {
     global $db;
 
     $conditions = [];
+    $whereConditions = 'iTy.id = ' . (int)$itemTypeId . ' AND io.user_id = ' . (int)$userId . ' AND io.active = 1';
+    
+    if ($transactionCandidatesOnly) {
+        $tableJoins = "
+            LEFT JOIN (
+                " . TABLE_PREFIX . "mint_item_transaction_items iTrI
+                INNER JOIN " . TABLE_PREFIX . "mint_item_transactions iTr ON iTrI.item_transaction_id = iTr.id AND iTr.active = 1 
+            ) ON iTrI.item_id = i.id";
+        $whereConditions .= ' AND iTrI.item_transaction_id IS NULL';
+    } else {
+        $tableJoins = null;
+    }
 
     if ($limit !== null) {
         $conditions[] = 'LIMIT ' . (int)$limit;
@@ -803,12 +833,13 @@ function getItemOwnershipsInStackByItemTypeAndUser(int $itemTypeId, int $userId,
     return \mint\queryResultAsArray(
         $db->query("
             SELECT
-                io.id AS item_ownership_id, i.id AS item_id, it.id AS item_type_id
+                io.id AS item_ownership_id, i.id AS item_id, iTy.id AS item_type_id
                 FROM
                     " . TABLE_PREFIX . "mint_item_ownerships io
                     INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
-                    INNER JOIN " . TABLE_PREFIX . "mint_item_types it ON i.item_type_id = it.id
-                WHERE it.id = " . (int)$itemTypeId . " AND io.user_id = " . (int)$userId . " AND io.active = 1
+                    INNER JOIN " . TABLE_PREFIX . "mint_item_types iTy ON i.item_type_id = iTy.id
+                    {$tableJoins}
+                WHERE {$whereConditions}
                 ORDER BY io.activation_date DESC
                 {$conditions}
         "),
@@ -994,7 +1025,7 @@ function getUserActiveTransactions(int $userId): array
     global $db;
 
     $entries = \mint\queryResultAsArray(
-        \mint\getItemTransactionsDetails('WHERE active = 1 AND ask_user_id = ' . (int)$userId),
+        \mint\getItemTransactionsDetails('WHERE active = 1 AND ask_user_id = ' . (int)$userId . ' ORDER BY ask_date DESC'),
         'id'
     );
 
@@ -1045,6 +1076,26 @@ function getItemTransactionItems(int $transactionId): array
                 WHERE item_transaction_id = " . (int)$transactionId . "
         ")
     );
+}
+
+function getActiveItemTransactionIdByItemId(int $itemId): ?int
+{
+    global $db;
+
+    $query = $db->query("
+        SELECT
+            iTr.id
+            FROM
+                " . TABLE_PREFIX . "mint_item_transaction_items iTrI
+                INNER JOIN " . TABLE_PREFIX . "mint_item_transactions iTr ON iTrI.item_transaction_id = iTr.id
+            WHERE iTrI.item_id = " . (int)$itemId . " AND iTr.active = 1
+    ");
+
+    if ($db->num_rows($query) == 1) {
+        return $db->fetch_field($query, 'id');
+    } else {
+        return null;
+    }
 }
 
 function countItemTransactionsItems(array $transactionIds): array
