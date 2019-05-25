@@ -24,6 +24,14 @@ require_once __DIR__ . '/hooks.php';
 ]);
 
 \mint\registerRewardSources([
+    'user_activation' => [
+        'contentType' => 'user_activation',
+        'terminationPoint' => 'rewards.user_activation',
+    ],
+    'referred_user_activation' => [
+        'contentType' => 'user_activation',
+        'terminationPoint' => 'rewards.referred_user_activation',
+    ],
     'post' => [
         'contentType' => 'post',
         'terminationPoint' => 'rewards.post',
@@ -31,5 +39,9 @@ require_once __DIR__ . '/hooks.php';
     'thread' => [
         'contentType' => 'thread',
         'terminationPoint' => 'rewards.thread',
+    ],
+    'thread_reply' => [
+        'contentType' => 'thread_reply',
+        'terminationPoint' => 'rewards.thread_reply',
     ],
 ]);

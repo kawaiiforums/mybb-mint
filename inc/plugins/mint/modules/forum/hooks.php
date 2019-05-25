@@ -16,6 +16,16 @@ function datahandler_post_insert_post_end(\PostDataHandler $PostDataHandler): vo
                 $PostDataHandler->data['uid']
             );
         }
+
+        $thread = \get_thread($PostDataHandler->data['tid']);
+
+        if ($thread['uid'] != $PostDataHandler->data['uid']) {
+            \mint\addContentEntityReward(
+                'thread_reply',
+                $PostDataHandler->return_values['pid'],
+                $thread['uid']
+            );
+        }
     }
 }
 
@@ -42,6 +52,16 @@ function class_moderation_approve_posts(array $postIds): void
                             'post',
                             $post['pid'],
                             $post['uid']
+                        );
+                    }
+
+                    $thread = \get_thread($post['tid']);
+
+                    if ($thread['uid'] != $post['uid']) {
+                        \mint\addContentEntityReward(
+                            'thread_reply',
+                            $post['pid'],
+                            $thread['uid']
                         );
                     }
                 }
@@ -75,6 +95,16 @@ function class_moderation_restore_posts(array $postIds): void
                             $post['uid']
                         );
                     }
+
+                    $thread = \get_thread($post['tid']);
+
+                    if ($thread['uid'] != $post['uid']) {
+                        \mint\addContentEntityReward(
+                            'thread_reply',
+                            $post['pid'],
+                            $thread['uid']
+                        );
+                    }
                 }
             }
         }
@@ -89,6 +119,11 @@ function class_moderation_unapprove_posts(array $postIds): void
                 'post',
                 $postId
             );
+
+            \mint\voidContentEntityReward(
+                'thread_reply',
+                $postId
+            );
         }
     }
 }
@@ -101,6 +136,11 @@ function class_moderation_soft_delete_posts(array $postIds): void
                 'post',
                 $postId
             );
+
+            \mint\voidContentEntityReward(
+                'thread_reply',
+                $postId
+            );
         }
     }
 }
@@ -109,6 +149,11 @@ function class_moderation_delete_post(int $postId): void
 {
     \mint\voidContentEntityReward(
         'post',
+        $postId
+    );
+
+    \mint\voidContentEntityReward(
+        'thread_reply',
         $postId
     );
 }
@@ -218,4 +263,88 @@ function class_moderation_delete_thread(int $threadId): void
         'thread',
         $threadId
     );
+}
+
+function datahandler_user_insert_end(\UserDataHandler $UserDataHandler): void
+{
+    if ($UserDataHandler->user_insert_data['usergroup'] != 5) {
+        \mint\addContentEntityReward(
+            'user_activation',
+            $UserDataHandler->return_values['uid'],
+            $UserDataHandler->return_values['uid']
+        );
+
+        if (!empty($UserDataHandler->user_insert_data['referrer'])) {
+            \mint\addContentEntityReward(
+                'referred_user_activation',
+                $UserDataHandler->return_values['uid'],
+                $UserDataHandler->return_values['referrer']
+            );
+        }
+    }
+}
+
+function member_activate_accountactivated(): void
+{
+    global $user;
+
+    \mint\addContentEntityReward(
+        'user_activation',
+        $user['uid'],
+        $user['uid']
+    );
+
+    if (!empty($user['referrer'])) {
+        \mint\addContentEntityReward(
+            'referred_user_activation',
+            $user['uid'],
+            $user['referrer']
+        );
+    }
+}
+
+function admin_user_users_coppa_activate_commit(): void
+{
+    global $user;
+
+    \mint\addContentEntityReward(
+        'user_activation',
+        $user['uid'],
+        $user['uid']
+    );
+
+    if (!empty($user['referrer'])) {
+        \mint\addContentEntityReward(
+            'referred_user_activation',
+            $user['uid'],
+            $user['referrer']
+        );
+    }
+}
+
+function admin_user_awaiting_activation_activate_commit()
+{
+    global $user_ids;
+
+    $userIds = explode(', ', $user_ids);
+
+    $users = \mint\getUsersById($userIds, 'uid,referrer');
+
+    foreach ($userIds as $id) {
+        if (isset($users[$id])) {
+            \mint\addContentEntityReward(
+                'user_activation',
+                $id,
+                $id
+            );
+
+            if (!empty($users[$id]['referrer'])) {
+                \mint\addContentEntityReward(
+                    'referred_user_activation',
+                    $id,
+                    $users[$id]['referrer']
+                );
+            }
+        }
+    }
 }

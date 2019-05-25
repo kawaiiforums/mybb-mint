@@ -524,6 +524,36 @@ function userOnIgnoreList(int $subjectUserId, $targetUser): bool
     );
 }
 
+function getUsersById(array $userIds, string $columnsCsv = '*'): array
+{
+    global $mybb, $db;
+
+    $users = array_fill_keys($userIds, null);
+
+    $idsToFetch = [];
+
+    foreach ($userIds as $id) {
+        if ($id == $mybb->user['uid'] && $id != 0) {
+            $Users[$id] = $mybb->user;
+        } else {
+            $idsToFetch[] = $id;
+        }
+    }
+
+    if ($idsToFetch) {
+        $entries = \mint\queryResultAsArray(
+            $db->simple_select('users', $columnsCsv, 'uid IN (' . \mint\getIntegerCsv($idsToFetch) . ')'),
+            'uid'
+        );
+
+        foreach ($entries as $id => $entry) {
+            $users[$id] = $entry;
+        }
+    }
+
+    return $users;
+}
+
 function updateUser(int $userId, array $data): bool
 {
     global $mybb, $db;
