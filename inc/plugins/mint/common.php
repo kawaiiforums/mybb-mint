@@ -2,47 +2,6 @@
 
 namespace mint;
 
-// hooks
-function addHooks(array $hooks, string $namespace = null): void
-{
-    global $plugins;
-
-    if ($namespace) {
-        $prefix = $namespace . '\\';
-    } else {
-        $prefix = null;
-    }
-
-    foreach ($hooks as $hook) {
-        $plugins->add_hook($hook, $prefix . $hook);
-    }
-}
-
-function addHooksNamespace(string $namespace): void
-{
-    global $plugins;
-
-    $namespaceLowercase = strtolower($namespace);
-    $definedUserFunctions = get_defined_functions()['user'];
-
-    foreach ($definedUserFunctions as $callable) {
-        $namespaceWithPrefixLength = strlen($namespaceLowercase) + 1;
-        if (substr($callable, 0, $namespaceWithPrefixLength) == $namespaceLowercase . '\\') {
-            $hookName = substr_replace($callable, null, 0, $namespaceWithPrefixLength);
-
-            $priority = substr($callable, -2);
-
-            if (is_numeric(substr($hookName, -2))) {
-                $hookName = substr($hookName, 0, -2);
-            } else {
-                $priority = 10;
-            }
-
-            $plugins->add_hook($hookName, $callable, $priority);
-        }
-    }
-}
-
 // settings
 function getSettingValue(string $name): string
 {
@@ -579,6 +538,47 @@ function getIntegerCsv(array $values): string
         ',',
         array_map('intval', $values)
     );
+}
+
+// hooks
+function addHooks(array $hooks, string $namespace = null): void
+{
+    global $plugins;
+
+    if ($namespace) {
+        $prefix = $namespace . '\\';
+    } else {
+        $prefix = null;
+    }
+
+    foreach ($hooks as $hook) {
+        $plugins->add_hook($hook, $prefix . $hook);
+    }
+}
+
+function addHooksNamespace(string $namespace): void
+{
+    global $plugins;
+
+    $namespaceLowercase = strtolower($namespace);
+    $definedUserFunctions = get_defined_functions()['user'];
+
+    foreach ($definedUserFunctions as $callable) {
+        $namespaceWithPrefixLength = strlen($namespaceLowercase) + 1;
+        if (substr($callable, 0, $namespaceWithPrefixLength) == $namespaceLowercase . '\\') {
+            $hookName = substr_replace($callable, null, 0, $namespaceWithPrefixLength);
+
+            $priority = substr($callable, -2);
+
+            if (is_numeric(substr($hookName, -2))) {
+                $hookName = substr($hookName, 0, -2);
+            } else {
+                $priority = 10;
+            }
+
+            $plugins->add_hook($hookName, $callable, $priority);
+        }
+    }
 }
 
 // reflection

@@ -370,7 +370,15 @@ function admin_load(): void
             $controller = new AcpEntityManagementController('item_transactions', ItemTransactions::class);
 
             $controller->setColumns([
-                'id' => [],
+                'id' => [
+                    'presenter' => function (?int $value) use ($mybb) {
+                        if ($value !== null) {
+                            return '<a href="' . $mybb->settings['bburl'] . '/misc.php?action=economy_item_transaction&amp;id=' . (int)$value . '">' . (int)$value . '</a>';
+                        } else {
+                            return null;
+                        }
+                    },
+                ],
                 'ask_date' => [
                     'presenter' => function (string $value) {
                         return \my_date('normal', $value);

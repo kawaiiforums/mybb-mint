@@ -8,7 +8,6 @@ use mint\DbRepository\CurrencyTerminationPoints;
 use mint\DbRepository\InventoryTypes;
 use mint\DbRepository\Items;
 use mint\DbRepository\ItemTerminationPoints;
-use mint\DbRepository\ItemTransactions;
 use mint\DbRepository\ItemTypes;
 use mint\DbRepository\ItemOwnerships;
 
@@ -199,7 +198,7 @@ function getRecentPublicBalanceTransfers(int $limit)
 }
 
 // content entity rewards
-function addContentEntityReward(string $rewardSourceName, int $contentEntityId, int $userId): bool
+function addContentEntityReward(string $rewardSourceName, int $contentEntityId, int $userId, bool $restoreOnly = false): bool
 {
     global $db;
 
@@ -229,7 +228,7 @@ function addContentEntityReward(string $rewardSourceName, int $contentEntityId, 
                 } else {
                     return false;
                 }
-            } else {
+            } elseif (!$restoreOnly) {
                 $value = $rewardSource['reward']();
 
                 ContentEntityRewards::with($db)->insert([
@@ -241,6 +240,8 @@ function addContentEntityReward(string $rewardSourceName, int $contentEntityId, 
                     'last_action_date' => \TIME_NOW,
                     'void' => false,
                 ]);
+            } else {
+                return false;
             }
 
             \mint\userBalanceOperationWithTerminationPoint($userId, $value, $rewardSource['terminationPoint']);

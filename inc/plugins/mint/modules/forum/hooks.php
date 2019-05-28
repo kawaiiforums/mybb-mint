@@ -92,7 +92,8 @@ function class_moderation_restore_posts(array $postIds): void
                         \mint\addContentEntityReward(
                             'post',
                             $post['pid'],
-                            $post['uid']
+                            $post['uid'],
+                            true
                         );
                     }
 
@@ -102,7 +103,8 @@ function class_moderation_restore_posts(array $postIds): void
                         \mint\addContentEntityReward(
                             'thread_reply',
                             $post['pid'],
-                            $thread['uid']
+                            $thread['uid'],
+                            true
                         );
                     }
                 }
@@ -199,6 +201,31 @@ function class_moderation_approve_threads(array $threadIds): void
                         $thread['uid']
                     );
                 }
+
+                if ($thread['visible'] == 1) {
+                    $posts = \mint\queryResultAsArray(
+                        $db->simple_select('posts', 'pid,uid', 'tid = ' . (int)$threadId),
+                        'pid'
+                    );
+
+                    foreach ($posts as $postId => $post) {
+                        \mint\addContentEntityReward(
+                            'post',
+                            $postId,
+                            $post['uid'],
+                            true
+                        );
+
+                        if ($thread['uid'] != 0 && $post['uid'] != $thread['uid']) {
+                            \mint\addContentEntityReward(
+                                'thread_reply',
+                                $postId,
+                                $thread['uid'],
+                                true
+                            );
+                        }
+                    }
+                }
             }
         }
     }
@@ -228,6 +255,31 @@ function class_moderation_restore_threads(array $threadIds): void
                         $thread['uid']
                     );
                 }
+
+                if ($thread['visible'] == 1) {
+                    $posts = \mint\queryResultAsArray(
+                        $db->simple_select('posts', 'pid,uid', 'tid = ' . (int)$threadId),
+                        'pid'
+                    );
+
+                    foreach ($posts as $postId => $post) {
+                        \mint\addContentEntityReward(
+                            'post',
+                            $postId,
+                            $post['uid'],
+                            true
+                        );
+
+                        if ($thread['uid'] != 0 && $post['uid'] != $thread['uid']) {
+                            \mint\addContentEntityReward(
+                                'thread_reply',
+                                $postId,
+                                $thread['uid'],
+                                true
+                            );
+                        }
+                    }
+                }
             }
         }
     }
@@ -235,34 +287,103 @@ function class_moderation_restore_threads(array $threadIds): void
 
 function class_moderation_unapprove_threads(array $threadIds): void
 {
+    global $db;
+
     if (!empty($threadIds)) {
         foreach ($threadIds as $threadId) {
             \mint\voidContentEntityReward(
                 'thread',
                 $threadId
             );
+
+            $postIds = \mint\queryResultAsArray(
+                $db->simple_select('posts', 'pid', 'tid = ' . (int)$threadId),
+                null,
+                'pid'
+            );
+
+            foreach ($postIds as $postId) {
+                \mint\voidContentEntityReward(
+                    'post',
+                    $postId
+                );
+
+                \mint\voidContentEntityReward(
+                    'thread_reply',
+                    $postId
+                );
+            }
         }
     }
 }
 
 function class_moderation_soft_delete_threads(array $threadIds): void
 {
+    global $db;
+
     if (!empty($threadIds)) {
         foreach ($threadIds as $threadId) {
             \mint\voidContentEntityReward(
                 'thread',
                 $threadId
             );
+
+            $postIds = \mint\queryResultAsArray(
+                $db->simple_select('posts', 'pid', 'tid = ' . (int)$threadId),
+                null,
+                'pid'
+            );
+
+            foreach ($postIds as $postId) {
+                \mint\voidContentEntityReward(
+                    'post',
+                    $postId
+                );
+
+                \mint\voidContentEntityReward(
+                    'thread_reply',
+                    $postId
+                );
+            }
         }
     }
 }
 
+function class_moderation_delete_thread_start(int $threadId): void
+{
+    global $db, $mintRuntimeRegistry;
+
+    $postIds = \mint\queryResultAsArray(
+        $db->simple_select('posts', 'pid', 'tid = ' . (int)$threadId),
+        null,
+        'pid'
+    );
+
+    $mintRuntimeRegistry['forum']['deletedPostIds'] = $postIds;
+}
+
 function class_moderation_delete_thread(int $threadId): void
 {
+    global $mintRuntimeRegistry;
+
     \mint\voidContentEntityReward(
         'thread',
         $threadId
     );
+
+    if (!empty($mintRuntimeRegistry['forum']['deletedPostIds'])) {
+        foreach ($mintRuntimeRegistry['forum']['deletedPostIds'] as $postId) {
+            \mint\voidContentEntityReward(
+                'post',
+                $postId
+            );
+
+            \mint\voidContentEntityReward(
+                'thread_reply',
+                $postId
+            );
+        }
+    }
 }
 
 function datahandler_user_insert_end(\UserDataHandler $UserDataHandler): void

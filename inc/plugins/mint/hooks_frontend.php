@@ -14,8 +14,47 @@ function global_start(): void
 
     switch (\THIS_SCRIPT) {
         case 'misc.php':
-            if ($mybb->get_input('action') == 'mint_hub') {
+            if (strpos($mybb->get_input('action'), 'economy_') === 0) {
                 \mint\loadTemplates([
+                    'action_link',
+                    'action_link_button',
+                    'balance_operations',
+                    'balance_operations_entry',
+                    'balance_top_users',
+                    'balance_top_users_entry',
+                    'balance_transfer',
+                    'balance_transfer_form',
+                    'currency_mint',
+                    'currency_mint_form',
+                    'flag',
+                    'hub',
+                    'hub_service_link',
+                    'inventory',
+                    'inventory_entry',
+                    'inventory_entry_options',
+                    'inventory_entry_options_checkbox',
+                    'inventory_entry_options_number',
+                    'inventory_preview',
+                    'inventory_slot',
+                    'item_card',
+                    'item_ownership',
+                    'item_transaction',
+                    'item_transactions_entry',
+                    'items_discard_form',
+                    'items_forge',
+                    'items_forge_form',
+                    'items_melt_form',
+                    'items_transaction_new',
+                    'items_transaction_new_form',
+                    'items_transaction_new_inventory',
+                    'message',
+                    'page',
+                    'recent_balance_operations',
+                    'reward_sources',
+                    'reward_sources_entry',
+                    'reward_sources_legend',
+                    'reward_sources_legend_entry',
+                    'user_active_item_transactions',
                 ], 'mint_');
             }
 
@@ -23,7 +62,14 @@ function global_start(): void
         case 'member.php':
             if ($mybb->get_input('action') == 'profile') {
                 \mint\loadTemplates([
-                ], 'mint_balance');
+                    'balance_operations_entry',
+                    'flag',
+                    'inventory',
+                    'inventory_preview',
+                    'inventory_entry',
+                    'message',
+                    'recent_balance_operations',
+                ], 'mint_');
             }
     }
 
