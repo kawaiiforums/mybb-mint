@@ -129,9 +129,9 @@ function registerRewardSourceLegendEntries(array $rewardSources): void
 {
     global $mintRuntimeRegistry;
 
-    $mintRuntimeRegistry['rewardSourceLegendEntries'] = array_unique(
-        array_merge($mintRuntimeRegistry['rewardSourceLegendEntries'] ?? [], $rewardSources)
-    );
+    foreach ($rewardSources as $rewardSourceName => $rewardSource) {
+        $mintRuntimeRegistry['rewardSourceLegendEntries'][$rewardSourceName] = $rewardSource;
+    }
 }
 
 function getRegisteredRewardSourceLegendEntries(): array
@@ -192,7 +192,7 @@ function resolveRegisteredRewardSources(): void
 
             if (!isset($rewardSource['listInLegend']) || $rewardSource['listInLegend'] === true) {
                 \mint\registerRewardSourceLegendEntries([
-                    'post' => [
+                    $rewardSourceName => [
                         'title' => $contentEntityTitle,
                         'reward' => $rewardSource['reward'],
                     ],

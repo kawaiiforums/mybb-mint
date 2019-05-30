@@ -109,12 +109,27 @@ function loadTemplates(array $templates, string $prefix = null): void
     $templatelist .= implode(',', $templates);
 }
 
-function tpl(string $name): string
+function tpl(string $path): string
 {
     global $templates;
 
-    $templateName = __NAMESPACE__ . '_' . $name;
-    $directory = MYBB_ROOT . 'inc/plugins/' . __NAMESPACE__ . '/templates/';
+    $components = explode('.', $path, 2);
+
+    if (count($components) == 1) {
+        $moduleName = false;
+        $name = $components[0];
+    } else {
+        $moduleName = $components[0];
+        $name = $components[1];
+    }
+
+    if ($moduleName) {
+        $templateName = __NAMESPACE__ . '.' . $moduleName . '_' . $name;
+        $directory = MYBB_ROOT . 'inc/plugins/' . __NAMESPACE__ . '/modules/' . $moduleName . '/templates/';
+    } else {
+        $templateName = __NAMESPACE__ . '_' . $name;
+        $directory = MYBB_ROOT . 'inc/plugins/' . __NAMESPACE__ . '/templates/';
+    }
 
     if (DEVELOPMENT_MODE) {
         $templateContent = str_replace(
@@ -147,13 +162,15 @@ function getFilesContentInDirectory(string $path, string $fileNameSuffix): array
 {
     $contents = [];
 
-    $directory = new \DirectoryIterator($path);
+    if (is_dir($path)) {
+        $directory = new \DirectoryIterator($path);
 
-    foreach ($directory as $file) {
-        if (!$file->isDot() && !$file->isDir()) {
-            $templateName = $file->getPathname();
-            $templateName = basename($templateName, $fileNameSuffix);
-            $contents[$templateName] = file_get_contents($file->getPathname());
+        foreach ($directory as $file) {
+            if (!$file->isDot() && !$file->isDir()) {
+                $templateName = $file->getPathname();
+                $templateName = basename($templateName, $fileNameSuffix);
+                $contents[$templateName] = file_get_contents($file->getPathname());
+            }
         }
     }
 

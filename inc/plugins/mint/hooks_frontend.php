@@ -27,6 +27,7 @@ function global_start(): void
                     'currency_mint',
                     'currency_mint_form',
                     'flag',
+                    'flowing_list_entry',
                     'hub',
                     'hub_service_link',
                     'inventory',
@@ -53,7 +54,6 @@ function global_start(): void
                     'reward_sources',
                     'reward_sources_entry',
                     'reward_sources_legend',
-                    'reward_sources_legend_entry',
                     'user_active_item_transactions',
                 ], 'mint_');
             }
@@ -87,7 +87,7 @@ function global_start(): void
 
 function misc_start(): void
 {
-    global $mybb, $lang, $db,
+    global $mybb, $lang, $db, $plugins,
     $headerinclude, $header, $theme, $usercpnav, $footer;
 
     $pages = [
@@ -114,6 +114,8 @@ function misc_start(): void
                         'url' => 'misc.php?action=economy_currency_mint',
                     ];
                 }
+
+                $plugins->run_hooks('mint_economy_hub_balance_service_links', $links);
 
                 $currencyServiceLinks = \mint\getRenderedServiceLinks($links, 'currency');
 
@@ -197,6 +199,8 @@ function misc_start(): void
                         'url' => 'misc.php?action=economy_items_forge',
                     ];
                 }
+
+                $plugins->run_hooks('mint_economy_hub_items_service_links', $links);
 
                 $itemsServiceLinks = \mint\getRenderedServiceLinks($links, 'items');
 
@@ -889,19 +893,15 @@ function misc_start(): void
                             if ($transaction['active'] == 1 && $transaction['ask_user_id'] != $mybb->user['uid']) {
                                 if (\mint\getSettingValue('manual_balance_operations')) {
                                     if (isset($mybb->input['complete']) && \verify_post_check($mybb->get_input('my_post_key'))) {
-                                        $inputActionSignature = json_decode($mybb->get_input('action_signature'), true);
-
                                         if ($mybb->get_input('action_signature') === $actionSignatureJson) {
-                                            if (\mint\getSettingValue('manual_balance_operations')) {
-                                                if (\mint\getUserBalance($mybb->user['uid']) >= $transaction['ask_price']) {
-                                                    $result = ItemTransactions::with($db)->execute($transaction['id'], $mybb->user['uid']);
+                                            if (\mint\getUserBalance($mybb->user['uid']) >= $transaction['ask_price']) {
+                                                $result = ItemTransactions::with($db)->execute($transaction['id'], $mybb->user['uid']);
 
-                                                    if ($result) {
-                                                        \redirect('misc.php?action=economy_user_inventory', $lang->mint_item_transaction_complete_success);
-                                                    }
-                                                } else {
-                                                    $messages .= \mint\getRenderedMessage($lang->mint_currency_amount_exceeding_balance, 'error');
+                                                if ($result) {
+                                                    \redirect('misc.php?action=economy_user_inventory', $lang->mint_item_transaction_complete_success);
                                                 }
+                                            } else {
+                                                $messages .= \mint\getRenderedMessage($lang->mint_currency_amount_exceeding_balance, 'error');
                                             }
                                         }
                                     }
@@ -944,6 +944,8 @@ function misc_start(): void
         ],
     ];
 
+    $plugins->run_hooks('mint_misc_pages', $pages);
+
     if (array_key_exists($mybb->get_input('action'), $pages)) {
         $pageName = $mybb->get_input('action');
         $page = $pages[$mybb->get_input('action')];
@@ -967,6 +969,7 @@ function misc_start(): void
             'mybb',
             'lang',
             'db',
+            'plugins',
             'headerinclude',
             'header',
             'theme',

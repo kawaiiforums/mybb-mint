@@ -110,12 +110,12 @@ function getRenderedRewardSourceLegend(array $legendEntries): ?string
                 $reward = $legendEntry['reward'];
             }
 
-            $reward = my_number_format($reward);
+            $value = \mint\getFormattedCurrency($reward);
         } else {
-            $reward = null;
+            $value = null;
         }
 
-        eval('$entries .= "' . \mint\tpl('reward_sources_legend_entry') . '";');
+        eval('$entries .= "' . \mint\tpl('flowing_list_entry') . '";');
     }
 
     eval('$output = "' . \mint\tpl('reward_sources_legend') . '";');
@@ -230,12 +230,12 @@ function getRenderedInventoryPreview(array $items, ?int $contextUserId = null): 
 }
 
 // block elements
-function getRenderedItemCard(array $item): ?string
+function getRenderedItemCard(array $item, array $details = []): ?string
 {
     global $mybb, $lang;
 
-    $title = \htmlspecialchars_uni($item['item_type_title']);
-    $description = \htmlspecialchars_uni($item['item_type_description']);
+    $itemTitle = \htmlspecialchars_uni($item['item_type_title']);
+    $itemDescription = \htmlspecialchars_uni($item['item_type_description']);
 
     $categoryTitle = \htmlspecialchars_uni($item['item_category_title']);
 
@@ -271,7 +271,7 @@ function getRenderedItemCard(array $item): ?string
         eval('$flags .= "' . \mint\tpl('flag') . '";');
     }
 
-    if ($item['item_transaction_id']) {
+    if (!empty($item['item_transaction_id'])) {
         $classes[] = $elementClass . '--in-transaction';
 
         $flagType = 'in-transaction';
@@ -280,7 +280,7 @@ function getRenderedItemCard(array $item): ?string
         eval('$flags .= "' . \mint\tpl('flag') . '";');
     }
 
-    if (!$item['item_active']) {
+    if (isset($item['item_active']) && !$item['item_active']) {
         $classes[] = $elementClass . '--deactivated';
 
         $flagType = 'deactivated';
@@ -289,9 +289,16 @@ function getRenderedItemCard(array $item): ?string
         eval('$flags .= "' . \mint\tpl('flag') . '";');
     }
 
+    if ($item['item_type_stacked']) {
+        $flagType = 'stacked';
+        $flagContent = $lang->mint_item_stacked;
+
+        eval('$flags .= "' . \mint\tpl('flag') . '";');
+    }
+
     $classes = implode(' ', $classes);
 
-    if ($item['stacked_amount']) {
+    if (isset($item['stacked_amount'])) {
         $stackedAmount = \my_number_format($item['stacked_amount']);
         $stackedAmountText = $lang->sprintf(
             $lang->mint_items_in_stack,
@@ -308,15 +315,40 @@ function getRenderedItemCard(array $item): ?string
         $imageUrl = null;
     }
 
-    $profileLink = \build_profile_link($item['user_username'], $item['user_id']);
+    $attributes = [];
 
-    $ownedBy = $lang->sprintf(
-        $lang->mint_item_owned_by_since,
-        $profileLink,
-        \my_date('normal', $item['activation_date'])
-    );
+    if (isset($item['user_username'])) {
+        $profileLink = \build_profile_link($item['user_username'], $item['user_id']);
 
-    $itemActivationDate = \my_date('normal', $item['item_activation_date']);
+        $value = $lang->sprintf(
+            $lang->mint_item_owned_by_since,
+            $profileLink,
+            \my_date('normal', $item['activation_date'])
+        );
+
+        $attributes[] = [
+            'title' => $lang->mint_item_owner,
+            'value' => $value,
+        ];
+    }
+
+    if (isset($item['item_activation_date'])) {
+        $attributes[] = [
+            'title' => $lang->mint_item_activation_date,
+            'value' => \my_date('normal', $item['item_activation_date']),
+        ];
+    }
+
+    $attributes = array_merge($attributes, $details['attributes'] ?? []);
+
+    $attributesHtml = null;
+
+    foreach ($attributes as $attribute) {
+        $title = $attribute['title'];
+        $value = $attribute['value'];
+
+        eval('$attributesHtml .= "' . \mint\tpl('flowing_list_entry') . '<br />";');
+    }
 
     eval('$output = "' . \mint\tpl('item_card') . '";');
 

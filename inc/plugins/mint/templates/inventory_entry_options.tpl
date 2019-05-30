@@ -1,3 +1,3 @@
-<label class="mint__grid__item__options">
+<label class="mint__item-icon__options">
     {$fields}
 </label>

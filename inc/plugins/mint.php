@@ -83,7 +83,6 @@ function mint_install()
         \mint\DbRepository\ItemTypes::class,
         \mint\DbRepository\Items::class,
         \mint\DbRepository\ItemOwnerships::class,
-        \mint\DbRepository\ShopItems::class,
         \mint\DbRepository\ItemTransactions::class,
         \mint\DbRepository\ItemTransactionItems::class,
     ]);
@@ -148,7 +147,6 @@ function mint_uninstall()
         \mint\DbRepository\ItemTypes::class,
         \mint\DbRepository\Items::class,
         \mint\DbRepository\ItemOwnerships::class,
-        \mint\DbRepository\ShopItems::class,
         \mint\DbRepository\ItemTransactions::class,
         \mint\DbRepository\ItemTransactionItems::class,
     ], true, true);
@@ -317,6 +315,14 @@ function mint_activate()
         'Mint',
         \mint\getFilesContentInDirectory(MYBB_ROOT . 'inc/plugins/mint/templates', '.tpl')
     );
+
+    foreach ($moduleNames as $moduleName) {
+        $PL->templates(
+            'mint.' . $moduleName,
+            'Mint: ' . $moduleName,
+            \mint\getFilesContentInDirectory(MYBB_ROOT . 'inc/plugins/mint/modules/' . $moduleName . '/templates', '.tpl'),
+        );
+    }
 
     // stylesheets
     $stylesheets = [

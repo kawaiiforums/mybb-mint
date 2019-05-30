@@ -11,12 +11,11 @@ use mint\DbRepository\ItemCategories;
 use mint\DbRepository\ItemOwnerships;
 use mint\DbRepository\ItemTransactions;
 use mint\DbRepository\ItemTypes;
-use mint\DbRepository\ShopItems;
 use mint\DbRepository\Items;
 
 function admin_load(): void
 {
-    global $mybb, $db, $lang, $run_module, $action_file, $page, $sub_tabs, $pageUrl;
+    global $mybb, $db, $lang, $plugins, $run_module, $action_file, $page, $sub_tabs, $pageUrl;
 
     if ($run_module == 'config' && $action_file == 'mint') {
         $pageUrl = 'index.php?module=' . $run_module . '-' . $action_file;
@@ -27,20 +26,23 @@ function admin_load(): void
 
         $sub_tabs = [];
 
-        $tabControllers = [
+        $tabs = [
             'item_categories',
             'item_types',
-            'shop_items',
             'inventory_types',
         ];
 
-        foreach ($tabControllers as $tabName) {
+        $plugins->run_hooks('mint_admin_config_mint_tabs', $tabs);
+
+        foreach ($tabs as $tabName) {
             $sub_tabs[$tabName] = [
                 'link'        => $pageUrl . '&amp;action=' . $tabName,
                 'title'       => $lang->{'mint_admin_' . $tabName},
                 'description' => $lang->{'mint_admin_' . $tabName . '_description'},
             ];
         }
+
+        $plugins->run_hooks('mint_admin_config_mint_begin');
 
         if ($mybb->input['action'] == 'item_categories' || empty($mybb->input['action'])) {
             $controller = new AcpEntityManagementController('item_categories', ItemCategories::class);
@@ -137,57 +139,6 @@ function admin_load(): void
             ]);
 
             $controller->run();
-        } elseif ($mybb->input['action'] == 'shop_items') {
-            $itemTypes = \mint\queryResultAsArray(ItemTypes::with($db)->get(), 'id', 'title');
-
-            $controller = new AcpEntityManagementController('shop_items', ShopItems::class);
-
-            $controller->setColumns([
-                'id' => [],
-                'item_type_id' => [
-                    'listed' => false,
-                    'formElement' => function (\Form $form, array $entity) use ($itemTypes) {
-                        return $form->generate_select_box(
-                            'item_type_id',
-                            $itemTypes,
-                            $entity['item_type_id'] ?? 0
-                        );
-                    },
-                    'validator' => function (?string $value) use ($lang, $itemTypes): array {
-                        $errors = [];
-
-                        if (!array_key_exists($value, $itemTypes)) {
-                            $errors['item_type_invalid'] = [];
-                        }
-
-                        return $errors;
-                    },
-                ],
-                'item_type' => [
-                    'customizable' => false,
-                    'dataColumn' => 'item_type_title',
-                ],
-                'ask_price' => [
-                    'formMethod' => 'generate_numeric_field',
-                ],
-                'sales_limit' => [
-                    'formMethod' => 'generate_numeric_field',
-                ],
-                'times_purchased' => [
-                    'customizable' => false,
-                ],
-            ]);
-            $controller->addForeignKeyData([
-                'mint_item_types' => [
-                    'title',
-                ],
-            ]);
-            $controller->addEntityOptions([
-                'update' => [],
-                'delete' => [],
-            ]);
-
-            $controller->run();
         } elseif ($mybb->input['action'] == 'inventory_types') {
             $controller = new AcpEntityManagementController('inventory_types', InventoryTypes::class);
 
@@ -207,8 +158,6 @@ function admin_load(): void
         } else {
             exit;
         }
-
-
     } elseif ($run_module == 'tools' && $action_file == 'mint_logs') {
         $pageUrl = 'index.php?module=' . $run_module . '-' . $action_file;
 
@@ -218,19 +167,23 @@ function admin_load(): void
 
         $sub_tabs = [];
 
-        $tabControllers = [
+        $tabs = [
             'balance_operations',
             'balance_transfers',
             'item_transactions',
         ];
 
-        foreach ($tabControllers as $tabName) {
+        $plugins->run_hooks('mint_admin_tools_mint_logs_tabs', $tabs);
+
+        foreach ($tabs as $tabName) {
             $sub_tabs[$tabName] = [
                 'link'        => $pageUrl . '&amp;action=' . $tabName,
                 'title'       => $lang->{'mint_admin_' . $tabName},
                 'description' => $lang->{'mint_admin_' . $tabName . '_description'},
             ];
         }
+
+        $plugins->run_hooks('mint_admin_tools_mint_logs_begin', $tabs);
 
         if ($mybb->input['action'] == 'balance_operations' || empty($mybb->input['action'])) {
             $controller = new AcpEntityManagementController('balance_operations', BalanceOperations::class);

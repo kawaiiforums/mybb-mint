@@ -145,7 +145,7 @@ function countUserPublicBalanceOperations(int $userId, array $includePrivateWith
     return \mint\countBalanceOperations('WHERE ' . $whereString . ' ' . $conditions);
 }
 
-function userBalanceOperationWithTerminationPoint($user, int $value, string $terminationPointName, bool $allowOverdraft = true): bool
+function userBalanceOperationWithTerminationPoint($user, int $value, string $terminationPointName, bool $allowOverdraft = true, bool $useDbTransaction = true): bool
 {
     global $db;
 
@@ -160,7 +160,7 @@ function userBalanceOperationWithTerminationPoint($user, int $value, string $ter
     if ($terminationPointId !== null) {
         $result = BalanceOperations::with($db)->execute($userId, $value, [
             'currency_termination_point_id' => $terminationPointId,
-        ], true, $allowOverdraft);
+        ], $useDbTransaction, $allowOverdraft);
 
         return $result;
     } else {

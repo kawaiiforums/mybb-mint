@@ -39,6 +39,15 @@ Selected user groups are able to _forge_ amounts of an Item Type to be assigned 
 - `{$post['mintBalance']}` - formatted balance of the author (`postbit`, `postbit_prev`, `postbit_pm`, `postbit_announcement` hooks)
 - `{$post['mintInventoryStatus']}` - number of occupied slots in inventory of the author (`postbit`, `postbit_prev`, `postbit_pm`, `postbit_announcement` hooks)
 
+### Hooks
+- `mint_admin_config_mint_tabs`
+- `mint_admin_config_mint_begin`
+- `mint_admin_tools_mint_logs_tabs`
+- `mint_admin_tools_mint_logs_begin`
+- `mint_misc_pages`
+- `mint_economy_hub_balance_service_links`
+- `mint_economy_hub_items_service_links`
+
 ### Plugin Management Events
 - **Install:**
   - Database structure created/altered

@@ -30,6 +30,21 @@
 .mint__flowing-list__entry__title { padding: 10px; background: #FAFAFA; color: #666; }
 .mint__flowing-list__entry__value { padding: 10px 10px 10px 5px; color: #666; }
 
+.mint__grid-menu { display: grid; padding: 10px 0; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.mint__grid-menu__entry { display: flex; align-items: center; justify-content: center; padding: 50px 10px;; background-color: #FAFAFA; font-size: 15px; text-align: center; transition: 0.2s; }
+.mint__grid-menu__entry:nth-child(even) { background-color: #F6F6F6; }
+a.mint__grid-menu__entry { text-decoration: none; color: inherit; }
+.mint__grid-menu__entry:hover, .mint__grid-menu__entry:focus { background-color: #EEE; }
+
+.mint__grid-detail { display: grid; padding: 10px 0; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.mint__grid-detail__entry { padding: 30px 10px; font-size: 15px; text-align: center; transition: 0.2s; }
+a.mint__grid-detail__entry { text-decoration: none; color: inherit; }
+.mint__grid-detail__entry:hover, .mint__grid-detail__entry:focus { background-color: #FAFAFA; }
+.mint__grid-detail__entry .mint__inventory__item { margin: 0 auto; }
+.mint__grid-detail__entry__price { display: inline-block; margin: 10px 0; padding: 6px 10px; background: #222; border-radius: 4px; font-size: 16px; color: #FAFAFA; }
+.mint__grid-detail__entry__note { font-size: 12px; color: #888; }
+.mint__grid-detail__entry .mint__inventory__item { opacity: 1; }
+
 .mint__form .mint__form__element { display: block; padding: 10px 0; }
 .mint__form .mint__form__element .mint__form__element__title { padding: 8px 0; font-size: 13px; }
 .mint__form .mint__form__element--major .mint__form__element__title { font-weight: bold; }
@@ -114,9 +129,9 @@ a.mint__service-nav__link:hover { background-color: var(--color); color: var(--s
 .mint__inventory__item:hover .mint__inventory__item__stacked-amount, .mint__inventory__item:focus .mint__inventory__item__stacked-amount { margin-bottom: -17px; }
 .mint__inventory__item__stacked-amount:empty { display: none; }
 
-.mint__grid__item { position: relative; }
-.mint__grid__item__options { position: absolute; padding: 10px; top: -16px; right: -16px; background: var(--background); border-radius: 0 0 0 20px; }
-.mint__grid__item__options input[type="number"] { margin-top: -10px; margin-right: -10px; width: 35px; }
+.mint__item-icon { position: relative; }
+.mint__item-icon__options { position: absolute; padding: 10px; top: -16px; right: -16px; background: var(--background); border-radius: 0 0 0 20px; }
+.mint__grid-icon__options input[type="number"] { margin-top: -10px; margin-right: -10px; width: 35px; }
 
 .mint__item-card { display: flex; margin-top: 10px; }
 .mint__item-card__visual { flex: 1; align-self: center; text-align: center; }

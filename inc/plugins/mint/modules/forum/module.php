@@ -2,10 +2,13 @@
 
 namespace mint\modules\forum;
 
+// hook files
 require_once __DIR__ . '/hooks.php';
 
+// hooks
 \mint\addHooksNamespace('mint\modules\forum\Hooks');
 
+// init
 \mint\loadModuleLanguageFile('forum', 'forum');
 
 \mint\registerSettings([
