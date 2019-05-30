@@ -174,7 +174,7 @@ function mint_is_installed()
 
 function mint_activate()
 {
-    global $PL;
+    global $plugins, $PL;
 
     \mint\loadPluginLibrary();
 
@@ -344,11 +344,13 @@ function mint_activate()
         'version' => mint_info()['version'],
         'modules' => $moduleNames,
     ]);
+
+    $plugins->run_hooks('mint_activate');
 }
 
 function mint_deactivate()
 {
-    global $PL;
+    global $plugins, $PL;
 
     \mint\loadPluginLibrary();
 
@@ -357,4 +359,6 @@ function mint_deactivate()
 
     // stylesheets
     $PL->stylesheet_delete('mint', true);
+
+    $plugins->run_hooks('mint_deactivate');
 }

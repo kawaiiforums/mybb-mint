@@ -40,6 +40,8 @@ Selected user groups are able to _forge_ amounts of an Item Type to be assigned 
 - `{$post['mintInventoryStatus']}` - number of occupied slots in inventory of the author (`postbit`, `postbit_prev`, `postbit_pm`, `postbit_announcement` hooks)
 
 ### Hooks
+- `mint_activate`
+- `mint_deactivate`
 - `mint_admin_config_mint_tabs`
 - `mint_admin_config_mint_begin`
 - `mint_admin_tools_mint_logs_tabs`

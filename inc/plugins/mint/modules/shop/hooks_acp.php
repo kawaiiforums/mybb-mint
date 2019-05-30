@@ -6,27 +6,23 @@ use mint\AcpEntityManagementController;
 use mint\DbRepository\ItemTypes;
 use mint\modules\shop\DbRepository\ShopItems;
 
-function admin_config_plugins_activate(): void
+function mint_activate(): void
 {
     global $mybb;
 
-    if ($mybb->get_input('plugin') == 'mint') {
-        \mint\createTables([
-            ShopItems::class,
-        ]);
-    }
+    \mint\createTables([
+        ShopItems::class,
+    ]);
 }
 
-function admin_config_plugins_deactivate(): void
+function mint_deactivate(): void
 {
     global $mybb;
 
-    if ($mybb->get_input('plugin') == 'mint') {
-        if ($mybb->get_input('uninstall') == 1) {
-            \mint\dropTables([
-                ShopItems::class,
-            ], true, true);
-        }
+    if ($mybb->get_input('uninstall') == 1) {
+        \mint\dropTables([
+            ShopItems::class,
+        ], true, true);
     }
 }
 
