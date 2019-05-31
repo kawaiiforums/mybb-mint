@@ -8,8 +8,6 @@ use mint\modules\shop\DbRepository\ShopItems;
 
 function mint_activate(): void
 {
-    global $mybb;
-
     \mint\createTables([
         ShopItems::class,
     ]);

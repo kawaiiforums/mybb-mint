@@ -14,5 +14,9 @@ class ItemCategories extends \mint\DbEntityRepository
             'type' => 'varchar',
             'length' => 255,
         ],
+        'image' => [
+            'type' => 'varchar',
+            'length' => 255,
+        ],
     ];
 }

@@ -2,8 +2,6 @@
 
 namespace mint\modules\shop\DbRepository;
 
-use mint\DbRepository\BalanceTransfers;
-
 class ShopItems extends \mint\DbEntityRepository
 {
     public const TABLE_NAME = 'mint_shop_items';
@@ -37,7 +35,7 @@ class ShopItems extends \mint\DbEntityRepository
     ];
 
 
-    public function purchase(int $shopItemId, int $bidUserId, bool $useDbTransaction = true): bool
+    public function purchase(int $shopItemId, int $amount, int $bidUserId, bool $useDbTransaction = true): bool
     {
         $result = true;
 
@@ -50,31 +48,36 @@ class ShopItems extends \mint\DbEntityRepository
         if (
             $shopItem && (
                 $shopItem['sales_limit'] == 0 ||
-                $shopItem['sales_limit'] > $shopItem['times_purchased']
+                (
+                    $shopItem['sales_limit'] > $shopItem['times_purchased'] &&
+                    ($shopItem['sales_limit'] - $shopItem['times_purchased']) >= $amount
+                )
             )
         ) {
             if ($shopItem['ask_price'] != 0) {
-                $balanceOperationId = \mint\userBalanceOperationWithTerminationPoint(
+                $value = -($amount * $shopItem['ask_price']);
+
+                $balanceOperationResult = \mint\userBalanceOperationWithTerminationPoint(
                     $bidUserId,
-                    -$shopItem['ask_price'],
+                    $value,
                     'shop',
                     false,
                     false
                 );
 
-                $result = $balanceOperationId !== null;
+                $result = $balanceOperationResult !== false;
             }
 
             if ($result == true) {
                 $result = \mint\createItemsWithTerminationPoint(
                     $shopItem['item_type_id'],
-                    1,
+                    $amount,
                     $bidUserId,
                     'shop'
                 );
 
                 $result &= $this->updateById($shopItemId, [
-                    'times_purchased' => $shopItem['times_purchased'] + 1,
+                    'times_purchased' => $shopItem['times_purchased'] + $amount,
                 ]);
             }
         } else {

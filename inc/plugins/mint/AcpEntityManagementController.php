@@ -304,7 +304,6 @@ class AcpEntityManagementController
 
                             $conditions[] = $queryColumn . ' ' . $operator . " '" . $this->db->escape_string($value) . "'";
                         }
-
                     } else {
                         $conditions[] = $this->dbRepository->getEscapedComparison($columnName, $operator, $value);
                     }

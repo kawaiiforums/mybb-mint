@@ -24,6 +24,8 @@ $l['mint_admin_item_categories_empty'] = 'No item categories added.';
 $l['mint_admin_item_categories_id'] = 'ID';
 $l['mint_admin_item_categories_title'] = 'Title';
 $l['mint_admin_item_categories_title_description'] = 'Title that will be used within the interface.';
+$l['mint_admin_item_categories_image'] = 'Image';
+$l['mint_admin_item_categories_image_description'] = 'Path to an image representing the item category. Paths relative to the forum root directory are supported.';
 
 $l['mint_admin_item_categories_add'] = 'Add Item Category';
 $l['mint_admin_item_categories_update'] = 'Update Item Category';

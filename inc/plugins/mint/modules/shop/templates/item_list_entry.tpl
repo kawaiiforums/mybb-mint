@@ -1,4 +1,4 @@
-<a href="{$url}" class="mint__grid-detail__entry">
+<a href="{$url}" class="{$entryClasses}">
     <div class="mint__item-icon">
         <div class="{$classes}" style="background-image: url({$imageUrl})">
         </div>

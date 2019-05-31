@@ -458,7 +458,6 @@ function misc_start(): void
                     }
 
                     $pagination = $listManager->pagination();
-
                 } else {
                     $pageTitle = $lang->mint_page_economy_balance_operations;
                     $pagination = null;
@@ -851,7 +850,6 @@ function misc_start(): void
 
                     if ($transaction['completed'] == 1) {
                         $status = $lang->mint_item_transaction_status_completed;
-
                     } elseif ($transaction['active'] == 1) {
                         $status = $lang->mint_item_transaction_status_active;
                     } else {

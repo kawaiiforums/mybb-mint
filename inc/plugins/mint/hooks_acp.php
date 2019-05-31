@@ -47,6 +47,16 @@ function admin_load(): void
         if ($mybb->input['action'] == 'item_categories' || empty($mybb->input['action'])) {
             $controller = new AcpEntityManagementController('item_categories', ItemCategories::class);
 
+            $controller->setColumns([
+                'id' => [],
+                'title' => [],
+                'image' => [
+                    'presenter' => function (?string $value) use ($mybb) {
+                        return $value ? '<img src="' . $mybb->get_asset_url($value) . '" style="max-width: 40px; max-height: 40px" />' : null;
+                    },
+                ],
+            ]);
+
             $controller->addEntityOptions([
                 'update' => [],
                 'delete' => [],

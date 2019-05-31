@@ -16,6 +16,15 @@ require_once __DIR__ . '/hooks_frontend.php';
 // init
 \mint\loadModuleLanguageFile('shop', 'shop');
 
+\mint\registerSettings([
+    'shop_list_available_items_only' => [
+        'title' => 'Shop: List Available Items Only',
+        'description' => 'Choose whether to hide limited items that were sold out.',
+        'optionscode' => 'yesno',
+        'value' => '1',
+    ],
+]);
+
 \mint\registerCurrencyTerminationPoints([
     'shop',
 ]);

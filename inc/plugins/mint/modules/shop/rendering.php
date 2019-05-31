@@ -4,11 +4,23 @@ namespace mint\modules\shop;
 
 function getRenderedItemCategoryMenu(array $itemCategories): ?string
 {
+    global $mybb, $lang;
+
     $entries = null;
 
     foreach ($itemCategories as $entry) {
         $url = 'misc.php?action=economy_items_shop&amp;category_id=' . (int)$entry['id'];
         $title = \htmlspecialchars_uni($entry['title']);
+        $count = $lang->sprintf(
+            $lang->mint_items_count,
+            (int)$entry['shop_items_count']
+        );
+
+        if (!empty($entry['image'])) {
+            $image = '<img class="mint__grid-menu__entry__image" src="' . $mybb->get_asset_url(\htmlspecialchars_uni($entry['image'])) . '">';
+        } else {
+            $image = null;
+        }
 
         eval('$entries .= "' . \mint\tpl('shop.item_category_menu_entry') . '";');
     }
@@ -31,15 +43,19 @@ function getRenderedShopItemEntries(array $items): ?string
         $askPrice = \mint\getFormattedCurrency($entry['ask_price']);
 
         if ($entry['sales_limit'] != 0) {
-            $itemsLeft = $lang->sprintf(
-                $lang->mint_items_shop_items_left,
-                $entry['sales_limit'] - $entry['times_purchased']
-            );
+            $availableItems = $entry['sales_limit'] - $entry['times_purchased'];
+
+            if ($availableItems != 0) {
+                $itemsLeft = $lang->sprintf(
+                    $lang->mint_shop_items_left,
+                    $availableItems
+                );
+            } else {
+                $itemsLeft = $lang->mint_shop_items_none_left;
+            }
         } else {
             $itemsLeft = null;
         }
-
-        $flags = null;
 
         $elementClass = 'mint__inventory__item';
 
@@ -55,23 +71,25 @@ function getRenderedShopItemEntries(array $items): ?string
 
         if (!$entry['item_type_discardable']) {
             $classes[] = $elementClass . '--non-discardable';
-
-            $flagType = 'non-discardable';
-            $flagContent = $lang->mint_item_non_discardable;
-
-            eval('$flags .= "' . \mint\tpl('flag') . '";');
         }
 
         if (!$entry['item_type_transferable']) {
             $classes[] = $elementClass . '--non-transferable';
-
-            $flagType = 'non-transferable';
-            $flagContent = $lang->mint_item_non_transferable;
-
-            eval('$flags .= "' . \mint\tpl('flag') . '";');
         }
 
         $classes = implode(' ', $classes);
+
+        $entryElementClass = 'mint__grid-detail__entry';
+
+        $entryClasses = [
+            $entryElementClass,
+        ];
+
+        if ($entry['sales_limit'] != 0 && $entry['sales_limit'] == $entry['times_purchased']) {
+            $entryClasses[] = $entryElementClass . '--unavailable';
+        }
+
+        $entryClasses = implode(' ', $entryClasses);
 
         if ($entry['item_type_image']) {
             $imageUrl = $mybb->get_asset_url($entry['item_type_image']);

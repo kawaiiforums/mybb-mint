@@ -31,19 +31,22 @@
 .mint__flowing-list__entry__value { padding: 10px 10px 10px 5px; color: #666; }
 
 .mint__grid-menu { display: grid; padding: 10px 0; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
-.mint__grid-menu__entry { display: flex; align-items: center; justify-content: center; padding: 50px 10px;; background-color: #FAFAFA; font-size: 15px; text-align: center; transition: 0.2s; }
+.mint__grid-menu__entry { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 10px; background-color: #FAFAFA; font-size: 15px; text-align: center; transition: 0.2s; }
 .mint__grid-menu__entry:nth-child(even) { background-color: #F6F6F6; }
 a.mint__grid-menu__entry { text-decoration: none; color: inherit; }
 .mint__grid-menu__entry:hover, .mint__grid-menu__entry:focus { background-color: #EEE; }
+.mint__grid-menu__entry__image { margin-bottom: 10px; max-height: 100px; max-width: 100px; }
+.mint__grid-menu__entry__note { margin-top: 14px; padding-top: 10px; border-top: solid 1px rgba(0,0,0,0.05); font-size: 12px; color: #AAA; }
 
 .mint__grid-detail { display: grid; padding: 10px 0; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 .mint__grid-detail__entry { padding: 30px 10px; font-size: 15px; text-align: center; transition: 0.2s; }
 a.mint__grid-detail__entry { text-decoration: none; color: inherit; }
 .mint__grid-detail__entry:hover, .mint__grid-detail__entry:focus { background-color: #FAFAFA; }
 .mint__grid-detail__entry .mint__inventory__item { margin: 0 auto; }
-.mint__grid-detail__entry__price { display: inline-block; margin: 10px 0; padding: 6px 10px; background: #222; border-radius: 4px; font-size: 16px; color: #FAFAFA; }
+.mint__grid-detail__entry__price { display: inline-block; margin: 10px 0; padding: 6px 10px; border: solid 2px #222; background: #222; border-radius: 4px; font-size: 16px; color: #FAFAFA; }
+.mint__grid-detail__entry--unavailable .mint__grid-detail__entry__price { background-color: transparent; color: #222; }
 .mint__grid-detail__entry__note { font-size: 12px; color: #888; }
-.mint__grid-detail__entry .mint__inventory__item { opacity: 1; }
+.mint__grid-detail__entry--unavailable .mint__inventory__item { opacity: 0.2; }
 
 .mint__form .mint__form__element { display: block; padding: 10px 0; }
 .mint__form .mint__form__element .mint__form__element__title { padding: 8px 0; font-size: 13px; }

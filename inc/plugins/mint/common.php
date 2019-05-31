@@ -614,6 +614,13 @@ function getClassMethodsNamesMatching($class, string $pattern): array
     return $methodNames;
 }
 
+// requests
+function redirect(string $url): void
+{
+    header('Location: ' . $url);
+    exit;
+}
+
 // 3rd party
 function loadPluginLibrary(): void
 {
