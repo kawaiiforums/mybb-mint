@@ -84,7 +84,7 @@ function getShopItemCategories(bool $notEmptyOnly = false, bool $availableOnly =
     $conditions = null;
 
     if ($notEmptyOnly || $availableOnly) {
-        $conditions .= 'HAVING shop_items_count != 0';
+        $conditions .= 'HAVING COUNT(si.id) != 0';
     }
 
     if ($availableOnly) {
