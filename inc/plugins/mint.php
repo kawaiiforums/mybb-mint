@@ -320,7 +320,7 @@ function mint_activate()
         $PL->templates(
             'mint.' . $moduleName,
             'Mint: ' . $moduleName,
-            \mint\getFilesContentInDirectory(MYBB_ROOT . 'inc/plugins/mint/modules/' . $moduleName . '/templates', '.tpl'),
+            \mint\getFilesContentInDirectory(MYBB_ROOT . 'inc/plugins/mint/modules/' . $moduleName . '/templates', '.tpl')
         );
     }
 
