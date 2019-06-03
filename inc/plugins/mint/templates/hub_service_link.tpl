@@ -1,0 +1,1 @@
+<a href="{$url}" class="mint__service-nav__link">{$title}</a>
