@@ -504,7 +504,7 @@ function getItemsById(array $ids, bool $forUpdate = false)
 }
 
 // item ownerships
-function getItemOwnershipsById(array $ids, bool $forUpdate = false)
+function getItemOwnershipsById(array $ids, bool $forUpdate = false): ?array
 {
     global $db;
 
@@ -517,7 +517,9 @@ function getItemOwnershipsById(array $ids, bool $forUpdate = false)
 
         $query = $db->simple_select('mint_item_ownerships', '*', $conditions);
 
-        return $query;
+        $result = \mint\queryResultAsArray($query);
+
+        return $result;
     } else {
         return null;
     }
