@@ -258,7 +258,7 @@ function verifyBalanceOperationsDataIntegrity(bool $attemptToFix = false)
     }
 
     // verify users.mint_balance
-    $query = $db->simple_select('users', 'uid, mint_balance', 'uid IN (' . implode(',', array_map('intval', $userIds)) . ')');
+    $query = $db->simple_select('users', 'uid, mint_balance', 'uid IN (' . \mint\getIntegerCsv($userIds) . ')');
 
     while ($row = $db->fetch_array($query)) {
         $balanceSum = $userBalanceSums[$row['uid']];

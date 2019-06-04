@@ -197,6 +197,8 @@ class ItemTransactions extends \mint\DbEntityRepository
                     );
 
                     $result = $balanceTransferId !== null;
+                } else {
+                    $balanceTransferId = null;
                 }
             }
 
