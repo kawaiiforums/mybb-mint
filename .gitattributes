@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.tpl linguist-language=HTML
+.gitattributes export-ignore
+/README.md export-ignore
+/LICENSE export-ignore
