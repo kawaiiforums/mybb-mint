@@ -48,7 +48,7 @@ function mint_misc_pages(array &$pages): void
 
                 if ($itemCategory) {
                     $pageTitle = $lang->sprintf(
-                        $lang->mint_shop_itemcategory,
+                        $lang->mint_shop_item_category,
                         \htmlspecialchars_uni($itemCategory['title'])
                     );
 
