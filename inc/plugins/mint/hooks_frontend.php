@@ -377,7 +377,7 @@ function misc_start(): void
                         }
                     }
 
-                    $username = \htmlspecialchars_uni($mybb->input['username'] ?? null);
+                    $username = \htmlspecialchars_uni($mybb->input['user_name'] ?? null);
                     $amount = (int)($mybb->input['amount'] ?? 1);
                     $note = \htmlspecialchars_uni($mybb->input['note'] ?? null);
 

@@ -12,6 +12,11 @@ The Currency platform allows units to enter and exit the circulation by applying
 
 Manual Balance Transfers allow users to transfer currency units &mdash; using public and private transfers &mdash; between accounts with attached messages.
 
+Transfer form fields can be pre-filled using GET parameters:
+```
+misc.php?action=economy_balance_transfer&user_name=aloeblacc&amount=1&note=for+your+story
+```
+
 The plugin's _Content Entity Rewards_ handling allows modules to grant, void, and trace rewards for Entities of specified Content Types.
 
 Selected user groups are able to _mint_ and _burn_ amounts assigned to individual accounts, inserting and removing currency from circulation, respectively.
