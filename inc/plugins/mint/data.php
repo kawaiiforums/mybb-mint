@@ -8,6 +8,7 @@ use mint\DbRepository\CurrencyTerminationPoints;
 use mint\DbRepository\InventoryTypes;
 use mint\DbRepository\Items;
 use mint\DbRepository\ItemTerminationPoints;
+use mint\DbRepository\ItemTransactions;
 use mint\DbRepository\ItemTypes;
 use mint\DbRepository\ItemOwnerships;
 
@@ -1034,12 +1035,10 @@ function getItemTransactionDetails(int $transactionId): ?array
     }
 }
 
-function getUserActiveTransactions(int $userId): array
+function getItemTransactionsDetailsWithItemCount(?string $conditions): array
 {
-    global $db;
-
     $entries = \mint\queryResultAsArray(
-        \mint\getItemTransactionsDetails('WHERE active = 1 AND ask_user_id = ' . (int)$userId . ' ORDER BY ask_date DESC'),
+        \mint\getItemTransactionsDetails($conditions),
         'id'
     );
 
@@ -1054,20 +1053,49 @@ function getUserActiveTransactions(int $userId): array
     return $entries;
 }
 
-function getRecentPublicItemTransactions(int $limit): array
+function getUserActiveTransactions(int $userId): array
 {
-    $entries = \mint\queryResultAsArray(
-        \mint\getItemTransactionsDetails('WHERE iTr.completed = 1 ORDER BY iTr.completed_date LIMIT ' . (int)$limit),
-        'id'
-    );
+    $entries = \mint\getItemTransactionsDetailsWithItemCount('WHERE active = 1 AND ask_user_id = ' . (int)$userId . ' ORDER BY ask_date DESC');
 
-    $counts = \mint\countItemTransactionsItems(
-        array_keys($entries)
-    );
+    return $entries;
+}
 
-    foreach ($counts as $transactionId => $count) {
-        $entries[$transactionId]['transactionItemsCount'] = $count;
+function getActivePublicItemTransactions(?string $conditions): array
+{
+    $passedConditions = 'WHERE iTr.active = 1';
+
+    if ($conditions) {
+        $passedConditions .= ' ' . $conditions;
     }
+
+    $entries = \mint\getItemTransactionsDetailsWithItemCount($passedConditions);
+
+    return $entries;
+}
+
+function countActivePublicItemTransactions(): int
+{
+    global $db;
+
+    return ItemTransactions::with($db)->count('active = 1');
+}
+
+function getRecentActivePublicItemTransactions(?int $limit = null): array
+{
+    $conditions = 'ORDER BY iTr.ask_date DESC';
+
+    if ($limit) {
+        $conditions .= ' LIMIT ' . (int)$limit;
+    }
+
+    $entries = \mint\getActivePublicItemTransactions($conditions);
+
+    return $entries;
+}
+
+function getRecentCompletedPublicItemTransactions(int $limit): array
+{
+    $entries = \mint\getItemTransactionsDetailsWithItemCount('WHERE iTr.completed = 1 ORDER BY iTr.completed_date DESC LIMIT ' . (int)$limit);
 
     return $entries;
 }

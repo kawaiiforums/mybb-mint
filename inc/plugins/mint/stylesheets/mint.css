@@ -26,7 +26,8 @@
 
 .mint__grid { display: grid; grid-gap: 30px; justify-items: center; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
 
-.mint__flowing-list__entry { display: inline-block; margin: 6px 2px; padding: 2px 0; border: solid 2px #FAFAFA; border-radius: 30px; font-size: 13px; line-height: 1.8; overflow: hidden; }
+.mint__flowing-list { margin: 6px 0; }
+.mint__flowing-list__entry { display: inline-block; margin: 4px 2px; padding: 2px 0; border: solid 2px #FAFAFA; border-radius: 30px; font-size: 13px; line-height: 1.8; overflow: hidden; }
 .mint__flowing-list__entry__title { padding: 10px; background: #FAFAFA; color: #666; }
 .mint__flowing-list__entry__value { padding: 10px 10px 10px 5px; color: #666; }
 

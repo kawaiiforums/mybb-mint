@@ -97,8 +97,13 @@ $l['mint_item_transaction_new'] = 'New Transaction';
 $l['mint_item_transaction_new_error'] = 'Could not create transaction.';
 $l['mint_item_transaction_new_success'] = 'Successfully created item transaction offer.';
 $l['mint_item_transaction_select_items'] = 'Select items for transaction.';
+
+$l['mint_page_economy_active_transactions'] = 'Active Transactions';
+$l['mint_page_economy_active_transactions_count'] = 'Active Transactions ({1})';
+
 $l['mint_active_user_transactions'] = 'Active Transactions';
-$l['mint_recent_public_item_transactions'] = 'Recent Item Transactions';
+$l['mint_recent_completed_public_item_transactions'] = 'Recent Public Transactions';
+$l['mint_recent_active_public_item_transactions'] = 'Recent Public Offers';
 
 $l['mint_recent_public_balance_transfers'] = 'Recent Public Transfers';
 $l['mint_balance_top_users'] = 'Top Users by Balance';

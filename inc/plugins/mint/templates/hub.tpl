@@ -33,9 +33,15 @@
             {$inventoryPreview}
             {$userActiveTransactions}
             <div class="mint__block">
-                <p class="mint__block__title">{$lang->mint_recent_public_item_transactions}</p>
+                <p class="mint__block__title">{$lang->mint_recent_completed_public_item_transactions}</p>
                 <div class="mint__table">
                     {$recentItemTransactions}
+                </div>
+            </div>
+            <div class="mint__block">
+                <p class="mint__block__title"><a href="misc.php?action=economy_active_transactions">{$lang->mint_recent_active_public_item_transactions}</a></p>
+                <div class="mint__table">
+                    {$recentActivePublicItemTransactions}
                 </div>
             </div>
         </section>

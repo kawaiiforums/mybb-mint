@@ -40,6 +40,7 @@ function global_start(): void
                     'item_card',
                     'item_ownership',
                     'item_transaction',
+                    'item_transactions',
                     'item_transactions_entry',
                     'items_discard_form',
                     'items_forge',
@@ -229,7 +230,7 @@ function misc_start(): void
                 }
 
 
-                $entries = \mint\getRecentPublicItemTransactions(
+                $entries = \mint\getRecentCompletedPublicItemTransactions(
                     \mint\getSettingValue('recent_item_transactions_entries')
                 );
 
@@ -237,6 +238,17 @@ function misc_start(): void
                     $recentItemTransactions = \mint\getRenderedTransactionEntries($entries);
                 } else {
                     $recentItemTransactions = \mint\getRenderedMessage($lang->mint_no_entries);
+                }
+
+
+                $entries = \mint\getRecentActivePublicItemTransactions(
+                    \mint\getSettingValue('recent_item_transactions_entries')
+                );
+
+                if ($entries) {
+                    $recentActivePublicItemTransactions = \mint\getRenderedTransactionEntries($entries);
+                } else {
+                    $recentActivePublicItemTransactions = \mint\getRenderedMessage($lang->mint_no_entries);
                 }
 
                 eval('$page = "' . \mint\tpl('hub') . '";');
@@ -948,6 +960,51 @@ function misc_start(): void
                     $content = \mint\getRenderedMessage($lang->mint_item_transaction_not_found, 'error');
                 }
 
+                eval('$page = "' . \mint\tpl('page') . '";');
+
+                return $page;
+            },
+        ],
+        'economy_active_transactions' => [
+            'parents' => [
+                'economy_hub',
+            ],
+            'controller' => function (array $globals) {
+                extract($globals);
+
+                $itemsNum = \mint\countActivePublicItemTransactions();
+
+                $pageTitle = $lang->sprintf(
+                    $lang->mint_page_economy_active_transactions_count,
+                    $itemsNum
+                );
+
+                $listManager = new \mint\ListManager([
+                    'mybb' => $mybb,
+                    'baseurl' => 'misc.php?action=economy_active_transactions',
+                    'order_columns' => [
+                        'iTr.id',
+                    ],
+                    'order_dir' => 'desc',
+                    'items_num' => $itemsNum,
+                    'per_page' => $mybb->settings['threadsperpage'],
+                ]);
+
+                if ($itemsNum > 0) {
+                    $entries = null;
+
+                    $query = \mint\getActivePublicItemTransactions(
+                        $listManager->sql()
+                    );
+
+                    $entries = \mint\getRenderedTransactionEntries($query);
+                } else {
+                    $entries = \mint\getRenderedMessage($lang->mint_no_entries);
+                }
+
+                $pagination = $listManager->pagination();
+
+                eval('$content = "' . \mint\tpl('item_transactions') . '";');
                 eval('$page = "' . \mint\tpl('page') . '";');
 
                 return $page;

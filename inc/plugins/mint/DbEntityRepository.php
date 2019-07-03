@@ -151,10 +151,10 @@ abstract class DbEntityRepository
         ");
     }
 
-    public function count(?string $conditions = null): int
+    public function count(?string $whereConditions = null): int
     {
         return $this->db->fetch_field(
-            $this->db->simple_select(static::TABLE_NAME, 'COUNT(id) AS n', $conditions),
+            $this->db->simple_select(static::TABLE_NAME, 'COUNT(id) AS n', $whereConditions),
             'n'
         );
     }
