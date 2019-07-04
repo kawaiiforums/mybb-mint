@@ -177,8 +177,10 @@ abstract class DbEntityRepository
     {
         $result = $this->db->update_query(
             static::TABLE_NAME,
-            $this->getEscapedArray($data, false),
-            $whereString
+            $this->getEscapedArray($data, true),
+            $whereString,
+            null,
+            true
         );
 
         return $this->db->affected_rows();
@@ -212,23 +214,27 @@ abstract class DbEntityRepository
 
     protected function getEscapedColumnValue(string $columnName, $value, bool $includeQuotes = true)
     {
-        switch (static::COLUMNS[$columnName]['type']) {
-            case 'bool':
-                $escapedValue = (int)(bool)$value;
-                break;
-            case 'integer':
-                $escapedValue = (int)$value;
-                break;
-            case 'text':
-            case 'varchar':
-                $escapedValue = $this->db->escape_string($value);
+        if ($value === null && empty(static::COLUMNS[$columnName]['notNull'])) {
+            $escapedValue = 'NULL';
+        } else {
+            switch (static::COLUMNS[$columnName]['type']) {
+                case 'bool':
+                    $escapedValue = (int)(bool)$value;
+                    break;
+                case 'integer':
+                    $escapedValue = (int)$value;
+                    break;
+                case 'text':
+                case 'varchar':
+                    $escapedValue = $this->db->escape_string($value);
 
-                if ($includeQuotes) {
-                    $escapedValue = '\'' . $escapedValue . '\'';
-                }
-                break;
-            default:
-                $escapedValue = null;
+                    if ($includeQuotes) {
+                        $escapedValue = '\'' . $escapedValue . '\'';
+                    }
+                    break;
+                default:
+                    $escapedValue = null;
+            }
         }
 
         return $escapedValue;
