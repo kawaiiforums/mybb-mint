@@ -1062,7 +1062,7 @@ function getUserActiveTransactions(int $userId): array
 
 function getActivePublicItemTransactions(?string $conditions): array
 {
-    $passedConditions = 'WHERE iTr.active = 1';
+    $passedConditions = 'WHERE iTr.active = 1 AND iTr.unlisted = 0';
 
     if ($conditions) {
         $passedConditions .= ' ' . $conditions;

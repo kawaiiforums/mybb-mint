@@ -1,6 +1,8 @@
 {$messages}
 <br />
 
+{$urlToCopy}
+
 <div class="mint__flowing-list">
     <div class="mint__flowing-list__entry">
         <span class="mint__flowing-list__entry__title">{$lang->mint_item_transaction_status}</span>

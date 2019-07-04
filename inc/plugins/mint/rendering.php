@@ -450,6 +450,10 @@ function getRenderedTransactionEntries($entries): ?string
         $id = (int)$entry['id'];
         $url = 'misc.php?action=economy_item_transaction&amp;id=' . $id;
 
+        if ($entry['token']) {
+            $url .= '&token=' . urlencode($entry['token']);
+        }
+
         $askDate = \my_date('normal', $entry['ask_date']);
 
         if ($entry['completed_date']) {
@@ -486,6 +490,15 @@ function getRenderedTransactionEntries($entries): ?string
         }
 
         $details = implode(' &middot; ', $details);
+
+        $flags = null;
+
+        if ($entry['active'] == 1 && $entry['unlisted'] == true) {
+            $flagType = 'unlisted';
+            $flagContent = $lang->mint_item_transaction_unlisted;
+
+            eval('$flags .= "' . \mint\tpl('flag') . '";');
+        }
 
         eval('$output .= "' . \mint\tpl('item_transactions_entry') . '";');
     }

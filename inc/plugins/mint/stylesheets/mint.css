@@ -11,6 +11,10 @@
 .mint__message--success { background: #EAFAEA; }
 .mint__message--error { background: #FFF5F5; }
 
+.mint__string-to-copy { margin-bottom: 10px; padding-bottom: 10px; border-bottom: solid 1px rgba(0,0,0,0.05); }
+.mint__string-to-copy p { font-size: 11px; color: #767676; }
+.mint__string-to-copy input { margin: 6px 0; padding: 10px; width: 100%; border: none; background-color: rgba(0,0,0,0.02); box-sizing: border-box; cursor: copy; }
+
 .mint__block { margin: 20px 0; }
 .mint__block__title { padding: 10px; border-bottom: solid 2px rgba(0,0,0,0.1); font-size: 14px; color: #767676; }
 

@@ -50,6 +50,14 @@ class ItemTransactions extends \mint\DbEntityRepository
         'completed_date' => [
             'type' => 'integer',
         ],
+        'unlisted' => [
+            'type' => 'bool',
+            'notNull' => true,
+        ],
+        'token' => [
+            'type' => 'varchar',
+            'length' => 40,
+        ],
         'balance_transfer_id' => [
             'type' => 'integer',
             'foreignKeys' => [
@@ -79,6 +87,10 @@ class ItemTransactions extends \mint\DbEntityRepository
                 'active' => true,
                 'completed' => false,
             ]);
+
+            if ($transaction['unlisted'] == true) {
+                $transaction['token'] = \random_str(14);
+            }
 
             $transactionId = $this->insert($transaction);
 

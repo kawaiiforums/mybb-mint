@@ -55,6 +55,7 @@ function global_start(): void
                     'reward_sources',
                     'reward_sources_entry',
                     'reward_sources_legend',
+                    'string_to_copy',
                     'user_active_item_transactions',
                 ], 'mint_');
             }
@@ -800,10 +801,19 @@ function misc_start(): void
                                         $transactionId = ItemTransactions::with($db)->create([
                                             'ask_user_id' => $user['uid'],
                                             'ask_price' => $askPrice,
+                                            'unlisted' => !empty($mybb->input['unlisted']),
                                         ], $selectedItems);
 
                                         if ($transactionId !== null) {
-                                            \redirect('misc.php?action=economy_item_transaction&id=' . (int)$transactionId, $lang->mint_item_transaction_new_success);
+                                            $transaction = ItemTransactions::with($db)->getById($transactionId);
+
+                                            $url = 'misc.php?action=economy_item_transaction&id=' . (int)$transactionId;
+
+                                            if ($transaction['token']) {
+                                                $url .= '&token=' . urlencode($transaction['token']);
+                                            }
+
+                                            \redirect($url, $lang->mint_item_transaction_new_success);
                                         } else {
                                             $messages .= \mint\getRenderedMessage($lang->mint_item_transaction_new_error, 'error');
                                         }
@@ -859,7 +869,37 @@ function misc_start(): void
 
                 $transaction = \mint\getItemTransactionDetails($mybb->get_input('id', \MyBB::INPUT_INT));
 
-                if ($transaction !== null) {
+                if (
+                    $transaction !== null && (
+                        $transaction['active'] == 0 ||
+                        $transaction['unlisted'] == 0 ||
+                        $mybb->user['uid'] != 0 && $transaction['ask_user_id'] === $mybb->user['uid'] ||
+                        $mybb->usergroup['cancp'] == 1 ||
+                        (
+                            !empty($transaction['token']) &&
+                            $mybb->get_input('token') === $transaction['token']
+                        )
+                    )
+                ) {
+                    if (
+                        $transaction['active'] == 1 &&
+                        $transaction['unlisted'] == 1
+                    ) {
+                        $url = $mybb->settings['bburl'] . '/misc.php?action=economy_item_transaction&id=' . (int)$transaction['id'] . '&token=' . urlencode($transaction['token']);
+
+                        $note = $lang->mint_item_transaction_unlisted_note;
+                        $string = $url;
+
+                        eval('$urlToCopy = "' . \mint\tpl('string_to_copy') . '";');
+
+                        if (
+                            !empty($transaction['token']) &&
+                            $mybb->get_input('token') !== $transaction['token']
+                        ) {
+                            \mint\redirect($url);
+                        }
+                    }
+
                     $transactionItems = \mint\getItemTransactionItems($transaction['id']);
 
                     $actionSignatureJson = json_encode([
