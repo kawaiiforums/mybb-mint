@@ -21,7 +21,7 @@ $l['mint_continue'] = 'Continue';
 $l['mint_currency_simple'] = '{1} {2}';
 $l['mint_to_user'] = 'to {1}';
 $l['mint_from_user'] = 'from {1}';
-$l['mint_items_count'] = '{1} items';
+$l['mint_items_count'] = '{1} item(s)';
 
 $l['mint_page_economy_hub'] = 'Economy Hub';
 $l['mint_service_currency_mint'] = 'Mint';
