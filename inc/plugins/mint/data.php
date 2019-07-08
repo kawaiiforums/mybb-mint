@@ -1099,50 +1099,54 @@ function getItemTransactionsItems(array $transactionIds, bool $withDetails = fal
 {
     global $db;
 
-    $transactionsItems = array_fill_keys($transactionIds, []);
+    if (!empty($transactionIds)) {
+        $transactionsItems = array_fill_keys($transactionIds, []);
 
-    $csv = \mint\getIntegerCsv($transactionIds);
+        $csv = \mint\getIntegerCsv($transactionIds);
 
-    $itemOwnershipsJoinConditions = null;
+        $itemOwnershipsJoinConditions = null;
 
-    if ($activeOnly) {
-         $itemOwnershipsJoinConditions .= ' AND io.active = 1';
-    }
+        if ($activeOnly) {
+            $itemOwnershipsJoinConditions .= ' AND io.active = 1';
+        }
 
-    $entries = \mint\queryResultAsArray(
-        $db->query("
-            SELECT
-                iTrI.item_id, iTrI.item_transaction_id,
-                i.item_type_id, i.active AS item_active,
-                io.id AS item_ownership_id, io.user_id, io.active AS item_ownership_active
-                FROM
-                    " . TABLE_PREFIX . "mint_item_transaction_items iTrI
-                    INNER JOIN " . TABLE_PREFIX . "mint_items i ON iTrI.item_id = i.id
-                    LEFT JOIN " . TABLE_PREFIX . "mint_item_ownerships io ON i.id = io.item_id {$itemOwnershipsJoinConditions}
-                WHERE iTrI.item_transaction_id IN (" . $csv . ")
-        "),
-        'item_id'
-    );
-
-    if ($withDetails) {
-        $itemsDetails = \mint\getItemsDetails(
-            array_column(
-                $entries,
-                'item_id'
-            ),
-            false
+        $entries = \mint\queryResultAsArray(
+            $db->query("
+                SELECT
+                    iTrI.item_id, iTrI.item_transaction_id,
+                    i.item_type_id, i.active AS item_active,
+                    io.id AS item_ownership_id, io.user_id, io.active AS item_ownership_active
+                    FROM
+                        " . TABLE_PREFIX . "mint_item_transaction_items iTrI
+                        INNER JOIN " . TABLE_PREFIX . "mint_items i ON iTrI.item_id = i.id
+                        LEFT JOIN " . TABLE_PREFIX . "mint_item_ownerships io ON i.id = io.item_id {$itemOwnershipsJoinConditions}
+                    WHERE iTrI.item_transaction_id IN (" . $csv . ")
+            "),
+            'item_id'
         );
 
-        foreach ($itemsDetails as $itemDetails) {
-            $entries[ $itemDetails['item_id'] ] += $itemDetails;
+        if ($withDetails) {
+            $itemsDetails = \mint\getItemsDetails(
+                array_column(
+                    $entries,
+                    'item_id'
+                ),
+                false
+            );
+
+            foreach ($itemsDetails as $itemDetails) {
+                $entries[$itemDetails['item_id']] += $itemDetails;
+            }
         }
-    }
 
-    foreach ($entries as $entry) {
-        $transactionsItems[ $entry['item_transaction_id'] ][] = $entry;
-    }
+        foreach ($entries as $entry) {
+            $transactionsItems[$entry['item_transaction_id']][] = $entry;
+        }
 
-    return $transactionsItems;
+        return $transactionsItems;
+    } else {
+        return [];
+    }
 }
 
 function getItemTransactionItems(int $transactionId, bool $withDetails = false, bool $activeOnly = false): array
