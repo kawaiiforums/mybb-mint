@@ -181,7 +181,7 @@ class ItemTransactions extends \mint\DbEntityRepository
         ) {
             $result = false;
         } else {
-            $transactionItems = \mint\getItemTransactionItems($transaction['id']);
+            $transactionItems = \mint\getItemTransactionItems($transaction['id'], false, true);
 
             \mint\getItemsById(array_column($transactionItems, 'item_id'), true);
 

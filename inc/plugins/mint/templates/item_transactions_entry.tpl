@@ -7,5 +7,6 @@
         {$flags}
         <p class="mint__balance-operation__details">{$details}</p>
         <p class="mint__balance-operation__note">{$note}</p>
+        {$preview}
     </div>
 </div>

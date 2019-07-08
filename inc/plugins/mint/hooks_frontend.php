@@ -900,7 +900,7 @@ function misc_start(): void
                         }
                     }
 
-                    $transactionItems = \mint\getItemTransactionItems($transaction['id']);
+                    $transactionItems = \mint\getItemTransactionItems($transaction['id'], true);
 
                     $actionSignatureJson = json_encode([
                         'item_ownership_ids' => array_column($transactionItems, 'item_ownership_id'),

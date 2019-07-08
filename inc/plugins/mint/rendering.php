@@ -440,7 +440,7 @@ function getRenderedBalanceOperationEntries($query, ?int $contextUserId = null, 
     return $output;
 }
 
-function getRenderedTransactionEntries($entries): ?string
+function getRenderedTransactionEntries(array $entries): ?string
 {
     global $db, $lang;
 
@@ -466,10 +466,10 @@ function getRenderedTransactionEntries($entries): ?string
 
         $details = [];
 
-        if (isset($entry['transactionItemsCount'])) {
+        if (isset($entry['items'])) {
             $details[] = $lang->sprintf(
                 $lang->mint_items_count,
-                (int)$entry['transactionItemsCount']
+                count($entry['items'])
             );
         }
 
@@ -498,6 +498,14 @@ function getRenderedTransactionEntries($entries): ?string
             $flagContent = $lang->mint_item_transaction_unlisted;
 
             eval('$flags .= "' . \mint\tpl('flag') . '";');
+        }
+
+        if (!empty($entry['items'])) {
+            $maxPreviewItems = 6;
+
+            $preview = \mint\getRenderedInventory(array_slice($entry['items'], 0, $maxPreviewItems), 'preview');
+        } else {
+            $preview = null;
         }
 
         eval('$output .= "' . \mint\tpl('item_transactions_entry') . '";');

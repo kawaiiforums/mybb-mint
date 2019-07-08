@@ -711,12 +711,25 @@ function getItemOwnershipsWithStackedAmount(?int $userId, ?array $itemOwnershipI
     return $result;
 }
 
-function getItemsDetails(array $itemIds): array
+function getItemsDetails(array $itemIds, bool $withActiveTransaction = true): array
 {
     global $db;
 
     if (!empty($itemIds)) {
         $csv = \mint\getIntegerCsv($itemIds);
+
+        $columns = null;
+        $joinStatements = null;
+
+        if ($withActiveTransaction) {
+            $columns = ', iTr.id AS item_transaction_id';
+            $joinStatements .= "
+                LEFT JOIN (
+                    " . TABLE_PREFIX . "mint_item_transaction_items iTrI
+                    INNER JOIN " . TABLE_PREFIX . "mint_item_transactions iTr ON iTrI.item_transaction_id = iTr.id AND iTr.active = 1 
+                ) ON iTrI.item_id = i.id
+            ";
+        }
 
         return \mint\queryResultAsArray(
             $db->query("
@@ -724,17 +737,14 @@ function getItemsDetails(array $itemIds): array
                     i.id AS item_id, i.item_type_id, i.active AS item_active, i.activation_date AS item_activation_date,
                     io.id AS item_ownership_id, io.item_id, io.user_id, io.active AS item_ownership_active, io.activation_date, io.deactivation_date,
                     iTy.title AS item_type_title, iTy.description AS item_type_description, iTy.image AS item_type_image, iTy.stacked AS item_type_stacked, iTy.transferable AS item_type_transferable, iTy.discardable AS item_type_discardable,
-                    ic.title AS item_category_title,
-                    iTr.id AS item_transaction_id
+                    ic.title AS item_category_title
+                    {$columns}
                     FROM
                         " . TABLE_PREFIX . "mint_items i
                         INNER JOIN " . TABLE_PREFIX . "mint_item_types iTy ON i.item_type_id = iTy.id
                         INNER JOIN " . TABLE_PREFIX . "mint_item_categories ic ON iTy.item_category_id = ic.id
                         LEFT JOIN " . TABLE_PREFIX . "mint_item_ownerships io ON i.id = io.item_id
-                        LEFT JOIN (
-                            " . TABLE_PREFIX . "mint_item_transaction_items iTrI
-                            INNER JOIN " . TABLE_PREFIX . "mint_item_transactions iTr ON iTrI.item_transaction_id = iTr.id AND iTr.active = 1 
-                        ) ON iTrI.item_id = i.id
+                        {$joinStatements}
                     WHERE i.id IN (" . $csv . ")
             "),
             'item_id'
@@ -1003,61 +1013,47 @@ function getItemTransactionById(int $transactionId, bool $forUpdate = false): ?a
     }
 }
 
-function getItemTransactionsDetails(?string $conditions)
+function getItemTransactionsDetails(?string $conditions, bool $withItems = false): array
 {
     global $db;
 
-    $query = $db->query("
-        SELECT
-            iTr.*,
-            ask_u.username AS ask_user_username,
-            bid_u.username AS bid_user_username
-            FROM
-                " . TABLE_PREFIX . "mint_item_transactions iTr
-                LEFT JOIN " . TABLE_PREFIX . "users ask_u ON iTr.ask_user_id = ask_u.uid 
-                LEFT JOIN " . TABLE_PREFIX . "users bid_u ON iTr.bid_user_id = bid_u.uid
-            " . $conditions . "
-    ");
-
-    return $query;
-}
-
-function getItemTransactionDetails(int $transactionId): ?array
-{
-    global $db;
-
-    $query = \mint\getItemTransactionsDetails('WHERE iTr.id = ' . (int)$transactionId);
-
-    if ($db->num_rows($query) == 1) {
-        return $db->fetch_array($query);
-    } else {
-        return null;
-    }
-}
-
-function getItemTransactionsDetailsWithItemCount(?string $conditions): array
-{
-    $entries = \mint\queryResultAsArray(
-        \mint\getItemTransactionsDetails($conditions),
+    $transactions = \mint\queryResultAsArray(
+        $db->query("
+            SELECT
+                iTr.*,
+                ask_u.username AS ask_user_username,
+                bid_u.username AS bid_user_username
+                FROM
+                    " . TABLE_PREFIX . "mint_item_transactions iTr
+                    LEFT JOIN " . TABLE_PREFIX . "users ask_u ON iTr.ask_user_id = ask_u.uid 
+                    LEFT JOIN " . TABLE_PREFIX . "users bid_u ON iTr.bid_user_id = bid_u.uid
+                " . $conditions . "
+        "),
         'id'
     );
 
-    $counts = \mint\countItemTransactionsItems(
-        array_keys($entries)
-    );
+    if ($withItems) {
+        $transactionsItems = \mint\getItemTransactionsItems(
+            array_keys($transactions),
+            true
+        );
 
-    foreach ($counts as $transactionId => $count) {
-        $entries[$transactionId]['transactionItemsCount'] = $count;
+        foreach ($transactions as $transactionId => &$transaction) {
+            $transaction['items'] = $transactionsItems[$transactionId];
+        }
     }
 
-    return $entries;
+    return $transactions;
+}
+
+function getItemTransactionDetails(int $transactionId, bool $withItems = false): ?array
+{
+    return \mint\getItemTransactionsDetails('WHERE iTr.id = ' . (int)$transactionId, $withItems)[$transactionId];
 }
 
 function getUserActiveTransactions(int $userId): array
 {
-    $entries = \mint\getItemTransactionsDetailsWithItemCount('WHERE active = 1 AND ask_user_id = ' . (int)$userId . ' ORDER BY ask_date DESC');
-
-    return $entries;
+    return \mint\getItemTransactionsDetails('WHERE active = 1 AND ask_user_id = ' . (int)$userId . ' ORDER BY ask_date DESC', true);
 }
 
 function getActivePublicItemTransactions(?string $conditions): array
@@ -1068,7 +1064,7 @@ function getActivePublicItemTransactions(?string $conditions): array
         $passedConditions .= ' ' . $conditions;
     }
 
-    $entries = \mint\getItemTransactionsDetailsWithItemCount($passedConditions);
+    $entries = \mint\getItemTransactionsDetails($passedConditions, true);
 
     return $entries;
 }
@@ -1077,7 +1073,7 @@ function countActivePublicItemTransactions(): int
 {
     global $db;
 
-    return ItemTransactions::with($db)->count('active = 1');
+    return ItemTransactions::with($db)->count('active = 1 AND unlisted = 0');
 }
 
 function getRecentActivePublicItemTransactions(?int $limit = null): array
@@ -1095,29 +1091,63 @@ function getRecentActivePublicItemTransactions(?int $limit = null): array
 
 function getRecentCompletedPublicItemTransactions(int $limit): array
 {
-    $entries = \mint\getItemTransactionsDetailsWithItemCount('WHERE iTr.completed = 1 ORDER BY iTr.completed_date DESC LIMIT ' . (int)$limit);
-
-    return $entries;
+    return \mint\getItemTransactionsDetails('WHERE iTr.completed = 1 ORDER BY iTr.completed_date DESC LIMIT ' . (int)$limit, true);
 }
 
 // item transaction items
-function getItemTransactionItems(int $transactionId): array
+function getItemTransactionsItems(array $transactionIds, bool $withDetails = false, bool $activeOnly = false): array
 {
     global $db;
 
-    return \mint\queryResultAsArray(
+    $transactionsItems = array_fill_keys($transactionIds, []);
+
+    $csv = \mint\getIntegerCsv($transactionIds);
+
+    $itemOwnershipsJoinConditions = null;
+
+    if ($activeOnly) {
+         $itemOwnershipsJoinConditions .= ' AND io.active = 1';
+    }
+
+    $entries = \mint\queryResultAsArray(
         $db->query("
             SELECT
-                iTrI.item_id,
+                iTrI.item_id, iTrI.item_transaction_id,
                 i.item_type_id, i.active AS item_active,
                 io.id AS item_ownership_id, io.user_id, io.active AS item_ownership_active
                 FROM
                     " . TABLE_PREFIX . "mint_item_transaction_items iTrI
                     INNER JOIN " . TABLE_PREFIX . "mint_items i ON iTrI.item_id = i.id
-                    LEFT JOIN " . TABLE_PREFIX . "mint_item_ownerships io ON i.id = io.item_id AND io.active = 1
-                WHERE item_transaction_id = " . (int)$transactionId . "
-        ")
+                    LEFT JOIN " . TABLE_PREFIX . "mint_item_ownerships io ON i.id = io.item_id {$itemOwnershipsJoinConditions}
+                WHERE iTrI.item_transaction_id IN (" . $csv . ")
+        "),
+        'item_id'
     );
+
+    if ($withDetails) {
+        $itemsDetails = \mint\getItemsDetails(
+            array_column(
+                $entries,
+                'item_id'
+            ),
+            false
+        );
+
+        foreach ($itemsDetails as $itemDetails) {
+            $entries[ $itemDetails['item_id'] ] += $itemDetails;
+        }
+    }
+
+    foreach ($entries as $entry) {
+        $transactionsItems[ $entry['item_transaction_id'] ][] = $entry;
+    }
+
+    return $transactionsItems;
+}
+
+function getItemTransactionItems(int $transactionId, bool $withDetails = false, bool $activeOnly = false): array
+{
+    return \mint\getItemTransactionsItems([$transactionId], $withDetails, $activeOnly)[$transactionId];
 }
 
 function getActiveItemTransactionIdByItemId(int $itemId): ?int
