@@ -135,7 +135,7 @@ a.mint__service-nav__link:hover { background-color: var(--color); color: var(--s
 .mint__item-card .mint__inventory__item { height: 100px; width: 100px; opacity: 1; }
 .mint__inventory__item:hover, .mint__inventory__item:focus { opacity: 1; }
 .mint__inventory__item__stacked-amount { display: inline-block; z-index: 2; align-self: flex-end; margin-bottom: -12px; padding: 2px 8px; background: #FFF; border-radius: 10px 10px 0 0; transition: 0.2s; }
-.mint__inventory--small .mint__inventory__itemf__stacked-amount { font-size: 11px; }
+.mint__inventory--small .mint__inventory__item__stacked-amount { font-size: 11px; }
 .mint__item-card .mint__inventory__item__stacked-amount { margin-bottom: -17px; font-size: 16px; }
 .mint__inventory__item:hover .mint__inventory__item__stacked-amount, .mint__inventory__item:focus .mint__inventory__item__stacked-amount { margin-bottom: -17px; }
 .mint__inventory__item__stacked-amount:empty { display: none; }
