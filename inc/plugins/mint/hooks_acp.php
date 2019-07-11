@@ -38,7 +38,7 @@ function admin_load(): void
             $sub_tabs[$tabName] = [
                 'link'        => $pageUrl . '&amp;action=' . $tabName,
                 'title'       => $lang->{'mint_admin_' . $tabName},
-                'description' => $lang->{'mint_admin_' . $tabName . '_description'},
+                'description' => $lang->{'mint_admin_' . $tabName . '_page_description'},
             ];
         }
 
@@ -189,7 +189,7 @@ function admin_load(): void
             $sub_tabs[$tabName] = [
                 'link'        => $pageUrl . '&amp;action=' . $tabName,
                 'title'       => $lang->{'mint_admin_' . $tabName},
-                'description' => $lang->{'mint_admin_' . $tabName . '_description'},
+                'description' => $lang->{'mint_admin_' . $tabName . '_page_description'},
             ];
         }
 

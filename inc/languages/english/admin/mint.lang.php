@@ -17,7 +17,7 @@ $l['mint_admin'] = 'Mint';
 
 // Mint: Item Categories
 $l['mint_admin_item_categories'] = 'Item Categories';
-$l['mint_admin_item_categories_description'] = 'Here you can manage item categories.';
+$l['mint_admin_item_categories_page_description'] = 'Here you can manage item categories.';
 $l['mint_admin_item_categories_list'] = 'Item Categories ({1})';
 $l['mint_admin_item_categories_empty'] = 'No item categories added.';
 
@@ -38,7 +38,7 @@ $l['mint_admin_item_categories_delete_confirm_message'] = 'Are you sure you want
 
 // Mint: Item Types
 $l['mint_admin_item_types'] = 'Item Types';
-$l['mint_admin_item_types_description'] = 'Here you can manage item types.';
+$l['mint_admin_item_types_page_description'] = 'Here you can manage item types.';
 $l['mint_admin_item_types_list'] = 'Item Types ({1})';
 $l['mint_admin_item_types_empty'] = 'No item types added.';
 
@@ -74,7 +74,7 @@ $l['mint_admin_item_types_error_item_category_invalid'] = 'Selected Item Categor
 
 // Mint: Inventory Types
 $l['mint_admin_inventory_types'] = 'Inventory Types';
-$l['mint_admin_inventory_types_description'] = 'Here you can manage inventory types.';
+$l['mint_admin_inventory_types_page_description'] = 'Here you can manage inventory types.';
 $l['mint_admin_inventory_types_list'] = 'Inventory Types ({1})';
 $l['mint_admin_inventory_types_empty'] = 'No inventory types added.';
 
@@ -97,7 +97,7 @@ $l['mint_admin_logs'] = 'Mint Logs';
 
 // Mint Logs: Balance Operations
 $l['mint_admin_balance_operations'] = 'Balance Operations';
-$l['mint_admin_balance_operations_description'] = 'This section allows you to view a history of users\' balance operations.';
+$l['mint_admin_balance_operations_page_description'] = 'This section allows you to view a history of users\' balance operations.';
 $l['mint_admin_balance_operations_list'] = 'Balance Operations ({1})';
 $l['mint_admin_balance_operations_empty'] = 'No balance operations to show.';
 $l['mint_admin_balance_operations_filter'] = 'Filters';
@@ -117,7 +117,7 @@ $l['mint_admin_balance_operations_termination_point_description'] = 'Name of a T
 
 // Mint Logs: Balance Transfers
 $l['mint_admin_balance_transfers'] = 'Balance Transfers';
-$l['mint_admin_balance_transfers_description'] = 'This section allows you to view a history of users\' balance transfers.';
+$l['mint_admin_balance_transfers_page_description'] = 'This section allows you to view a history of users\' balance transfers.';
 $l['mint_admin_balance_transfers_list'] = 'Balance Transfers ({1})';
 $l['mint_admin_balance_transfers_empty'] = 'No balance transfers to show.';
 $l['mint_admin_balance_transfers_filter'] = 'Filters';
@@ -136,7 +136,7 @@ $l['mint_admin_balance_transfers_private_description'] = '';
 
 // Mint Logs: Item Transactions
 $l['mint_admin_item_transactions'] = 'Item Transactions';
-$l['mint_admin_item_transactions_description'] = 'This section allows you to view a history users\' item transactions.';
+$l['mint_admin_item_transactions_page_description'] = 'This section allows you to view a history users\' item transactions.';
 $l['mint_admin_item_transactions_list'] = 'Item Transactions ({1})';
 $l['mint_admin_item_transactions_empty'] = 'No item transactions to show.';
 $l['mint_admin_item_transactions_filter'] = 'Filters';
