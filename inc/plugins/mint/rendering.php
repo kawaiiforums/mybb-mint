@@ -501,9 +501,12 @@ function getRenderedTransactionEntries(array $entries): ?string
         }
 
         if (!empty($entry['items'])) {
-            $maxPreviewItems = 6;
-
-            $preview = \mint\getRenderedInventory(array_slice($entry['items'], 0, $maxPreviewItems), 'preview');
+            $previewItems = array_slice(
+                $entry['items'],
+                0,
+                \mint\getSettingValue('item_transaction_preview_items')
+            );
+            $preview = \mint\getRenderedInventory($previewItems, 'preview');
         } else {
             $preview = null;
         }

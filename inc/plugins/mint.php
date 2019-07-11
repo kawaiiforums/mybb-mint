@@ -286,6 +286,12 @@ function mint_activate()
             'optionscode' => 'numeric',
             'value'       => '3',
         ],
+        'item_transaction_preview_items' => [
+            'title'       => 'Item Transaction Preview Items to Display',
+            'description' => 'Choose how many item images should be shown in Transaction listings.',
+            'optionscode' => 'numeric',
+            'value'       => '6',
+        ],
         'inventory_preview_entries' => [
             'title'       => 'Inventory Preview Items to Display',
             'description' => 'Choose how many items should be shown in Inventory preview blocks.',
