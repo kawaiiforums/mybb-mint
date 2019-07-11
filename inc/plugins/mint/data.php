@@ -1040,6 +1040,12 @@ function getItemTransactionsDetails(?string $conditions, bool $withItems = false
 
         foreach ($transactions as $transactionId => &$transaction) {
             $transaction['items'] = $transactionsItems[$transactionId];
+
+            if (!$transaction['active']) {
+                foreach ($transaction['items'] as &$item) {
+                    $item['item_transaction_id'] = null;
+                }
+            }
         }
     }
 
