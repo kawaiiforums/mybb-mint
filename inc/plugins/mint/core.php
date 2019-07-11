@@ -130,6 +130,8 @@ function registerRewardSourceLegendEntries(array $rewardSources): void
     global $mintRuntimeRegistry;
 
     foreach ($rewardSources as $rewardSourceName => $rewardSource) {
+        $rewardSource['name'] = $rewardSourceName;
+
         $mintRuntimeRegistry['rewardSourceLegendEntries'][$rewardSourceName] = $rewardSource;
     }
 }
@@ -146,6 +148,8 @@ function registerRewardSources(array $rewardSources): void
     global $mintRuntimeRegistry;
 
     foreach ($rewardSources as $rewardSourceName => $rewardSource) {
+        $rewardSource['name'] = $rewardSourceName;
+
         $mintRuntimeRegistry['rewardSources'][$rewardSourceName] = $rewardSource;
     }
 }
@@ -202,6 +206,41 @@ function resolveRegisteredRewardSources(): void
     }
 
     \mint\registerRewardSources($rewardSources);
+}
+
+function registerItemTypesInteraction(array $itemTypeNames, ?array $details = null): void
+{
+    global $mintRuntimeRegistry;
+
+    foreach ($itemTypeNames as $itemTypeName) {
+        $mintRuntimeRegistry['itemInteractions'][$itemTypeName] = array_merge(
+            $mintRuntimeRegistry['itemInteractions'][$itemTypeName] ?? [],
+            [
+                $details ?? [],
+            ]
+        );
+    }
+}
+
+function getRegisteredItemTypeInteractions(): array
+{
+    global $mintRuntimeRegistry;
+
+    return $mintRuntimeRegistry['itemInteractions'] ?? [];
+}
+
+// processing
+function getMultipliedRewardValue(int $baseValue, ?float $multiplier): int
+{
+    $value = $baseValue;
+
+    if (!is_null($multiplier)) {
+        $value *= $multiplier;
+    }
+
+    $value = round($value);
+
+    return $value;
 }
 
 // actions

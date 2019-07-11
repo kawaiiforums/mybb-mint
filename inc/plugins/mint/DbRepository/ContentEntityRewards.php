@@ -37,6 +37,14 @@ class ContentEntityRewards extends \mint\DbEntityRepository
             ],
             'uniqueKey' => 1,
         ],
+        'base_value' => [
+            'type' => 'integer',
+        ],
+        'multiplier' => [
+            'type' => 'numeric',
+            'precision' => 12,
+            'scale' => 2,
+        ],
         'value' => [
             'type' => 'integer',
         ],

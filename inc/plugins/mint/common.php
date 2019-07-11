@@ -227,6 +227,17 @@ function buildCreateTableQuery(string $tableName, array $columns): string
                         $columnDefinition .= '(' . $column['length'] . ')';
                     }
 
+                    if (!empty($column['precision'])) {
+                        $columnDefinition .= '(';
+                        $columnDefinition .= $column['precision'];
+
+                        if (!empty($column['scale'])) {
+                            $columnDefinition .= ', ' . $column['scale'];
+                        }
+
+                        $columnDefinition .= ')';
+                    }
+
                     if (!empty($column['notNull'])) {
                         $columnDefinition .= ' NOT NULL';
                     }
@@ -279,6 +290,17 @@ function buildCreateTableQuery(string $tableName, array $columns): string
                         $columnDefinition .= '(' . $column['length'] . ')';
                     }
 
+                    if (!empty($column['precision'])) {
+                        $columnDefinition .= '(';
+                        $columnDefinition .= $column['precision'];
+
+                        if (!empty($column['scale'])) {
+                            $columnDefinition .= ', ' . $column['scale'];
+                        }
+
+                        $columnDefinition .= ')';
+                    }
+
                     if (!empty($column['notNull'])) {
                         $columnDefinition .= ' NOT NULL';
                     }
@@ -329,6 +351,17 @@ function buildCreateTableQuery(string $tableName, array $columns): string
                 } else {
                     if (!empty($column['length'])) {
                         $columnDefinition .= '(' . $column['length'] . ')';
+                    }
+
+                    if (!empty($column['precision'])) {
+                        $columnDefinition .= '(';
+                        $columnDefinition .= $column['precision'];
+
+                        if (!empty($column['scale'])) {
+                            $columnDefinition .= ', ' . $column['scale'];
+                        }
+
+                        $columnDefinition .= ')';
                     }
 
                     if (!empty($column['notNull'])) {
@@ -547,6 +580,11 @@ function updateUser(int $userId, array $data): bool
 function getArrayWithColumnAsKey(array $array, string $column): array
 {
     return array_combine(array_column($array, $column), $array);
+}
+
+function getArraySubset(array $array, array $keys): array
+{
+    return array_intersect_key($array, array_flip($keys));
 }
 
 function getIntegerCsv(array $values): string

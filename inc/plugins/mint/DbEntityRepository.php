@@ -214,16 +214,19 @@ abstract class DbEntityRepository
 
     protected function getEscapedColumnValue(string $columnName, $value, bool $includeQuotes = true)
     {
-        if ($value === null && empty(static::COLUMNS[$columnName]['notNull'])) {
+        $column = static::COLUMNS[$columnName];
+
+        if ($value === null && empty($column['notNull'])) {
             $escapedValue = 'NULL';
         } else {
-            switch (static::COLUMNS[$columnName]['type']) {
+            switch ($column['type']) {
                 case 'bool':
                     $escapedValue = (int)(bool)$value;
                     break;
                 case 'integer':
                     $escapedValue = (int)$value;
                     break;
+                case 'numeric':
                 case 'text':
                 case 'varchar':
                     $escapedValue = $this->db->escape_string($value);

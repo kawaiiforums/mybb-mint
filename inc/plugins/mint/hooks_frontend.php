@@ -163,7 +163,7 @@ function misc_start(): void
                 $legendEntries = \mint\getRegisteredRewardSourceLegendEntries();
 
                 if ($legendEntries) {
-                    $rewardSourcesLegend = \mint\getRenderedRewardSourceLegend($legendEntries);
+                    $rewardSourcesLegend = \mint\getRenderedRewardSourceLegend($legendEntries, $mybb->user['uid']);
                 } else {
                     $rewardSourcesLegend = null;
                 }

@@ -94,7 +94,7 @@ function getRenderedRecentBalanceOperations($query, ?int $contextUserId = null):
     return $output;
 }
 
-function getRenderedRewardSourceLegend(array $legendEntries): ?string
+function getRenderedRewardSourceLegend(array $legendEntries, ?int $contextUserId = null): ?string
 {
     global $lang;
 
@@ -108,6 +108,13 @@ function getRenderedRewardSourceLegend(array $legendEntries): ?string
                 $reward = $legendEntry['reward']();
             } else {
                 $reward = $legendEntry['reward'];
+            }
+
+            if ($contextUserId) {
+                $reward = \mint\getMultipliedRewardValue(
+                    $reward,
+                    \mint\getUserRewardMultiplier($contextUserId, $legendEntry)
+                );
             }
 
             $value = \mint\getFormattedCurrency($reward);

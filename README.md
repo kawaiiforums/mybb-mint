@@ -53,6 +53,7 @@ Selected user groups are able to _forge_ amounts of an Item Type to be assigned 
 - `mint_misc_pages`
 - `mint_economy_hub_balance_service_links`
 - `mint_economy_hub_items_service_links`
+- `mint_get_user_reward_multiplier`
 
 ### Plugin Management Events
 - **Install:**

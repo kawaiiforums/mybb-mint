@@ -230,13 +230,19 @@ function addContentEntityReward(string $rewardSourceName, int $contentEntityId, 
                     return false;
                 }
             } elseif (!$restoreOnly) {
-                $value = $rewardSource['reward']();
+                $baseValue = $rewardSource['reward']();
+
+                $multiplier = \mint\getUserRewardMultiplier($userId, $rewardSource);
+
+                $value = \mint\getMultipliedRewardValue($baseValue, $multiplier);
 
                 ContentEntityRewards::with($db)->insert([
                     'user_id' => $userId,
                     'content_type' => $rewardSource['contentType'],
                     'content_entity_id' => $contentEntityId,
                     'currency_termination_point_id' => $terminationPointId,
+                    'base_value' => $baseValue,
+                    'multiplier' => $multiplier,
                     'value' => $value,
                     'last_action_date' => \TIME_NOW,
                     'void' => false,
@@ -299,6 +305,58 @@ function voidContentEntityReward(string $rewardSourceName, int $contentEntityId)
     } else {
         return false;
     }
+}
+
+function getUserRewardMultiplier(int $userId, array $rewardSource): ?float
+{
+    global $plugins;
+
+    static $usersMultipliers;
+
+    if (!isset($usersMultipliers[$userId])) {
+        $user = \get_user($userId);
+
+        if (!empty($user)) {
+            $userGroupIds = array_map('intval', explode(',', $user['additionalgroups']));
+            $userGroupIds[] = $user['usergroup'];
+
+            $usersMultipliers[$userId] = \mint\getArraySubset(
+                \mint\getUsergroupRewardMultipliers(),
+                $userGroupIds
+            );
+        } else {
+            $usersMultipliers[$userId] = null;
+        }
+    }
+
+    $userMultipliers = $usersMultipliers[$userId];
+
+    if ($userMultipliers) {
+        $arguments = compact('userId', 'rewardSource', 'userMultipliers');
+
+        extract(
+            $plugins->run_hooks('mint_get_user_reward_multiplier', $arguments)
+        );
+
+        if (empty($userMultipliers)) {
+            return null;
+        } else {
+            return max($userMultipliers);
+        }
+    } else {
+        return null;
+    }
+}
+
+function getUsergroupRewardMultipliers(): array
+{
+    global $cache;
+
+    return array_column(
+        $cache->read('usergroups') ?? [],
+        'mint_reward_multiplier',
+        'gid'
+    );
 }
 
 // inventory
@@ -767,7 +825,7 @@ function getItemOwnershipsDetails(array $itemOwnershipIds): array
                     io.id AS item_ownership_id, io.item_id, io.user_id, io.active AS item_ownership_active, io.activation_date, io.deactivation_date,
                     u.username AS user_username,
                     i.item_type_id, i.active AS item_active, i.activation_date AS item_activation_date,
-                    iTy.title AS item_type_title, iTy.description AS item_type_description, iTy.image AS item_type_image, iTy.stacked AS item_type_stacked, iTy.transferable AS item_type_transferable, iTy.discardable AS item_type_discardable,
+                    iTy.name AS item_type_name, iTy.title AS item_type_title, iTy.description AS item_type_description, iTy.image AS item_type_image, iTy.stacked AS item_type_stacked, iTy.transferable AS item_type_transferable, iTy.discardable AS item_type_discardable,
                     ic.title AS item_category_title,
                     iTr.id AS item_transaction_id
                     FROM

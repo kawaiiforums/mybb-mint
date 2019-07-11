@@ -11,6 +11,8 @@ $l['mint_admin_submit'] = 'Submit';
 // Users
 $l['mint_inventory_type'] = 'Inventory Type';
 $l['mint_inventory_slots_bonus'] = 'Bonus Inventory Slots';
+$l['mint_reward_multiplier'] = 'Content Entity Reward Multiplier';
+$l['mint_reward_multiplier_description'] = 'Users\' rewards will be multiplied by this number (rounded to nearest integer). Set to "1" to leave reward amounts unaffected.';
 
 // Mint
 $l['mint_admin'] = 'Mint';
@@ -41,6 +43,8 @@ $l['mint_admin_item_types'] = 'Item Types';
 $l['mint_admin_item_types_page_description'] = 'Here you can manage item types.';
 $l['mint_admin_item_types_list'] = 'Item Types ({1})';
 $l['mint_admin_item_types_empty'] = 'No item types added.';
+$l['mint_admin_item_types_interactions_registered'] = 'Registered interactions';
+$l['mint_admin_item_types_interactions_registered_list'] = 'Registered interactions: {1}';
 
 $l['mint_admin_item_types_id'] = 'ID';
 $l['mint_admin_item_types_name'] = 'Name';

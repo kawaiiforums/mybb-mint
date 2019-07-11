@@ -69,6 +69,9 @@ function mint_install()
             'mint_inventory_slots_bonus' => 'integer NOT NULL DEFAULT 0',
             'mint_inventory_slots_occupied' => 'integer NOT NULL DEFAULT 0',
         ],
+        'usergroups' => [
+            'mint_reward_multiplier' => 'numeric(12,2) NOT NULL DEFAULT 1',
+        ],
     ], true);
 
     \mint\createTables([
@@ -132,6 +135,9 @@ function mint_uninstall()
             'mint_inventory_type_id',
             'mint_inventory_slots_bonus',
             'mint_inventory_slots_occupied',
+        ],
+        'usergroups' => [
+            'mint_reward_multiplier',
         ],
     ]);
 

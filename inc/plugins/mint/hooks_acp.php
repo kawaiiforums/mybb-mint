@@ -65,6 +65,7 @@ function admin_load(): void
             $controller->run();
         } elseif ($mybb->input['action'] == 'item_types') {
             $itemCategories = \mint\queryResultAsArray(ItemCategories::with($db)->get(), 'id', 'title');
+            $itemTypeInteractions = \mint\getRegisteredItemTypeInteractions();
 
             $controller = new AcpEntityManagementController('item_types', ItemTypes::class);
 
@@ -93,7 +94,31 @@ function admin_load(): void
                     'customizable' => false,
                     'dataColumn' => 'item_category_title',
                 ],
-                'name' => [],
+                'name' => [
+                    'presenter' => function (?string $value) use ($lang, $itemTypeInteractions) {
+                        $attributes = null;
+
+                        if (!empty($itemTypeInteractions[$value])) {
+                            $modules = array_column($itemTypeInteractions[$value], 'module');
+
+                            if ($modules) {
+                                $text = $lang->sprintf(
+                                    $lang->mint_admin_item_types_interactions_registered_list,
+                                    \htmlspecialchars_uni(
+                                        implode($lang->comma, $modules)
+                                    )
+                                );
+
+                            } else {
+                                $text = $lang->mint_admin_item_types_interactions_registered;
+                            }
+
+                            $attributes .= ' style="font-weight: bold" title="' . $text . '"';
+                        }
+
+                        return '<code' . $attributes . '>' . \htmlspecialchars_uni($value) . '</code>';
+                    },
+                ],
                 'title' => [],
                 'description' => [
                     'listed' => false,
@@ -534,6 +559,56 @@ function admin_user_users_edit_commit_start(): void
     }
 
     $extra_user_updates['mint_inventory_slots_bonus'] = $mybb->get_input('mint_inventory_slots_bonus', \MyBB::INPUT_INT);
+}
+
+
+function admin_user_groups_edit_graph_tabs(&$tabs): void
+{
+    global $lang;
+
+    $tabs['mint'] = $lang->mint_admin;
+}
+
+function admin_user_groups_edit_graph(): void
+{
+    global $mybb, $lang, $form, $form_container;
+
+    echo '<div id="tab_mint">';
+
+    $form_container = new \FormContainer($lang->mint_admin);
+
+    $form_container->output_row(
+        $lang->mint_reward_multiplier,
+        $lang->mint_reward_multiplier_description,
+        $form->generate_numeric_field(
+            'mint_reward_multiplier',
+            $mybb->input['mint_reward_multiplier'] ?? 1,
+            [
+                'min' => '0',
+                'max' => '9999999999.99',
+                'step' => '0.01',
+            ]
+        )
+    );
+
+    $form_container->end();
+
+    echo '</div>';
+}
+
+function admin_user_groups_edit_commit(): void
+{
+    global $mybb, $updated_group;
+
+    $value = $mybb->get_input('mint_reward_multiplier', \MyBB::INPUT_FLOAT);
+
+    if ($value >= 0 && $value <= 9999999999.99) {
+        $value = round($value, 2);
+    } else {
+        $value = 1;
+    }
+
+    $updated_group['mint_reward_multiplier'] = $value;
 }
 
 
