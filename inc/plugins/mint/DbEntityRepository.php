@@ -28,7 +28,7 @@ abstract class DbEntityRepository
     /**
      * Inserts row with escaped column values.
      */
-    public function insert(array $data): int
+    public function insert(array $data): ?int
     {
         $this->db->insert_query(
             static::TABLE_NAME,
@@ -36,16 +36,20 @@ abstract class DbEntityRepository
             false // DB_PgSQL only
         );
 
-        if ($this->db->type == 'pgsql') {
-            $insertId = $this->db->fetch_field(
-                $this->db->query('SELECT lastval() AS i'),
-                'i'
-            );
-        } else {
-            $insertId = $this->db->insert_id();
-        }
+        if (count(array_filter(array_column(static::COLUMNS, 'primaryKey'))) == 1) {
+            if ($this->db->type == 'pgsql') {
+                $insertId = $this->db->fetch_field(
+                    $this->db->query('SELECT lastval() AS i'),
+                    'i'
+                );
+            } else {
+                $insertId = $this->db->insert_id();
+            }
 
-        return $insertId;
+            return $insertId;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -65,16 +69,40 @@ abstract class DbEntityRepository
         );
     }
 
-    public function getById(int $id): ?array
+    /**
+     * @param int|array $id
+     */
+    public function getById($id): ?array
     {
-        return $this->getByColumn('id', $id);
+        $entries = $this->getByColumn('id', $id);
+
+        if (is_array($id)) {
+            return $entries;
+        } else {
+            if (count($entries) == 1) {
+                return current($entries);
+            } else {
+                return null;
+            }
+        }
     }
 
-    public function getByColumn(string $columnName, $value, ?array $fields = null): ?array
+    public function getByColumn(string $columnName, $value, ?array $fields = null): array
     {
+        $keyColumn = null;
+
         if ($fields === null) {
             $fields = '*';
+
+            if (array_key_exists('id', static::COLUMNS)) {
+                $keyColumn = 'id';
+            }
         } else {
+            if (!in_array('id', $fields) && array_key_exists('id', static::COLUMNS)) {
+                $fields[] = 'id';
+                $keyColumn = 'id';
+            }
+
             $fields = implode(',', $fields);
         }
 
@@ -88,11 +116,7 @@ abstract class DbEntityRepository
 
         $query = $this->db->simple_select(static::TABLE_NAME, $fields, $conditions);
 
-        if ($this->db->num_rows($query) == 1) {
-            return $this->db->fetch_array($query);
-        } else {
-            return null;
-        }
+        return \mint\queryResultAsArray($query, $keyColumn);
     }
 
     public function get(string $columns = '*', ?string $conditions = null, array $foreignTableColumns = [])

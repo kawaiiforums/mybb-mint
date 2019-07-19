@@ -10,5 +10,6 @@
         <input type="submit" class="button" value="{$lang->mint_submit}" />
     </div>
     <input type="hidden" name="selected_items" value="{$selectedItemsJson}" />
+    <input type="hidden" name="selected_ask_item_types" value="{$selectedAskItemTypesJson}" />
     <input type="hidden" name="my_post_key" value="{$mybb->post_code}" />
 </form>

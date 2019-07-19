@@ -101,7 +101,7 @@ function addNewTerminationPoints(array $names, $dbEntityRepositoryClass): void
 {
     global $db;
 
-    /* @var $dbEntityRepository \mint\DbEntityRepository */
+    /* @var $dbEntityRepositoryClass \mint\DbEntityRepository */
     $dbEntityRepository = $dbEntityRepositoryClass::with($db);
 
     $terminationPoints = \mint\queryResultAsArray(
@@ -241,6 +241,27 @@ function getMultipliedRewardValue(int $baseValue, ?float $multiplier): int
     $value = round($value);
 
     return $value;
+}
+
+function itemsTransferableFromUser(?array $items, int $expectedOwnershipUserId, bool $notInTransaction = false): bool
+{
+    if ($items === null) {
+        return false;
+    }
+
+    foreach ($items as $item) {
+        if (
+            $item['user_id'] != $expectedOwnershipUserId ||
+            $item['item_ownership_active'] == 0 ||
+            $item['item_active'] == 0 ||
+            $item['item_type_transferable'] == 0 ||
+            ($notInTransaction && $item['item_transaction_id'])
+        ) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 // actions

@@ -5,8 +5,9 @@
     <div class="mint__table__row__cell">
         <p class="mint__balance-operation__date">{$date}</p>
         {$flags}
-        <p class="mint__balance-operation__details">{$details}</p>
-        <p class="mint__balance-operation__note">{$note}</p>
-        {$preview}
+        <p class="mint__balance-operation__details">{$offerDetails}</p>
+        {$offerPreview}
+        <p class="mint__balance-operation__details">{$askDetails}</p>
+        {$askPreview}
     </div>
 </div>

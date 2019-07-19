@@ -54,9 +54,11 @@ class ItemTypes extends \mint\DbEntityRepository
         $result = parent::updateById($id, $data);
 
         if (array_key_exists('stacked', $data)) {
-            \mint\recountOccupiedUserInventorySlots(null, [
-                $id,
-            ]);
+            \mint\recountOccupiedUserInventorySlots(
+                \mint\getItemTypeOwnershipUserIds([
+                    $id,
+                ])
+            );
         }
 
         return $result;
@@ -66,9 +68,11 @@ class ItemTypes extends \mint\DbEntityRepository
     {
         $result = parent::deleteById($id);
 
-        \mint\recountOccupiedUserInventorySlots(null, [
-            $id,
-        ]);
+        \mint\recountOccupiedUserInventorySlots(
+            \mint\getItemTypeOwnershipUserIds([
+                $id,
+            ])
+        );
 
         return $result;
     }

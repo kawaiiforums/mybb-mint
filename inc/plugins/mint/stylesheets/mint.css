@@ -127,13 +127,12 @@ a.mint__service-nav__link:hover { background-color: var(--color); color: var(--s
 .mint__inventory__item--non-discardable::before { border-style: solid; border-color: #e7b3ff; }
 .mint__inventory__item--in-transaction::before { border-style: dashed; border-color: #b7ccde; }
 .mint__inventory__item--non-transferable::before { border-style: solid; border-color: #b7ccde; }
-.mint__inventory__item--deactivated::before { border-style: solid; border-color: #444; }
-.mint__inventory__item--deactivated { opacity: 0.5; }
+.mint__inventory__item--deactivated { opacity: 0.5; filter: grayscale(100%); }
 .mint__inventory--small .mint__inventory__item { height: 60px; width: 60px; }
 .mint__inventory--preview .mint__inventory__item { height: 40px; width: 40px; }
 .mint__inventory--small .mint__inventory__item::before, .mint__inventory--preview .mint__inventory__item::before { top: -3px; bottom: -3px; left: -3px; right: -3px; border-width: 1px; }
 .mint__item-card .mint__inventory__item { height: 100px; width: 100px; opacity: 1; }
-.mint__inventory__item:hover, .mint__inventory__item:focus { opacity: 1; }
+.mint__inventory__item:hover, .mint__inventory__item:focus { opacity: 1; filter: none; }
 .mint__inventory__item__stacked-amount { display: inline-block; z-index: 2; align-self: flex-end; margin-bottom: -12px; padding: 2px 8px; background: #FFF; border-radius: 10px 10px 0 0; transition: 0.2s; }
 .mint__inventory--small .mint__inventory__item__stacked-amount { font-size: 11px; }
 .mint__item-card .mint__inventory__item__stacked-amount { margin-bottom: -17px; font-size: 16px; }

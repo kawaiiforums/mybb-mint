@@ -70,23 +70,36 @@ class ItemTransactions extends \mint\DbEntityRepository
         ],
     ];
 
-    public function create(array $data, array $items, bool $useDbTransaction = true): ?int
+    public function create(array $data, bool $useDbTransaction = true): ?int
     {
-        if ($data['ask_price'] >= 0) {
-            if ($useDbTransaction) {
-                $this->db->write_query('BEGIN');
+        if ($useDbTransaction) {
+            $this->db->write_query('BEGIN');
+        }
+
+        try {
+            $result = true;
+
+            if ($data['ask_price'] < 0) {
+                throw new \RuntimeException('Ask price invalid');
             }
 
             \mint\getItemsById(
-                array_column($items, 'item_id'),
+                array_column($data['offered_items'], 'item_id'),
                 true
             );
 
-            $transaction = array_merge($data, [
-                'ask_date' => TIME_NOW,
-                'active' => true,
-                'completed' => false,
-            ]);
+            $transaction = array_merge(
+                \mint\getArraySubset($data, [
+                    'ask_user_id',
+                    'ask_price',
+                    'unlisted',
+                ]),
+                [
+                    'ask_date' => TIME_NOW,
+                    'active' => true,
+                    'completed' => false,
+                ]
+            );
 
             if ($transaction['unlisted'] == true) {
                 $transaction['token'] = \random_str(14);
@@ -94,29 +107,56 @@ class ItemTransactions extends \mint\DbEntityRepository
 
             $transactionId = $this->insert($transaction);
 
-            $result = (bool)$transactionId;
+            if (!$transactionId) {
+                throw new \RuntimeException('Could not insert Item Transaction record');
+            }
 
             $itemOwnershipDetails = \mint\getItemOwnershipsDetails(
-                array_column($items, 'item_ownership_id')
+                array_column($data['offered_items'], 'item_ownership_id')
             );
 
+            if (!\mint\itemsTransferableFromUser($itemOwnershipDetails, $data['ask_user_id'], true)) {
+                throw new \RuntimeException('Item Transaction Items for asking user not transferable');
+            }
+
             foreach ($itemOwnershipDetails as $itemOwnership) {
-                if (
-                    $itemOwnership['user_id'] == $data['ask_user_id'] &&
-                    $itemOwnership['item_ownership_active'] == 1 &&
-                    $itemOwnership['item_active'] == 1 &&
-                    $itemOwnership['item_type_transferable'] == 1 &&
-                    !$itemOwnership['item_transaction_id']
-                ) {
-                    $result &= ItemTransactionItems::with($this->db)->insert([
-                            'item_transaction_id' => $transactionId,
-                            'item_id' => $itemOwnership['item_id'],
-                        ]) !== false;
-                } else {
-                    $result = false;
+                $result = ItemTransactionItems::with($this->db)->insert([
+                    'item_transaction_id' => $transactionId,
+                    'item_id' => $itemOwnership['item_id'],
+                    'bid' => false,
+                ]) !== false;
+
+                if ($result == false) {
+                    throw new \RuntimeException('Could not insert offered Item Transaction Item');
                 }
             }
 
+            if (!empty($data['ask_item_types'])) {
+                $askItemTypes = ItemTypes::with($this->db)->getById(array_keys($data['ask_item_types']));
+
+                foreach ($data['ask_item_types'] as $itemTypeId => $amount) {
+                    if (
+                        (int)$amount > 0 && (int)$amount <= 1000 &&
+                        isset($askItemTypes[$itemTypeId]) &&
+                        $askItemTypes[$itemTypeId]['transferable'] == 1
+                    ) {
+                        $result = ItemTransactionItemTypes::with($this->db)->insert([
+                            'item_transaction_id' => $transactionId,
+                            'item_type_id' => $itemTypeId,
+                            'amount' => (int)$amount,
+                        ]) !== false;
+
+                        if ($result == false) {
+                            throw new \RuntimeException('Could not insert Item Transaction Item Type');
+                        }
+                    } else {
+                        throw new \RuntimeException('Item Transaction Item Types invalid');
+                    }
+                }
+            }
+        } catch (\RuntimeException $e) {
+            $result = false;
+        } finally {
             if ($useDbTransaction) {
                 if ($result == true) {
                     $this->db->write_query('COMMIT');
@@ -124,14 +164,12 @@ class ItemTransactions extends \mint\DbEntityRepository
                     $this->db->write_query('ROLLBACK');
                 }
             }
+        }
 
-            if ($result == true) {
-                return $transactionId;
-            } else {
-                return null;
-            }
+        if ($result == true) {
+            return $transactionId;
         } else {
-            return false;
+            return null;
         }
     }
 
@@ -167,72 +205,115 @@ class ItemTransactions extends \mint\DbEntityRepository
 
     public function execute(int $transactionId, int $bidUserId, bool $useDbTransaction = true): bool
     {
-        $result = true;
-
         if ($useDbTransaction) {
             $this->db->write_query('BEGIN');
         }
 
-        $transaction = \mint\getItemTransactionById($transactionId, true);
+        try {
+            $result = true;
 
-        if (
-            $transaction['completed'] == 1 ||
-            $transaction['ask_user_id'] == $bidUserId
-        ) {
-            $result = false;
-        } else {
-            $transactionItems = \mint\getItemTransactionItems($transaction['id'], false, true);
+            $transaction = \mint\getItemTransactionById($transactionId, true);
 
+            if (!$transaction) {
+                throw new \RuntimeException('Could not fetch Item Transaction');
+            }
+
+            if (
+                $transaction['completed'] == 1 ||
+                $transaction['ask_user_id'] == $bidUserId
+            ) {
+                throw new \RuntimeException('Item Transaction not executable');
+            }
+
+            $transactionAskItems = \mint\getTransactionAskItemsForUser($transaction['id'], $bidUserId);
+
+            if ($transactionAskItems === null) {
+                throw new \RuntimeException('Item Transaction Ask Item Types not satisfied by bidding user');
+            }
+
+            // lock, validate ask items
+            \mint\getItemsById(array_column($transactionAskItems, 'item_id'), true);
+
+            if (!\mint\itemsTransferableFromUser($transactionAskItems, $bidUserId)) {
+                throw new \RuntimeException('Item Transaction Ask Items for bidding user not transferable');
+            }
+
+            foreach ($transactionAskItems as $itemOwnership) {
+                $result = ItemTransactionItems::with($this->db)->insert([
+                    'item_transaction_id' => $transactionId,
+                    'item_id' => $itemOwnership['item_id'],
+                    'bid' => true,
+                ]) !== false;
+
+                if ($result == false) {
+                    throw new \RuntimeException('Could not insert bid Item Transaction Item');
+                }
+            }
+
+            $transactionItems = \mint\getItemTransactionOfferedItems($transaction['id'], false);
+
+            // lock, validate offered items
             \mint\getItemsById(array_column($transactionItems, 'item_id'), true);
 
-            foreach ($transactionItems as $transactionItem) {
-                if (
-                    $transactionItem['user_id'] != $transaction['ask_user_id'] ||
-                    $transactionItem['item_ownership_active'] == 0 ||
-                    $transactionItem['item_active'] == 0
-                ) {
-                    $result &= false;
-                    break;
+            if (!\mint\itemsTransferableFromUser($transactionItems, $transaction['ask_user_id'])) {
+                throw new \RuntimeException('Item Transaction Items for asking user not transferable');
+            }
+
+            // execute balance transfers
+            if ($transaction['ask_price'] != 0) {
+                $balanceTransferId = BalanceTransfers::with($this->db)->execute(
+                    $bidUserId,
+                    $transaction['ask_user_id'],
+                    $transaction['ask_price'],
+                    [
+                        'handler' => 'item_transaction',
+                    ],
+                    false
+                );
+
+                if ($balanceTransferId === null) {
+                    throw new \RuntimeException('Balance Transfer execution failed');
                 }
-            }
-
-            if ($result == true) {
-                if ($transaction['ask_price'] != 0) {
-                    $balanceTransferId = BalanceTransfers::with($this->db)->execute(
-                        $bidUserId,
-                        $transaction['ask_user_id'],
-                        $transaction['ask_price'],
-                        [
-                            'handler' => 'item_transaction',
-                        ],
-                        false
-                    );
-
-                    $result = $balanceTransferId !== null;
-                } else {
-                    $balanceTransferId = null;
-                }
-            }
-
-            if ($result == true) {
-                $result &= ItemOwnerships::with($this->db)->remove($transactionItems, $transaction['ask_user_id']);
-                $result &= ItemOwnerships::with($this->db)->assign($transactionItems, $bidUserId);
-
-                $transaction['bid_user_id'] = $bidUserId;
-                $transaction['active'] = 0;
-                $transaction['completed'] = 1;
-                $transaction['completed_date'] = TIME_NOW;
-                $transaction['balance_transfer_id'] = $balanceTransferId;
-
-                $result &= $this->updateById($transaction['id'], $transaction);
-            }
-        }
-
-        if ($useDbTransaction) {
-            if ($result == true) {
-                $this->db->write_query('COMMIT');
             } else {
-                $this->db->write_query('ROLLBACK');
+                $balanceTransferId = null;
+            }
+
+            // modify item ownerships
+            $result &= ItemOwnerships::with($this->db)->remove($transactionItems, $transaction['ask_user_id']);
+            $result &= ItemOwnerships::with($this->db)->assign($transactionItems, $bidUserId);
+
+            if ($transactionAskItems) {
+                $result &= ItemOwnerships::with($this->db)->remove($transactionAskItems, $bidUserId);
+                $result &= ItemOwnerships::with($this->db)->assign($transactionAskItems, $transaction['ask_user_id']);
+            }
+
+            if ($result == false) {
+                throw new \RuntimeException('Item ownership modification failed');
+            }
+
+            // update transaction information
+            $transaction['bid_user_id'] = $bidUserId;
+            $transaction['active'] = 0;
+            $transaction['completed'] = 1;
+            $transaction['completed_date'] = TIME_NOW;
+            $transaction['balance_transfer_id'] = $balanceTransferId;
+
+            $result &= $this->updateById($transaction['id'], $transaction);
+
+            if ($result == false) {
+                throw new \RuntimeException('Could not update Item Transaction');
+            }
+
+            $result = true;
+        } catch (\RuntimeException $e) {
+            $result = false;
+        } finally {
+            if ($useDbTransaction) {
+                if ($result == true) {
+                    $this->db->write_query('COMMIT');
+                } else {
+                    $this->db->write_query('ROLLBACK');
+                }
             }
         }
 

@@ -8,9 +8,25 @@ use mint\DbRepository\CurrencyTerminationPoints;
 use mint\DbRepository\InventoryTypes;
 use mint\DbRepository\Items;
 use mint\DbRepository\ItemTerminationPoints;
+use mint\DbRepository\ItemTransactionItemTypes;
 use mint\DbRepository\ItemTransactions;
 use mint\DbRepository\ItemTypes;
 use mint\DbRepository\ItemOwnerships;
+
+// termination points
+function getCurrencyTerminationPointByName(string $name): ?array
+{
+    global $db;
+
+    return current(CurrencyTerminationPoints::with($db)->getByColumn('name', $name));
+}
+
+function getItemTerminationPointByName(string $name): ?array
+{
+    global $db;
+
+    return current(ItemTerminationPoints::with($db)->getByColumn('name', $name));
+}
 
 // balance
 function getUserBalance(int $userId, bool $forUpdate = false): ?int
@@ -156,7 +172,7 @@ function userBalanceOperationWithTerminationPoint($user, int $value, string $ter
         $userId = (int)$user;
     }
 
-    $terminationPointId = CurrencyTerminationPoints::with($db)->getByColumn('name', $terminationPointName)['id'] ?? null;
+    $terminationPointId = \mint\getCurrencyTerminationPointByName($terminationPointName)['id'] ?? null;
 
     if ($terminationPointId !== null) {
         $result = BalanceOperations::with($db)->execute($userId, $value, [
@@ -206,7 +222,7 @@ function addContentEntityReward(string $rewardSourceName, int $contentEntityId, 
     $rewardSource = \mint\getRegisteredRewardSources()[$rewardSourceName] ?? null;
 
     if ($rewardSource && $rewardSource['reward']() != 0) {
-        $terminationPointId = CurrencyTerminationPoints::with($db)->getByColumn('name', $rewardSource['terminationPoint'])['id'] ?? null;
+        $terminationPointId = \mint\getCurrencyTerminationPointByName($rewardSource['terminationPoint'])['id'] ?? null;
 
         if ($terminationPointId !== null) {
             $entry = $db->fetch_array(
@@ -269,7 +285,7 @@ function voidContentEntityReward(string $rewardSourceName, int $contentEntityId)
     $rewardSource = \mint\getRegisteredRewardSources()[$rewardSourceName] ?? null;
 
     if ($rewardSource) {
-        $terminationPointId = CurrencyTerminationPoints::with($db)->getByColumn('name', $rewardSource['terminationPoint'])['id'] ?? null;
+        $terminationPointId = \mint\getCurrencyTerminationPointByName($rewardSource['terminationPoint'])['id'] ?? null;
 
         if ($terminationPointId !== null) {
             $entries = \mint\queryResultAsArray(
@@ -454,12 +470,12 @@ function recountOccupiedUserInventorySlots(?array $userIds = null, ?array $itemT
     }
 }
 
-function countOccupiedUserInventorySlots(?array $userIds = null, ?array $itemTypeId = null): ?array
+function countOccupiedUserInventorySlots(?array $userIds = null, ?array $itemTypeIds = null): ?array
 {
     global $db;
 
-    if ($userIds === [] || $itemTypeId === []) {
-        return null;
+    if ($userIds === [] || $itemTypeIds === []) {
+        return [];
     }
 
     $whereConditions = [
@@ -470,8 +486,8 @@ function countOccupiedUserInventorySlots(?array $userIds = null, ?array $itemTyp
         $whereConditions[] = 'io.user_id IN (' . \mint\getIntegerCsv($userIds) . ')';
     }
 
-    if ($itemTypeId !== null) {
-        $whereConditions[] = 'it.id IN (' . \mint\getIntegerCsv($itemTypeId) . ')';
+    if ($itemTypeIds !== null) {
+        $whereConditions[] = 'it.id IN (' . \mint\getIntegerCsv($itemTypeIds) . ')';
     }
 
     $where = implode(' AND ', $whereConditions);
@@ -847,7 +863,7 @@ function getItemOwnershipsDetails(array $itemOwnershipIds): array
     }
 }
 
-function getItemIdsByResolvedStackedAmount(array $itemOwnershipIdsWithStackedAmount, bool $transactionCandidatesOnly = false): ?array
+function getItemIdsByResolvedOwnershipStackedAmount(array $itemOwnershipIdsWithStackedAmount, bool $transactionCandidatesOnly = false): ?array
 {
     $items = [];
 
@@ -861,7 +877,7 @@ function getItemIdsByResolvedStackedAmount(array $itemOwnershipIdsWithStackedAmo
 
             if (isset($itemOwnershipDetails)) {
                 if ($itemOwnershipDetails['item_type_stacked']) {
-                    $itemTypeOwnerships = \mint\getItemOwnershipsInStackByItemTypeAndUser($itemOwnershipDetails['item_type_id'], $itemOwnershipDetails['user_id'], $stackedAmount, $transactionCandidatesOnly);
+                    $itemTypeOwnerships = \mint\getItemOwnershipsByItemTypeAndUser($itemOwnershipDetails['item_type_id'], $itemOwnershipDetails['user_id'], $stackedAmount, $transactionCandidatesOnly);
 
                     if (count($itemTypeOwnerships) != $stackedAmount) {
                         return null;
@@ -889,7 +905,52 @@ function getItemIdsByResolvedStackedAmount(array $itemOwnershipIdsWithStackedAmo
     return $items;
 }
 
-function getItemOwnershipsInStackByItemTypeAndUser(int $itemTypeId, int $userId, ?int $limit = null, bool $transactionCandidatesOnly = false): array
+function getItemTypeAmountsByOwnershipIdsWithAmount(array $ownershipIdsWithAmount): array
+{
+    $itemTypeIdsWithAmount = [];
+
+    $itemOwnershipsDetails = \mint\getItemOwnershipsDetails(
+        array_keys($ownershipIdsWithAmount)
+    );
+
+    foreach ($ownershipIdsWithAmount as $itemOwnershipId => $amount) {
+        if (isset($itemOwnershipsDetails[$itemOwnershipId])) {
+            $value = &$itemTypeIdsWithAmount[ $itemOwnershipsDetails[$itemOwnershipId]['item_type_id'] ];
+
+            if (!isset($value)) {
+                $value = 0;
+            }
+
+            $value += $amount;
+        }
+    }
+
+    return $itemTypeIdsWithAmount;
+}
+
+function getUserItemsDetailsByItemTypeAndResolvedAmount(array $itemTypeIdsWithAmount, int $userId): ?array
+{
+    $entries = [];
+
+    foreach ($itemTypeIdsWithAmount as $itemTypeId => $amount) {
+        $itemTypeOwnerships = \mint\getItemOwnershipsByItemTypeAndUser($itemTypeId, $userId, $amount);
+
+        if (count($itemTypeOwnerships) == $amount) {
+            $itemsDetails = \mint\getItemsDetails(
+                array_column($itemTypeOwnerships, 'item_id'),
+                false
+            );
+
+            $entries = array_merge($entries, $itemsDetails);
+        } else {
+            return null;
+        }
+    }
+
+    return $entries;
+}
+
+function getItemOwnershipsByItemTypeAndUser(int $itemTypeId, int $userId, ?int $limit = null, bool $transactionCandidatesOnly = false): array
 {
     global $db;
 
@@ -948,11 +1009,33 @@ function getDistinctItemTypeIdsByUser(int $userId): array
     );
 }
 
+function getItemTypeOwnershipUserIds(array $itemTypeIds): array
+{
+    global $db;
+
+    if (!empty($itemTypeIds)) {
+        return \mint\queryResultAsArray(
+            $db->query("
+                SELECT
+                    DISTINCT user_id
+                    FROM
+                        " . TABLE_PREFIX . "mint_item_ownerships io
+                        INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
+                    WHERE item_type_id = " . \mint\getIntegerCsv($itemTypeIds) . " AND io.active = 1
+            "),
+            null,
+            'user_id'
+        );
+    } else {
+        return [];
+    }
+}
+
 function createItemsWithTerminationPoint(int $itemTypeId, int $amount, int $userId, string $terminationPointName, bool $useDbTransaction = true): bool
 {
     global $db;
 
-    $terminationPointId = ItemTerminationPoints::with($db)->getByColumn('name', $terminationPointName)['id'] ?? null;
+    $terminationPointId = \mint\getItemTerminationPointByName($terminationPointName)['id'] ?? null;
 
     if ($terminationPointId !== null) {
         $itemType = ItemTypes::with($db)->getById($itemTypeId);
@@ -1006,7 +1089,7 @@ function removeItemsWithTerminationPoint(int $itemOwnershipId, int $stackedAmoun
 {
     global $db;
 
-    $terminationPointId = ItemTerminationPoints::with($db)->getByColumn('name', $terminationPointName)['id'] ?? null;
+    $terminationPointId = \mint\getItemTerminationPointByName($terminationPointName)['id'] ?? null;
 
     if ($terminationPointId !== null) {
         $itemOwnershipDetails = \mint\getItemOwnershipWithDetails($itemOwnershipId);
@@ -1017,7 +1100,7 @@ function removeItemsWithTerminationPoint(int $itemOwnershipId, int $stackedAmoun
             }
 
             if ($itemOwnershipDetails['item_type_stacked']) {
-                $itemTypeOwnerships = \mint\getItemOwnershipsInStackByItemTypeAndUser($itemOwnershipDetails['item_type_id'], $itemOwnershipDetails['user_id'], $stackedAmount);
+                $itemTypeOwnerships = \mint\getItemOwnershipsByItemTypeAndUser($itemOwnershipDetails['item_type_id'], $itemOwnershipDetails['user_id'], $stackedAmount);
 
                 $itemIds = array_column($itemTypeOwnerships, 'item_id');
             } else {
@@ -1096,14 +1179,24 @@ function getItemTransactionsDetails(?string $conditions, bool $withItems = false
             true
         );
 
-        foreach ($transactions as $transactionId => &$transaction) {
-            $transaction['items'] = $transactionsItems[$transactionId];
+        $transactionsAskItemTypes = \mint\getItemTransactionsAskItemTypes(array_keys($transactions));
 
-            if (!$transaction['active']) {
-                foreach ($transaction['items'] as &$item) {
+        foreach ($transactions as $transactionId => &$transaction) {
+            foreach ($transactionsItems[$transactionId] as $item) {
+                if (!$transaction['active']) {
                     $item['item_transaction_id'] = null;
                 }
+
+                if ($item['bid'] == 1) {
+                    $type = 'bid_items';
+                } else {
+                    $type = 'offered_items';
+                }
+
+                $transaction[$type][] = $item;
             }
+
+            $transaction['ask_item_types'] = $transactionsAskItemTypes[$transactionId];
         }
     }
 
@@ -1159,7 +1252,7 @@ function getRecentCompletedPublicItemTransactions(int $limit): array
 }
 
 // item transaction items
-function getItemTransactionsItems(array $transactionIds, bool $withDetails = false, bool $activeOnly = false): array
+function getItemTransactionsItems(array $transactionIds, bool $withDetails = false, ?int $bid = null): array
 {
     global $db;
 
@@ -1170,23 +1263,28 @@ function getItemTransactionsItems(array $transactionIds, bool $withDetails = fal
 
         $itemOwnershipsJoinConditions = null;
 
-        if ($activeOnly) {
-            $itemOwnershipsJoinConditions .= ' AND io.active = 1';
+        $where = 'iTrI.item_transaction_id IN (' . $csv . ')';
+
+        if ($bid === 0) {
+            $where .= ' AND iTrI.bid = 0';
+        } elseif ($bid === 1) {
+            $where .= ' AND iTrI.bid = 1';
         }
 
         $entries = \mint\queryResultAsArray(
             $db->query("
                 SELECT
-                    iTrI.item_id, iTrI.item_transaction_id,
+                    iTrI.item_id, iTrI.item_transaction_id, iTrI.bid,
                     i.item_type_id, i.active AS item_active,
+                    iTy.transferable AS item_type_transferable,
                     io.id AS item_ownership_id, io.user_id, io.active AS item_ownership_active
                     FROM
                         " . TABLE_PREFIX . "mint_item_transaction_items iTrI
                         INNER JOIN " . TABLE_PREFIX . "mint_items i ON iTrI.item_id = i.id
-                        LEFT JOIN " . TABLE_PREFIX . "mint_item_ownerships io ON i.id = io.item_id {$itemOwnershipsJoinConditions}
-                    WHERE iTrI.item_transaction_id IN (" . $csv . ")
-            "),
-            'item_id'
+                        INNER JOIN " . TABLE_PREFIX . "mint_item_types iTy ON i.item_type_id = iTy.id
+                        LEFT JOIN " . TABLE_PREFIX . "mint_item_ownerships io ON i.id = io.item_id AND io.active = 1
+                    WHERE {$where}
+            ")
         );
 
         if ($withDetails) {
@@ -1198,14 +1296,12 @@ function getItemTransactionsItems(array $transactionIds, bool $withDetails = fal
                 false
             );
 
-            foreach ($itemsDetails as $itemDetails) {
-                $entries[$itemDetails['item_id']] += $itemDetails;
+            foreach ($entries as $key => $entry) {
+                $entries[$key] += $itemsDetails[ $entry['item_id'] ];
             }
         }
 
-        foreach ($entries as $entry) {
-            $transactionsItems[$entry['item_transaction_id']][] = $entry;
-        }
+        $transactionsItems = \mint\getArraySplitByColumn($entries, 'item_transaction_id');
 
         return $transactionsItems;
     } else {
@@ -1213,9 +1309,33 @@ function getItemTransactionsItems(array $transactionIds, bool $withDetails = fal
     }
 }
 
-function getItemTransactionItems(int $transactionId, bool $withDetails = false, bool $activeOnly = false): array
+function getItemTransactionOfferedItems(int $transactionId, bool $withDetails = false): array
 {
-    return \mint\getItemTransactionsItems([$transactionId], $withDetails, $activeOnly)[$transactionId];
+    return \mint\getItemTransactionsItems([$transactionId], $withDetails, 0)[$transactionId];
+}
+
+function getItemTransactionBidItems(int $transactionId, bool $withDetails = false): array
+{
+    return \mint\getItemTransactionsItems([$transactionId], $withDetails, 1)[$transactionId];
+}
+
+function getTransactionAskItemsForUser(int $transactionId, int $bidUserId): ?array
+{
+    global $db;
+
+    $transactionAskItemTypes = ItemTransactionItemTypes::with($db)->getByColumn(
+        'item_transaction_id',
+        $transactionId
+    );
+
+    if ($transactionAskItemTypes) {
+        return \mint\getUserItemsDetailsByItemTypeAndResolvedAmount(
+            array_column($transactionAskItemTypes, 'amount', 'item_type_id'),
+            $bidUserId
+        );
+    } else {
+        return [];
+    }
 }
 
 function getActiveItemTransactionIdByItemId(int $itemId): ?int
@@ -1262,4 +1382,37 @@ function countItemTransactionsItems(array $transactionIds): array
     }
 
     return $counts;
+}
+
+// item transaction item types
+function getItemTransactionsAskItemTypes(array $transactionIds): array
+{
+    global $db;
+
+    $transactions = array_fill_keys($transactionIds, []);
+
+    if ($transactionIds) {
+        $entries = \mint\queryResultAsArray(
+            $db->query("
+                SELECT
+                    iTrITy.item_transaction_id, iTrITy.amount AS stacked_amount,
+                    iTy.title AS item_type_title, iTy.description AS item_type_description, iTy.image AS item_type_image, iTy.stacked AS item_type_stacked, iTy.transferable AS item_type_transferable, iTy.discardable AS item_type_discardable
+                    FROM
+                        " . TABLE_PREFIX . "mint_item_transaction_item_types iTrITy
+                        INNER JOIN " . TABLE_PREFIX . "mint_item_types iTy ON iTrITy.item_type_id = iTy.id
+                    WHERE iTrITy.item_transaction_id IN (" . \mint\getIntegerCsv($transactionIds) . ")
+            ")
+        );
+
+        $entries = \mint\getArraySplitByColumn($entries, 'item_transaction_id');
+
+        $transactions = $entries + $transactions;
+    }
+
+    return $transactions;
+}
+
+function getItemTransactionAskItemTypes(int $transactionId): array
+{
+    return \mint\getItemTransactionsAskItemTypes([$transactionId])[$transactionId] ?? [];
 }

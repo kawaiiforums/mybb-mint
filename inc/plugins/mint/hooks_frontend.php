@@ -18,6 +18,7 @@ function global_start(): void
                 \mint\loadTemplates([
                     'action_link',
                     'action_link_button',
+                    'action_links',
                     'balance_operations',
                     'balance_operations_entry',
                     'balance_top_users',
@@ -40,6 +41,7 @@ function global_start(): void
                     'item_card',
                     'item_ownership',
                     'item_transaction',
+                    'item_transaction_entry_itemset',
                     'item_transactions',
                     'item_transactions_entry',
                     'items_discard_form',
@@ -693,10 +695,29 @@ function misc_start(): void
                         $userInventoryData['slotsOccupied']
                     );
 
+                    $actionLinks = [];
+
                     if ($itemsNum > 0) {
+                        if (
+                            $user['uid'] != $mybb->user['uid'] &&
+                            count(
+                                array_filter(array_column($items, 'item_type_transferable'))
+                            ) > 0
+                        ) {
+                            $actionLinks[] = [
+                                'url' => 'misc.php?action=economy_new_items_transaction&user_id=' . (int)$user['uid'],
+                                'title' => $lang->mint_items_inventory_trade,
+                            ];
+                        }
+
                         $content = \mint\getRenderedInventory($items, 'standard', $userInventoryData['slots']);
                     } else {
                         $content = \mint\getRenderedMessage($lang->mint_no_entries);
+                    }
+
+                    if ($actionLinks) {
+                        $actionLinks = \mint\getRenderedActionLinks($actionLinks);
+                        eval('$content .= "' . \mint\tpl('action_links') . '";');
                     }
                 } else {
                     $pageTitle = $lang->mint_page_economy_user_inventory;
@@ -768,22 +789,18 @@ function misc_start(): void
             'controller' => function (array $globals) {
                 extract($globals);
 
-                $user = $mybb->user;
-
-                $userInventoryData = \mint\getUserInventoryData($user);
-
-                $items = \mint\getItemOwnershipsWithDetails($user['uid'], null, null, false, true, true, true);
-
-                $itemsNum = count($items);
-
-                if (isset($mybb->input['user_item_selection']) || isset($mybb->input['selected_items'])) {
+                if (
+                    (isset($mybb->input['user_item_selection']) || isset($mybb->input['selected_items'])) &&
+                    $mybb->get_input('selection_type') != 'ask_items' &&
+                     \verify_post_check($mybb->get_input('my_post_key'))
+                ) {
                     $messages = null;
 
                     if (isset($mybb->input['selected_items']) && \verify_post_check($mybb->get_input('my_post_key'))) {
                         $userItemSelection = json_decode($mybb->get_input('selected_items'), true, 2);
 
                         if ($userItemSelection) {
-                            $selectedItems = \mint\getItemIdsByResolvedStackedAmount($userItemSelection, true);
+                            $selectedItems = \mint\getItemIdsByResolvedOwnershipStackedAmount($userItemSelection, true);
                             $askPrice = $mybb->get_input('ask_price', \MyBB::INPUT_INT);
 
                             if (!empty($selectedItems)) {
@@ -792,17 +809,39 @@ function misc_start(): void
                                         array_column($selectedItems, 'item_ownership_id')
                                     );
 
+                                    $askItemTypeSelection = json_decode($mybb->get_input('selected_ask_item_types'), true, 2);
+
+                                    $result = true;
+
+                                    if ($askItemTypeSelection) {
+                                        $askItemTypes = ItemTypes::with($db)->getById(array_keys($askItemTypeSelection));
+
+                                        foreach ($askItemTypeSelection as $itemTypeId => $amount) {
+                                            if (
+                                                (int)$amount < 0 || (int)$amount > 1000 ||
+                                                !isset($askItemTypes[$itemTypeId]) ||
+                                                $askItemTypes[$itemTypeId]['transferable'] != 1
+                                            ) {
+                                                $result = false;
+                                                break;
+                                            }
+                                        }
+                                    }
+
                                     if (
+                                        $result &&
                                         $selectedItemsOwnerships &&
                                         array_unique(
                                             array_column($selectedItemsOwnerships, 'user_id')
-                                        ) == [$user['uid']]
+                                        ) == [$mybb->user['uid']]
                                     ) {
                                         $transactionId = ItemTransactions::with($db)->create([
-                                            'ask_user_id' => $user['uid'],
+                                            'ask_user_id' => $mybb->user['uid'],
                                             'ask_price' => $askPrice,
+                                            'ask_item_types' => $askItemTypeSelection,
                                             'unlisted' => !empty($mybb->input['unlisted']),
-                                        ], $selectedItems);
+                                            'offered_items' => $selectedItems,
+                                        ]);
 
                                         if ($transactionId !== null) {
                                             $transaction = ItemTransactions::with($db)->getById($transactionId);
@@ -824,9 +863,17 @@ function misc_start(): void
 
                         $selectedItemsJson = \htmlspecialchars_uni($mybb->get_input('selected_items'));
                     } else {
-                        $selectedItemsJson = \htmlspecialchars_uni(
-                            json_encode($mybb->get_input('user_item_selection', \MyBB::INPUT_ARRAY), 0, 1)
-                        );
+                        if (\verify_post_check($mybb->get_input('my_post_key'), true)) {
+                            $selectedItemsJson = \htmlspecialchars_uni(
+                                json_encode($mybb->get_input('user_item_selection', \MyBB::INPUT_ARRAY), 0, 1)
+                            );
+                        } else {
+                            $selectedItemsJson = null;
+                        }
+                    }
+
+                    if (\verify_post_check($mybb->get_input('my_post_key'), true)) {
+                        $selectedAskItemTypesJson = \htmlspecialchars_uni($mybb->get_input('selected_ask_item_types'));
                     }
 
                     $pageTitle = $lang->mint_page_economy_new_items_transaction;
@@ -839,6 +886,36 @@ function misc_start(): void
 
                     return $page;
                 } else {
+                    if ($mybb->get_input('user_id') && $mybb->get_input('user_id', \MyBB::INPUT_INT) != $mybb->user['uid']) {
+                        $user = \get_user($mybb->get_input('user_id', \MyBB::INPUT_INT));
+
+                        $selectionType = 'ask_items';
+                        $actionText = $lang->mint_item_transaction_select_ask_items;
+                    } else {
+                        $user = $mybb->user;
+
+                        $selectionType = 'offered_items';
+                        $actionText = $lang->mint_item_transaction_select_bid_items;
+
+                        if (\verify_post_check($mybb->get_input('my_post_key'), true)) {
+                            $itemTypeIdsWithAmount = \mint\getItemTypeAmountsByOwnershipIdsWithAmount($mybb->get_input('user_item_selection', \MyBB::INPUT_ARRAY));
+
+                            $selectedAskItemTypesJson = \htmlspecialchars_uni(
+                                json_encode($itemTypeIdsWithAmount, 0, 2)
+                            );
+                        } else {
+                            $selectedAskItemTypesJson = null;
+                        }
+                    }
+
+                    $userInventoryData = \mint\getUserInventoryData($user);
+
+                    $items = \mint\getItemOwnershipsWithDetails($user['uid'], null, null, false, true, true, true);
+
+                    $itemsNum = count($items);
+
+                    $actionUrl = 'misc.php?action=economy_new_items_transaction';
+
                     $pageTitle = $lang->sprintf(
                         $lang->mint_page_economy_user_inventory_user,
                         \htmlspecialchars_uni($user['username']),
@@ -867,7 +944,7 @@ function misc_start(): void
 
                 $pageTitle = $lang->mint_page_economy_item_transaction;
 
-                $transaction = \mint\getItemTransactionDetails($mybb->get_input('id', \MyBB::INPUT_INT));
+                $transaction = \mint\getItemTransactionDetails($mybb->get_input('id', \MyBB::INPUT_INT), true);
 
                 if (
                     $transaction !== null && (
@@ -881,10 +958,7 @@ function misc_start(): void
                         )
                     )
                 ) {
-                    if (
-                        $transaction['active'] == 1 &&
-                        $transaction['unlisted'] == 1
-                    ) {
+                    if ($transaction['active'] == 1 && $transaction['unlisted'] == 1) {
                         $url = $mybb->settings['bburl'] . '/misc.php?action=economy_item_transaction&id=' . (int)$transaction['id'] . '&token=' . urlencode($transaction['token']);
 
                         $note = $lang->mint_item_transaction_unlisted_note;
@@ -900,14 +974,78 @@ function misc_start(): void
                         }
                     }
 
-                    $transactionItems = \mint\getItemTransactionItems($transaction['id'], true);
+                    $offeredItemsDetails = $transaction['offered_items'];
 
-                    $actionSignatureJson = json_encode([
-                        'item_ownership_ids' => array_column($transactionItems, 'item_ownership_id'),
-                    ]);
+                    if ($transaction['completed'] == 1) {
+                        $askItemsDetails = $transaction['bid_items'];
+                    } else {
+                        $askItemsDetails = $transaction['ask_item_types'];
+                    }
 
+                    $transactionPossible = (
+                        $transaction['active'] == 1 &&
+                        $mybb->user['uid'] != 0 &&
+                        $transaction['ask_user_id'] != $mybb->user['uid'] &&
+                        $offeredItemsDetails && (
+                            $transaction['ask_price'] == 0 || (
+                                \mint\getSettingValue('manual_balance_operations') == 1 &&
+                                \mint\getUserBalance($mybb->user['uid']) >= $transaction['ask_price']
+                            )
+                        ) &&
+                        !in_array(0, array_column($offeredItemsDetails, 'item_ownership_active'))
+                    );
+
+                    if ($transactionPossible && $askItemsDetails) {
+                        $candidateBidItems = \mint\getTransactionAskItemsForUser($transaction['id'], $mybb->user['uid']);
+                        $transactionPossible &= \mint\itemsTransferableFromUser($candidateBidItems, $mybb->user['uid']);
+                    } else {
+                        $candidateBidItems = [];
+                    }
+
+                    if ($transactionPossible) {
+                        $actionSignatureJson = json_encode([
+                            'ask_price' => $transaction['ask_price'],
+                            'offered_item_ownership_ids' => array_column($offeredItemsDetails, 'item_ownership_id'),
+                            'candidate_bid_item_ownership_ids' => array_column($candidateBidItems, 'item_ownership_id'),
+                        ]);
+                    } else {
+                        $actionSignatureJson = null;
+                    }
+
+                    $links = [];
                     $messages = null;
-                    $actionLinks = null;
+
+                    if ($mybb->user['uid'] != 0 && $transaction['active'] == 1) {
+                        if ($transaction['ask_user_id'] == $mybb->user['uid']) {
+                            if (isset($mybb->input['cancel']) && \verify_post_check($mybb->get_input('my_post_key'))) {
+                                $result = ItemTransactions::with($db)->cancel($transaction['id']);
+
+                                if ($result) {
+                                    \redirect('misc.php?action=economy_user_inventory', $lang->mint_item_transaction_cancel_success);
+                                }
+                            }
+
+                            $links['cancel'] = [
+                                'title' => $lang->mint_item_transaction_action_cancel,
+                            ];
+                        } else {
+                            if ($transactionPossible) {
+                                if (isset($mybb->input['complete']) && \verify_post_check($mybb->get_input('my_post_key'))) {
+                                    if ($mybb->get_input('action_signature') === $actionSignatureJson) {
+                                        $result = ItemTransactions::with($db)->execute($transaction['id'], $mybb->user['uid']);
+
+                                        if ($result) {
+                                            \redirect('misc.php?action=economy_user_inventory', $lang->mint_item_transaction_complete_success);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (!\mint\getSettingValue('manual_balance_operations')) {
+                        $messages .= \mint\getRenderedMessage($lang->mint_balance_operations_disabled);
+                    }
 
                     if ($transaction['completed'] == 1) {
                         $status = $lang->mint_item_transaction_status_completed;
@@ -931,69 +1069,57 @@ function misc_start(): void
                         $completedDate = null;
                     }
 
-                    $itemsDetails = \mint\getItemsDetails(
-                        array_column(
-                            $transactionItems,
-                            'item_id'
-                        )
-                    );
+                    $itemsSets = null;
 
-                    $links = [];
+                    if ($offeredItemsDetails) {
+                        $title = $lang->sprintf(
+                            $lang->mint_item_transaction_bid_items,
+                            count($offeredItemsDetails)
+                        );
+                        $items = \mint\getRenderedInventory($offeredItemsDetails);
 
-                    if ($mybb->user['uid'] != 0) {
-                        if ($transaction['active'] == 1 && $transaction['ask_user_id'] == $mybb->user['uid']) {
-                            if (isset($mybb->input['cancel']) && \verify_post_check($mybb->get_input('my_post_key'))) {
-                                $result = ItemTransactions::with($db)->cancel($transaction['id']);
-
-                                if ($result) {
-                                    \redirect('misc.php?action=economy_user_inventory', $lang->mint_item_transaction_cancel_success);
-                                }
-                            }
-
-                            $links['cancel'] = [
-                                'title' => $lang->mint_item_transaction_action_cancel,
-                            ];
-                        }
-
-                        if ($transactionItems) {
-                            if ($transaction['active'] == 1 && $transaction['ask_user_id'] != $mybb->user['uid']) {
-                                $transactionPossible = !in_array(0, array_column($itemsDetails, 'item_ownership_active'));
-
-                                if ($transactionPossible) {
-                                    if (\mint\getSettingValue('manual_balance_operations')) {
-                                        if (isset($mybb->input['complete']) && \verify_post_check($mybb->get_input('my_post_key'))) {
-                                            if ($mybb->get_input('action_signature') === $actionSignatureJson) {
-                                                if (\mint\getUserBalance($mybb->user['uid']) >= $transaction['ask_price']) {
-                                                    $result = ItemTransactions::with($db)->execute($transaction['id'], $mybb->user['uid']);
-
-                                                    if ($result) {
-                                                        \redirect('misc.php?action=economy_user_inventory', $lang->mint_item_transaction_complete_success);
-                                                    }
-                                                } else {
-                                                    $messages .= \mint\getRenderedMessage($lang->mint_currency_amount_exceeding_balance, 'error');
-                                                }
-                                            }
-                                        }
-
-                                        $links['complete'] = [
-                                            'title' => $lang->sprintf(
-                                                $lang->mint_item_transaction_action_buy_with,
-                                                $askPriceSimple
-                                            ),
-                                        ];
-                                    } else {
-                                        $messages .= \mint\getRenderedMessage($lang->mint_balance_operations_disabled);
-                                    }
-                                }
-                            }
-                        }
+                        eval('$itemSets .= "' . \mint\tpl('item_transaction_itemset') . '";');
                     }
 
-                    $items = \mint\getRenderedInventory($itemsDetails);
+                    if ($askItemsDetails) {
+                        $title = $lang->sprintf(
+                            $lang->mint_item_transaction_ask_items,
+                            count($askItemsDetails)
+                        );
+                        $items = \mint\getRenderedInventory($askItemsDetails);
+
+                        eval('$itemSets .= "' . \mint\tpl('item_transaction_itemset') . '";');
+                    }
+
+                    if ($transactionPossible) {
+                        $instrumentString = $askPriceSimple;
+
+                        if ($askItemsDetails) {
+                            $actionString = $lang->mint_item_transaction_action_trade_with;
+
+                            $instrumentString .= ' ' . $lang->and . ' ' . $lang->sprintf(
+                                $lang->mint_items_count,
+                                count($askItemsDetails)
+                            );
+                        } else {
+                            $actionString = $lang->mint_item_transaction_action_buy_with;
+                        }
+
+                        $links['complete'] = [
+                            'title' => $lang->sprintf(
+                                $actionString,
+                                $instrumentString
+                            ),
+                        ];
+                    }
 
                     if ($links) {
                         $actionLinks = \mint\getRenderedActionLinks($links);
+                    } else {
+                        $actionLinks = null;
                     }
+
+                    $actionSignatureJsonValue = \htmlspecialchars_uni($actionSignatureJson);
 
                     eval('$content = "' . \mint\tpl('item_transaction') . '";');
                 } else {

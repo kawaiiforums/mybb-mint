@@ -88,6 +88,7 @@ function mint_install()
         \mint\DbRepository\ItemOwnerships::class,
         \mint\DbRepository\ItemTransactions::class,
         \mint\DbRepository\ItemTransactionItems::class,
+        \mint\DbRepository\ItemTransactionItemTypes::class,
     ]);
 
     // datacache
@@ -155,6 +156,7 @@ function mint_uninstall()
         \mint\DbRepository\ItemOwnerships::class,
         \mint\DbRepository\ItemTransactions::class,
         \mint\DbRepository\ItemTransactionItems::class,
+        \mint\DbRepository\ItemTransactionItemTypes::class,
     ], true, true);
 
     // settings

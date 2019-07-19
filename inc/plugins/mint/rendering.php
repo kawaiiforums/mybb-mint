@@ -139,14 +139,37 @@ function getRenderedInventory(array $items, string $type = 'standard', ?int $pla
     $inventoryType = $type;
 
     foreach ($items as $item) {
-        $userItemId = $item['item_ownership_id'];
-        $title = \htmlspecialchars_uni($item['item_type_title']);
-
         $elementClass = 'mint__inventory__item';
 
         $classes = [
             $elementClass,
         ];
+
+        $attributes = null;
+
+        if (!empty($item['item_ownership_id'])) {
+            $userItemId = (int)$item['item_ownership_id'];
+
+            $attributes .= ' href="misc.php?action=economy_item_ownership&amp;id=' . $userItemId . '"';
+        } else {
+            $userItemId = null;
+        }
+
+        $title = \htmlspecialchars_uni($item['item_type_title']);
+
+        if ($item['item_type_image']) {
+            $imageUrl = $mybb->get_asset_url($item['item_type_image']);
+        } else {
+            $imageUrl = null;
+        }
+
+        if ($item['item_transaction_id']) {
+            $classes[] = $elementClass . '--in-transaction';
+        }
+
+        if (isset($item['item_active']) && $item['item_active'] == 0) {
+            $classes[] = $elementClass . '--deactivated';
+        }
 
         if ($item['item_type_stacked']) {
             $classes[] = $elementClass . '--stacked';
@@ -162,26 +185,12 @@ function getRenderedInventory(array $items, string $type = 'standard', ?int $pla
             $classes[] = $elementClass . '--non-transferable';
         }
 
-        if ($item['item_transaction_id']) {
-            $classes[] = $elementClass . '--in-transaction';
-        }
-
-        if (!$item['item_active']) {
-            $classes[] = $elementClass . '--deactivated';
-        }
-
         $classes = implode(' ', $classes);
 
-        if ($item['stacked_amount']) {
+        if (!empty($item['stacked_amount']) && $item['stacked_amount'] > 1) {
             $stackedAmount = \my_number_format($item['stacked_amount']);
         } else {
             $stackedAmount = null;
-        }
-
-        if ($item['item_type_image']) {
-            $imageUrl = $mybb->get_asset_url($item['item_type_image']);
-        } else {
-            $imageUrl = null;
         }
 
         if ($type == 'transaction-select' && $item['item_type_transferable'] && !$item['item_transaction_id']) {
@@ -454,6 +463,8 @@ function getRenderedTransactionEntries(array $entries): ?string
     $output = null;
 
     foreach ($entries as $entry) {
+        $flags = null;
+
         $id = (int)$entry['id'];
         $url = 'misc.php?action=economy_item_transaction&amp;id=' . $id;
 
@@ -471,35 +482,6 @@ function getRenderedTransactionEntries(array $entries): ?string
             $date = $askDate;
         }
 
-        $details = [];
-
-        if (isset($entry['items'])) {
-            $details[] = $lang->sprintf(
-                $lang->mint_items_count,
-                count($entry['items'])
-            );
-        }
-
-        $details[] = \mint\getFormattedCurrency(abs($entry['ask_price']));
-
-        if ($entry['ask_user_id']) {
-            $details[] = $lang->sprintf(
-                $lang->mint_from_user,
-                \build_profile_link($entry['ask_user_username'], $entry['ask_user_id'])
-            );
-        }
-
-        if ($entry['bid_user_id']) {
-            $details[] = $lang->sprintf(
-                $lang->mint_to_user,
-                \build_profile_link($entry['bid_user_username'], $entry['bid_user_id'])
-            );
-        }
-
-        $details = implode(' &middot; ', $details);
-
-        $flags = null;
-
         if ($entry['active'] == 1 && $entry['unlisted'] == true) {
             $flagType = 'unlisted';
             $flagContent = $lang->mint_item_transaction_unlisted;
@@ -507,15 +489,80 @@ function getRenderedTransactionEntries(array $entries): ?string
             eval('$flags .= "' . \mint\tpl('flag') . '";');
         }
 
-        if (!empty($entry['items'])) {
+        $offerObjects = [];
+        $askObjects = [];
+
+        if (isset($entry['offered_items'])) {
+            $offerObjects[] = $lang->sprintf(
+                $lang->mint_items_count,
+                count($entry['offered_items'])
+            );
+        }
+
+        if ($entry['completed'] == 1 && isset($entry['bid_items'])) {
+            $askItems = $entry['bid_items'];
+        } elseif (isset($entry['ask_item_types'])) {
+            $askItems = $entry['ask_item_types'];
+        } else {
+            $askItems = [];
+        }
+
+        if ($askItems) {
+            $askObjects[] = $lang->sprintf(
+                $lang->mint_items_count,
+                count($askItems)
+            );
+        }
+
+        if ($offerObjects) {
+            $offerDetails = $lang->sprintf(
+                $lang->mint_objects_offered_by_user,
+                implode($lang->comma, $offerObjects),
+                \build_profile_link($entry['ask_user_username'], $entry['ask_user_id'])
+            );
+        }
+
+        if ($entry['ask_price']) {
+            $askObjects[] = \mint\getFormattedCurrency(abs($entry['ask_price']));
+        }
+
+        $askDetails = null;
+
+        if ($askObjects) {
+            $askDetails .= $lang->sprintf(
+                $lang->mint_for_objects,
+                implode($lang->comma, $askObjects)
+            );
+        }
+
+        if ($entry['bid_user_id']) {
+            $askDetails .= ' ' . $lang->sprintf(
+                $lang->mint_to_user,
+                \build_profile_link($entry['bid_user_username'], $entry['bid_user_id'])
+            );
+        }
+
+
+        if (!empty($entry['offered_items'])) {
             $previewItems = array_slice(
-                $entry['items'],
+                $entry['offered_items'],
                 0,
                 \mint\getSettingValue('item_transaction_preview_items')
             );
-            $preview = \mint\getRenderedInventory($previewItems, 'preview');
+            $offerPreview = \mint\getRenderedInventory($previewItems, 'preview');
         } else {
-            $preview = null;
+            $offerPreview = null;
+        }
+
+        if ($askItems) {
+            $previewItems = array_slice(
+                $askItems,
+                0,
+                \mint\getSettingValue('item_transaction_preview_items')
+            );
+            $askPreview = \mint\getRenderedInventory($previewItems, 'preview');
+        } else {
+            $askPreview = null;
         }
 
         eval('$output .= "' . \mint\tpl('item_transactions_entry') . '";');

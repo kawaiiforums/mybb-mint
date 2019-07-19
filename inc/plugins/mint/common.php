@@ -577,14 +577,20 @@ function updateUser(int $userId, array $data): bool
 }
 
 // data
-function getArrayWithColumnAsKey(array $array, string $column): array
-{
-    return array_combine(array_column($array, $column), $array);
-}
-
 function getArraySubset(array $array, array $keys): array
 {
     return array_intersect_key($array, array_flip($keys));
+}
+
+function getArraySplitByColumn(array $array, $columnName): array
+{
+    $result = [];
+
+    foreach ($array as $value) {
+        $result[ $value[$columnName] ][] = $value;
+    }
+
+    return $result;
 }
 
 function getIntegerCsv(array $values): string

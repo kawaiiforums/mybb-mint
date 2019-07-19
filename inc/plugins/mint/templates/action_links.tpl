@@ -1,0 +1,1 @@
+<div class="mint__action-links">{$actionLinks}</div>
