@@ -1070,27 +1070,27 @@ function misc_start(): void
                         $askItemsDetails = $transaction['ask_item_types'];
                     }
 
-                    $transactionPossible = (
+                    $transactionPossibleForCurrentUser = (
                         $transaction['active'] == 1 &&
                         $mybb->user['uid'] != 0 &&
                         $transaction['ask_user_id'] != $mybb->user['uid'] &&
                         $offeredItemsDetails && (
-                            $transaction['ask_price'] == 0 || (
-                                \mint\getSettingValue('manual_balance_operations') == 1 &&
-                                \mint\getUserBalance($mybb->user['uid']) >= $transaction['ask_price']
-                            )
+                            $transaction['ask_price'] == 0 ||
+                            \mint\getSettingValue('manual_balance_operations') == 1
                         ) &&
                         !in_array(0, array_column($offeredItemsDetails, 'item_ownership_active'))
                     );
 
-                    if ($transactionPossible && $askItemsDetails) {
+                    $transactionConditionsSatisfiedForCurrentUser = $transactionPossibleForCurrentUser && \mint\getUserBalance($mybb->user['uid']) >= $transaction['ask_price'];
+
+                    if ($transactionConditionsSatisfiedForCurrentUser && $askItemsDetails) {
                         $candidateBidItems = \mint\getTransactionAskItemsForUser($transaction['id'], $mybb->user['uid']);
-                        $transactionPossible &= \mint\itemsTransferableFromUser($candidateBidItems, $mybb->user['uid']);
+                        $transactionConditionsSatisfiedForCurrentUser &= \mint\itemsTransferableFromUser($candidateBidItems, $mybb->user['uid']);
                     } else {
                         $candidateBidItems = [];
                     }
 
-                    if ($transactionPossible) {
+                    if ($transactionConditionsSatisfiedForCurrentUser) {
                         $actionSignatureJson = json_encode([
                             'ask_price' => $transaction['ask_price'],
                             'offered_item_ownership_ids' => array_column($offeredItemsDetails, 'item_ownership_id'),
@@ -1117,7 +1117,7 @@ function misc_start(): void
                                 'title' => $lang->mint_item_transaction_action_cancel,
                             ];
                         } else {
-                            if ($transactionPossible) {
+                            if ($transactionConditionsSatisfiedForCurrentUser) {
                                 if (isset($mybb->input['complete']) && \verify_post_check($mybb->get_input('my_post_key'))) {
                                     if ($mybb->get_input('action_signature') === $actionSignatureJson) {
                                         $result = ItemTransactions::with($db)->execute($transaction['id'], $mybb->user['uid']);
@@ -1133,6 +1133,10 @@ function misc_start(): void
 
                     if (!\mint\getSettingValue('manual_balance_operations')) {
                         $messages .= \mint\getRenderedMessage($lang->mint_balance_operations_disabled);
+                    }
+
+                    if ($transactionPossibleForCurrentUser && !$transactionConditionsSatisfiedForCurrentUser) {
+                        $messages .= \mint\getRenderedMessage($lang->mint_item_transaction_conditions_not_satisfied);
                     }
 
                     if ($transaction['completed'] == 1) {
@@ -1179,7 +1183,7 @@ function misc_start(): void
                         eval('$itemSets .= "' . \mint\tpl('item_transaction_itemset') . '";');
                     }
 
-                    if ($transactionPossible) {
+                    if ($transactionConditionsSatisfiedForCurrentUser) {
                         $instrumentString = $askPriceSimple;
 
                         if ($askItemsDetails) {

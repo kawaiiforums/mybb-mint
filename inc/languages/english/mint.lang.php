@@ -104,6 +104,7 @@ $l['mint_item_transaction_completed_date'] = 'Completed on';
 $l['mint_item_transaction_action_buy_with'] = 'Buy with {1}';
 $l['mint_item_transaction_action_trade_with'] = 'Trade with {1}';
 $l['mint_item_transaction_action_cancel'] = 'Cancel';
+$l['mint_item_transaction_conditions_not_satisfied'] = 'You do not have enough currency and/or items to complete this transaction.';
 $l['mint_item_transaction_cancel_success'] = 'Successfully canceled item transaction.';
 $l['mint_item_transaction_complete_success'] = 'Successfully completed item transaction.';
 
