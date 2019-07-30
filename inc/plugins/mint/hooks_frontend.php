@@ -3,6 +3,7 @@
 namespace mint\Hooks;
 
 use mint\DbRepository\BalanceTransfers;
+use mint\DbRepository\ItemActions;
 use mint\DbRepository\ItemTransactions;
 use mint\DbRepository\ItemTypes;
 
@@ -44,6 +45,7 @@ function global_start(): void
                     'item_transaction_entry_itemset',
                     'item_transactions',
                     'item_transactions_entry',
+                    'items_action_form',
                     'items_discard_form',
                     'items_forge',
                     'items_forge_form',
@@ -667,6 +669,83 @@ function misc_start(): void
                 return $page;
             },
         ],
+        'economy_items_action' => [
+            'parents' => [
+                'economy_hub',
+            ],
+            'permission' => function () use ($mybb): bool {
+                return $mybb->user['uid'] != 0;
+            },
+            'controller' => function (array $globals) {
+                extract($globals);
+
+                $pageTitle = $lang->mint_page_economy_items_action;
+
+                $messages = null;
+                $form = null;
+
+                if (isset($mybb->input['name'])) {
+                    if (isset($mybb->input['user_item_selection'])) {
+                        $userItemSelection = $mybb->get_input('user_item_selection', \MyBB::INPUT_ARRAY);
+                    } elseif (isset($mybb->input['selected_items']) && \verify_post_check($mybb->get_input('my_post_key'))) {
+                        $userItemSelection = json_decode($mybb->get_input('selected_items'), true, 2);
+                    } else {
+                        $userItemSelection = null;
+                    }
+
+                    if ($userItemSelection) {
+                        $selectedItems = \mint\getItemIdsByResolvedOwnershipStackedAmount($userItemSelection, true);
+
+                        if ($selectedItems) {
+                            $itemOwnershipsDetails = \mint\getItemOwnershipsDetails(
+                                array_column($selectedItems, 'item_ownership_id')
+                            );
+                            $selectedItemTypeNames = array_column($itemOwnershipsDetails, 'item_type_name');
+                            $itemAction = \mint\getItemActionBySignature($mybb->get_input('name'), $selectedItemTypeNames);
+
+                            if ($itemAction) {
+                                $itemActionItemCount = count($itemOwnershipsDetails);
+
+                                if (isset($mybb->input['selected_items'])) {
+                                    $result = ItemActions::with($db)->execute([
+                                        'user_id' => $mybb->user['uid'],
+                                        'name' => $itemAction['name'],
+                                        'items' => $selectedItems,
+                                    ]);
+
+                                    if ($result) {
+                                        $url = 'misc.php?action=economy_user_inventory';
+
+                                        \redirect($url, $lang->sprintf(
+                                            $lang->mint_items_action_success_amount,
+                                            $itemActionItemCount
+                                        ));
+                                    } else {
+                                        $messages .= \mint\getRenderedMessage($lang->mint_items_action_error, 'error');
+                                    }
+                                }
+
+                                $itemActionName = \htmlspecialchars_uni($itemAction['name']);
+                                $itemActionTitle = $lang->{'mint_item_action_' . $itemAction['name']};
+                                $selectedItemsJson = \htmlspecialchars_uni(
+                                    json_encode($mybb->get_input('user_item_selection', \MyBB::INPUT_ARRAY), 0, 1)
+                                );
+
+                                eval('$form = "' . \mint\tpl('items_action_form') . '";');
+                            } else {
+                                $messages .= \mint\getRenderedMessage($lang->mint_items_action_not_applicable, 'error');
+                            }
+                        }
+                    }
+                }
+
+                $content = $messages . $form;
+
+                eval('$page = "' . \mint\tpl('page') . '";');
+
+                return $page;
+            },
+        ],
         'economy_user_inventory' => [
             'parents' => [
                 'economy_hub',
@@ -765,6 +844,15 @@ function misc_start(): void
                             'url' => 'misc.php?action=economy_item_transaction&id=' . $item['item_transaction_id'],
                             'title' => $lang->mint_items_action_active_transaction,
                         ];
+                    } elseif ($item['item_type_name']) {
+                        $itemActions = \mint\getItemActionsAcceptingItemTypes([$item['item_type_name']]);
+
+                        foreach ($itemActions as $itemAction) {
+                            $links['item_action_' . $itemAction['name']] = [
+                                'url' => 'misc.php?action=economy_items_action&name=' . $itemAction['name'] . '&user_item_selection[' . $item['item_ownership_id'] . ']=1',
+                                'title' => $lang->{'mint_item_action_' . $itemAction['name']},
+                            ];
+                        }
                     }
 
                     if ($links) {

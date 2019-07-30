@@ -61,6 +61,12 @@ $l['mint_page_economy_items_discard'] = 'Discard Items';
 $l['mint_items_discard_success_amount'] = 'Successfully discarded {1} item(s).';
 $l['mint_items_discard_error'] = 'Could not execute the discarding operation.';
 
+$l['mint_page_economy_items_action'] = 'Use Items';
+$l['mint_items_action_name'] = 'Action';
+$l['mint_items_action_success_amount'] = 'Successfully used {1} item(s).';
+$l['mint_items_action_error'] = 'Could not execute action on items.';
+$l['mint_items_action_not_applicable'] = 'Could not apply action to selected items.';
+
 $l['mint_page_economy_user_inventory'] = 'Inventory';
 $l['mint_page_economy_user_inventory_user'] = '{1}\'s Inventory ({2})';
 $l['mint_items_inventory_preview'] = 'Inventory Preview';

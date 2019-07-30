@@ -24,9 +24,11 @@ Selected user groups are able to _mint_ and _burn_ amounts assigned to individua
 ### Items
 The Items platform handles Item Types assigned to Categories, providing blueprints for invididual user-owned Items. Inventory Types and size bonuses allow to specify how many slots are available to hold Items. 
 
-Manual Item Transactions allow users to exchange currency units and items.
-
 Selected user groups are able to _forge_ amounts of an Item Type to be assigned to individual accounts, inserting it into the economy.
+
+Item Actions allow developers to create custom scripts to be executed upon request by item owners.
+
+Manual Item Transactions allow users to exchange currency units and items.
 
 ### Widgets & Variables
 ##### Global

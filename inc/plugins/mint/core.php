@@ -229,6 +229,62 @@ function getRegisteredItemTypeInteractions(): array
     return $mintRuntimeRegistry['itemInteractions'] ?? [];
 }
 
+function registerItemAction(string $name, array $itemTypeNames, callable $handler, ?array $details = null): void
+{
+    global $mintRuntimeRegistry;
+
+    $mintRuntimeRegistry['itemActions'][] = array_merge([
+        'name' => $name,
+        'itemTypeNames' => $itemTypeNames,
+        'handler' => $handler,
+    ], $details ?? []);
+
+    \mint\registerItemTypesInteraction($itemTypeNames, \mint\getArraySubset($details, ['module']));
+}
+
+function getRegisteredItemActions(): array
+{
+    global $mintRuntimeRegistry;
+
+    return $mintRuntimeRegistry['itemActions'] ?? [];
+}
+
+function getItemActionBySignature(string $name, array $itemTypeNames): ?array
+{
+    $registeredItemActions = \mint\getRegisteredItemActions();
+
+    sort($itemTypeNames);
+
+    foreach ($registeredItemActions as $itemAction) {
+        sort($itemAction['itemTypeNames']);
+
+        if ($itemAction['name'] == $name && $itemTypeNames === $itemAction['itemTypeNames']) {
+            return $itemAction;
+        }
+    }
+
+    return null;
+}
+
+function getItemActionsAcceptingItemTypes(array $itemTypeNames): array
+{
+    $itemActions = [];
+
+    $registeredItemActions = \mint\getRegisteredItemActions();
+
+    sort($itemTypeNames);
+
+    foreach ($registeredItemActions as $itemAction) {
+        sort($itemAction['itemTypeNames']);
+
+        if ($itemTypeNames === $itemAction['itemTypeNames']) {
+            $itemActions[] = $itemAction;
+        }
+    }
+
+    return $itemActions;
+}
+
 // processing
 function getMultipliedRewardValue(int $baseValue, ?float $multiplier): int
 {
@@ -265,7 +321,18 @@ function itemsTransferableFromUser(?array $items, int $expectedOwnershipUserId, 
 }
 
 // actions
-function verifyBalanceOperationsDataIntegrity(bool $attemptToFix = false)
+function executeItemAction(array $action, array $itemOwnershipsDetails): ?bool
+{
+    $itemAction = getItemActionBySignature($action['name'], array_column($itemOwnershipsDetails, 'item_type_name'));
+
+    if ($itemAction) {
+        return $itemAction['handler']($action, $itemOwnershipsDetails);
+    } else {
+        return null;
+    }
+}
+
+function verifyBalanceOperationsDataIntegrity(bool $attemptToFix = false): bool
 {
     global $db;
 
