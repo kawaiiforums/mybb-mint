@@ -1052,13 +1052,17 @@ function misc_start(): void
                         )
                     )
                 ) {
+                    $urlToCopy = null;
+
                     if ($transaction['active'] == 1 && $transaction['unlisted'] == 1) {
                         $url = $mybb->settings['bburl'] . '/misc.php?action=economy_item_transaction&id=' . (int)$transaction['id'] . '&token=' . urlencode($transaction['token']);
 
-                        $note = $lang->mint_item_transaction_unlisted_note;
-                        $string = $url;
+                        if ($transaction['ask_user_id'] == $mybb->user['uid']) {
+                            $note = $lang->mint_item_transaction_unlisted_note;
+                            $string = $url;
 
-                        eval('$urlToCopy = "' . \mint\tpl('string_to_copy') . '";');
+                            eval('$urlToCopy = "' . \mint\tpl('string_to_copy') . '";');
+                        }
 
                         if (
                             !empty($transaction['token']) &&
