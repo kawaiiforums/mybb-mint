@@ -966,6 +966,12 @@ function misc_start(): void
 
                     $pageTitle = $lang->mint_page_economy_new_items_transaction;
 
+                    if (!empty($mybb->input['selected_ask_item_types'])) {
+                        $askPrice = 0;
+                    } else {
+                        $askPrice = 1;
+                    }
+
                     eval('$form = "' . \mint\tpl('items_transaction_new_form') . '";');
 
                     $content = $messages . $form;
