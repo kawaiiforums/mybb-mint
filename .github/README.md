@@ -1,3 +1,5 @@
+<img align="left" src="https://raw.githubusercontent.com/kawaiiforums/mybb-mint/master/.github/logomark-trim-200h.png" height="80">
+
 # Mint
 
 A MyBB extension that establishes a platform for virtual currency and inventory items held by users.
