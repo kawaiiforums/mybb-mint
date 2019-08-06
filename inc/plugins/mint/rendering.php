@@ -130,7 +130,7 @@ function getRenderedRewardSourceLegend(array $legendEntries, ?int $contextUserId
     return $output;
 }
 
-function getRenderedInventory(array $items, string $type = 'standard', ?int $placeholders = null): ?string
+function getRenderedInventory(array $items, string $type = 'standard', ?int $placeholders = null, ?string $selectInputName = 'item_selection'): ?string
 {
     global $mybb;
 

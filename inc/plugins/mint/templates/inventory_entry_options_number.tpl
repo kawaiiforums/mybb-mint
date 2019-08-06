@@ -1,1 +1,1 @@
-<input type="number" class="textbox" name="user_item_selection[{$userItemId}]" value="0" min="0" max="{$max}" />
+<input type="number" class="textbox" name="{$selectInputName}[{$userItemId}]" value="0" min="0" max="{$max}" />

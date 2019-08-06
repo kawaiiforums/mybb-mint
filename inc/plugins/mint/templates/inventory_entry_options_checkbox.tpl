@@ -1,1 +1,1 @@
-<input type="checkbox" name="user_item_selection[{$userItemId}]" value="1" />
+<input type="checkbox" name="{$selectInputName}[{$userItemId}]" value="1" />

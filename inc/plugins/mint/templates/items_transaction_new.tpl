@@ -10,8 +10,7 @@
     <div class="mint__page-title">{$lang->mint_page_economy_new_items_transaction}</div>
 
     {$messages}
-
-    {$form}
+    {$content}
 </div>
 
 {$footer}
