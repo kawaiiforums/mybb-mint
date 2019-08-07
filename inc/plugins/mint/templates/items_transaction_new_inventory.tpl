@@ -1,6 +1,6 @@
 <div class="mint__section">
-    <div class="mint__form__header">
-        <p class="mint__form__header__title">{$actionText}</p>
+    <div class="mint__block mint__block--nospacing">
+        <div class="mint__block__title">{$actionText}</div>
     </div>
     {$content}
 </div>

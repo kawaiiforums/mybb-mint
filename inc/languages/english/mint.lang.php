@@ -113,7 +113,7 @@ $l['mint_item_transaction_new'] = 'New Transaction';
 $l['mint_item_transaction_new_error'] = 'Could not create transaction.';
 $l['mint_item_transaction_new_success'] = 'Successfully created item transaction offer.';
 $l['mint_item_transaction_select_ask_items'] = 'Select items to ask for.';
-$l['mint_item_transaction_select_bid_items'] = 'Select items to offer.';
+$l['mint_item_transaction_select_bid_items'] = 'Select items to offer (required).';
 
 $l['mint_page_economy_active_transactions'] = 'Active Transactions';
 $l['mint_page_economy_active_transactions_count'] = 'Active Transactions ({1})';
