@@ -104,6 +104,8 @@ function mint_install()
     ]);
 
     // tasks
+    require_once MYBB_ROOT . '/inc/functions_task.php';
+
     $new_task = [
         'title'       => 'Mint: Integrity Check',
         'description' => 'Performs data integrity verification for the Mint extension.',

@@ -1,6 +1,6 @@
 <?php
 
-function mint_integrity(array $task): void
+function task_mint_integrity(array $task): void
 {
     global $lang;
 
