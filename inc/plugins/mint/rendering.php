@@ -499,9 +499,9 @@ function getRenderedBalanceOperationEntries($query, ?int $contextUserId = null, 
     return $output;
 }
 
-function getRenderedTransactionEntries(array $entries): ?string
+function getRenderedTransactionEntries(array $entries, string $templateName = 'item_transactions_entry'): ?string
 {
-    global $db, $lang;
+    global $lang;
 
     $output = null;
 
@@ -513,6 +513,17 @@ function getRenderedTransactionEntries(array $entries): ?string
 
         if ($entry['token']) {
             $url .= '&token=' . urlencode($entry['token']);
+        }
+
+        if ($entry['completed'] == 1) {
+            $statusText = $lang->mint_item_transaction_status_completed;
+            $activeStatus = 'inactive';
+        } elseif ($entry['active'] == 1) {
+            $statusText = $lang->mint_item_transaction_status_active;
+            $activeStatus = 'active';
+        } else {
+            $statusText = $lang->mint_item_transaction_status_canceled;
+            $activeStatus = 'inactive';
         }
 
         $askDate = \my_date('normal', $entry['ask_date']);
@@ -608,8 +619,21 @@ function getRenderedTransactionEntries(array $entries): ?string
             $askPreview = null;
         }
 
-        eval('$output .= "' . \mint\tpl('item_transactions_entry') . '";');
+        eval('$output .= "' . \mint\tpl($templateName) . '";');
     }
+
+    return $output;
+}
+
+function getRenderedItemTransactionCard(array $entry): ?string
+{
+    global $lang;
+
+    if (!isset($lang->mint)) {
+        $lang->load('mint');
+    }
+
+    $output = \mint\getRenderedTransactionEntries([$entry], 'item_transaction_card');
 
     return $output;
 }

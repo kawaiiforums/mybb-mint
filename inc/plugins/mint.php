@@ -5,6 +5,7 @@ require MYBB_ROOT . 'inc/plugins/mint/common.php';
 require MYBB_ROOT . 'inc/plugins/mint/data.php';
 require MYBB_ROOT . 'inc/plugins/mint/core.php';
 require MYBB_ROOT . 'inc/plugins/mint/rendering.php';
+require MYBB_ROOT . 'inc/plugins/mint/entityEmbedParsing.php';
 
 // hook files
 require MYBB_ROOT . 'inc/plugins/mint/hooks_frontend.php';

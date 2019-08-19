@@ -30,7 +30,7 @@ Selected user groups are able to _forge_ amounts of an Item Type to be assigned 
 
 Item Actions allow developers to create custom scripts to be executed upon request by item owners.
 
-Manual Item Transactions allow users to exchange currency units and items.
+Manual Item Transactions allow users to exchange currency units and items. Individual Transactions can be represented in MyCode-enabled content using `[item_transaction=ID]` tags.
 
 ### Widgets & Variables
 ##### Global

@@ -10,7 +10,7 @@
     {$messages}
 
     <div class="mint__sections">
-        <section class="mint__section mint__section--items">
+        <section class="mint__section mint__swatch--items">
             <header class="mint__section__header">
                 <nav class="mint__section__header__nav">
                     <a href="misc.php?action=economy_new_items_transaction" class="mint__section__header__nav__link">{$lang->mint_item_transaction_new}</a>
@@ -46,7 +46,7 @@
             </div>
         </section>
 
-        <section class="mint__section mint__section--currency">
+        <section class="mint__section mint__swatch--currency">
             <header class="mint__section__header">
                 <nav class="mint__section__header__nav">
                     <a href="misc.php?action=economy_balance_transfer" class="mint__section__header__nav__link">{$lang->mint_balance_transfer_new}</a>

@@ -13,6 +13,10 @@ function global_start(): void
 
     $lang->load('mint');
 
+    \mint\loadTemplates([
+        'item_transaction_card',
+    ], 'mint_');
+
     switch (\THIS_SCRIPT) {
         case 'misc.php':
             if (strpos($mybb->get_input('action'), 'economy_') === 0) {
@@ -1375,6 +1379,68 @@ function postbit_pm(array $post): array
 function postbit_announcement(array $post): array
 {
     return postbit($post);
+}
+
+function parse_message_me_mycode(string $message): string
+{
+    global $mintRuntimeRegistry;
+
+    $matchLimit = 1000;
+
+    if (!isset($mintRuntimeRegistry['itemTransactionParsingPlaceholders'])) {
+        $mintRuntimeRegistry['itemTransactionParsingPlaceholders'] = [];
+    }
+
+    $matches = \mint\entityEmbedParsing\getMatches($message, 'item_transaction', $matchLimit);
+
+    $message = \mint\entityEmbedParsing\getMessageWithPlaceholders(
+        $message,
+        'item_transaction',
+        $matches,
+        $mintRuntimeRegistry['itemTransactionParsingPlaceholders']
+    );
+
+    return $message;
+}
+
+function parse_message_end(string $message): string
+{
+    global $mintRuntimeRegistry;
+
+    $entityLimit = 1000;
+
+    if (!\mint\isStaticRender()) {
+        $message = \mint\entityEmbedParsing\getFormattedMessageFromPlaceholders(
+            $message,
+            'item_transaction',
+            $mintRuntimeRegistry['itemTransactionParsingPlaceholders'],
+            '\mint\getPublicItemTransactionsById',
+            '\mint\getRenderedItemTransactionCard',
+            $entityLimit
+        );
+    }
+
+    return $message;
+}
+
+function pre_output_page(string $content): string
+{
+    global $mintRuntimeRegistry;
+
+    $entityLimit = 1000;
+
+    if (!empty($mintRuntimeRegistry['itemTransactionParsingPlaceholders'])) {
+        $content = \mint\entityEmbedParsing\getFormattedMessageFromPlaceholders(
+            $content,
+            'item_transaction',
+            $mintRuntimeRegistry['itemTransactionParsingPlaceholders'],
+            '\mint\getPublicItemTransactionsById',
+            '\mint\getRenderedItemTransactionCard',
+            $entityLimit
+        );
+    }
+
+    return $content;
 }
 
 function xmlhttp(): void

@@ -3,7 +3,7 @@
         <p class="mint__balance-operation__value">{$sign} {$amount}</p>
     </div>
     <div class="mint__table__row__cell">
-        <p class="mint__balance-operation__date">{$date}</p>
+        <p class="mint__tag mint__tag--date">{$date}</p>
         {$flags}
         <p class="mint__balance-operation__details">{$details}</p>
         <p class="mint__balance-operation__note">{$note}</p>

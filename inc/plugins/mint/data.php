@@ -1365,6 +1365,20 @@ function getUserActiveTransactions(int $userId): array
     return \mint\getItemTransactionsDetails('WHERE active = 1 AND ask_user_id = ' . (int)$userId . ' ORDER BY ask_date DESC', true);
 }
 
+function getPublicItemTransactionsById(array $transactionIds): ?array
+{
+    if (!empty($transactionIds)) {
+        $entries = \mint\getItemTransactionsDetails(
+            'WHERE id IN (' . \mint\getIntegerCsv($transactionIds) . ') AND (active = 0 OR unlisted = 0)',
+            true
+        );
+
+        return $entries;
+    } else {
+        return [];
+    }
+}
+
 function getActivePublicItemTransactions(?string $conditions): array
 {
     $passedConditions = 'WHERE iTr.active = 1 AND iTr.unlisted = 0';

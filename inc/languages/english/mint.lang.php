@@ -1,5 +1,7 @@
 <?php
 
+$l['mint'] = '';
+
 $l['mint_no_entries'] = 'Nothing to show yet.';
 $l['mint_recipient_username'] = 'Recipient Username';
 $l['mint_user_not_found'] = 'Could not find specified user.';

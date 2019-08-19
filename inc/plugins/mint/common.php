@@ -665,6 +665,14 @@ function redirect(string $url): void
     exit;
 }
 
+function isStaticRender(): bool
+{
+    return !defined('THIS_SCRIPT') || !in_array(THIS_SCRIPT, [
+        'xmlhttp.php',
+        'newreply.php',
+    ]);
+}
+
 // 3rd party
 function loadPluginLibrary(): void
 {
