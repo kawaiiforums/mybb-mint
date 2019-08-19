@@ -32,6 +32,7 @@ function global_start(): void
                     'flowing_list_entry',
                     'hub',
                     'hub_service_link',
+                    'insights',
                     'inventory',
                     'inventory_entry',
                     'inventory_entry_options',
@@ -171,6 +172,17 @@ function misc_start(): void
                 } else {
                     $rewardSourcesLegend = null;
                 }
+
+
+                $timezoneCorrectionHours = (float)$mybb->settings['timezoneoffset'] + (float)$mybb->settings['dstcorrection'];
+
+                $currentPeriodStartTimestamp = strtotime('midnight UTC');
+                $currentPeriodStartTimestamp += $timezoneCorrectionHours * 3600;
+
+                $periods = \mint\getRecentGlobalBalanceSummariesByPeriod(86400, 6, $currentPeriodStartTimestamp);
+
+
+                $insights = \mint\getRenderedEconomyCharts($periods);
 
                 // items
                 $userInventoryData = \mint\getUserInventoryData($mybb->user);

@@ -130,6 +130,49 @@ function getRenderedRewardSourceLegend(array $legendEntries, ?int $contextUserId
     return $output;
 }
 
+function getRenderedEconomyCharts(array $periods): ?string
+{
+    global $mybb, $lang;
+
+    $input = [
+        'lang' => [
+            'mint_currency_units_added' => $lang->mint_currency_units_added,
+            'mint_currency_units_removed' => $lang->mint_currency_units_removed,
+            'mint_currency_units_total' => $lang->mint_currency_units_total,
+            'mint_currency_units_in_circulation' => $lang->mint_currency_units_in_circulation,
+            'mint_economy_insights_closing_date' => $lang->mint_economy_insights_closing_date,
+        ],
+        'data' => [
+            'currencyUnitsCreated' => [],
+            'currencyUnitsRemoved' => [],
+            'currencyUnitsTotal' => [],
+        ],
+    ];
+
+    foreach ($periods as $periodNo => $period) {
+        $msTimestamp = $period['endTimestamp'] * 1000;
+
+        $input['data']['currencyUnitsCreated'][] = [
+            'x' => $msTimestamp,
+            'y' => $period['deltaPositive'],
+        ];
+        $input['data']['currencyUnitsRemoved'][] = [
+            'x' => $msTimestamp,
+            'y' => $period['deltaNegative'],
+        ];
+        $input['data']['currencyUnitsTotal'][] = [
+            'x' => $msTimestamp,
+            'y' => $period['total'],
+        ];
+    }
+
+    $inputJson = \htmlspecialchars_uni(json_encode($input));
+
+    eval('$output = "' . \mint\tpl('insights') . '";');
+
+    return $output;
+}
+
 function getRenderedInventory(array $items, string $type = 'standard', ?int $placeholders = null, ?string $selectInputName = 'item_selection'): ?string
 {
     global $mybb;

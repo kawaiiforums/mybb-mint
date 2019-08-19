@@ -127,4 +127,11 @@ $l['mint_recent_public_balance_transfers'] = 'Recent Public Transfers';
 $l['mint_balance_top_users'] = 'Top Users by Balance';
 $l['mint_reward_sources_legend'] = 'Activity Rewards';
 
+$l['mint_economy_insights'] = 'Economy Insights';
+$l['mint_economy_insights_closing_date'] = 'Closing date';
+$l['mint_currency_units_in_circulation'] = 'Currency Units in Circulation';
+$l['mint_currency_units_added'] = 'Added';
+$l['mint_currency_units_removed'] = 'Removed';
+$l['mint_currency_units_total'] = 'Total';
+
 $l['mint_integrity_task_ran'] = 'The Mint: Integrity Check task successfully ran.';

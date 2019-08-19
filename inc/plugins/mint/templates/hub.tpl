@@ -70,6 +70,7 @@
                 </div>
             </div>
             {$rewardSourcesLegend}
+            {$insights}
         </section>
     </div>
 </div>

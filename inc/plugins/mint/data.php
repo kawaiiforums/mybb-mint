@@ -185,6 +185,114 @@ function userBalanceOperationWithTerminationPoint($user, int $value, string $ter
     }
 }
 
+function getRecentGlobalBalanceSummariesByPeriod(int $periodLengthSeconds = 86400, int $precedingPeriods = 0, ?int $currentPeriodStartTimestamp = null, bool $skipCache = false): array
+{
+    global $db;
+
+    $maxCacheEntries = 30;
+
+    $periods = [];
+
+    $cutoffTimestamp = null;
+    $periodsBackSqlCases = [];
+    $tryCache = !$skipCache;
+
+    $cachedPeriods = \mint\getCacheValue('global_balance_summaries_by_period') ?? [];
+
+    for ($periodNo = $precedingPeriods; $periodNo >= 0; $periodNo--) {
+        $periodStartTimestamp = $currentPeriodStartTimestamp - ($periodNo * $periodLengthSeconds);
+        $periodEndTimestamp = $periodStartTimestamp + $periodLengthSeconds;
+        $periodId = $periodStartTimestamp . '_' . $periodEndTimestamp;
+
+        if ($tryCache && array_key_exists($periodId, $cachedPeriods)) {
+            $period = $cachedPeriods[$periodId];
+        } else {
+            $tryCache = false;
+
+            if ($cutoffTimestamp === null) {
+                $cutoffTimestamp = $periodStartTimestamp;
+            }
+
+            $periodsBackSqlCases[] = 'WHEN bo.date >= ' . $periodStartTimestamp . ' THEN ' . $periodNo;
+
+            $period = [
+                'startTimestamp' => $periodStartTimestamp,
+                'endTimestamp' => $periodEndTimestamp,
+                'deltaNegative' => 0,
+                'deltaPositive' => 0,
+                'total' => null,
+            ];
+        }
+
+        $periods[$periodNo] = $period;
+    }
+
+    if ($periodsBackSqlCases) {
+        $periodsBackSqlCases = implode(' ', array_reverse($periodsBackSqlCases));
+
+        $query = $db->query("
+            SELECT
+                (CASE {$periodsBackSqlCases} END) AS periods_back,
+                SUM(CASE WHEN bo.value < 0 THEN bo.value END) AS delta_negative,
+                SUM(CASE WHEN bo.value > 0 THEN bo.value END) AS delta_positive
+                FROM
+                    " . TABLE_PREFIX . "mint_balance_operations bo
+                WHERE bo.currency_termination_point_id IS NOT NULL AND bo.date >= {$cutoffTimestamp}
+                GROUP BY periods_back
+        ");
+
+        while ($row = $db->fetch_array($query)) {
+            $periods[$row['periods_back']] = array_merge($periods[$row['periods_back']], [
+                'deltaNegative' => $row['delta_negative'] ?? 0,
+                'deltaPositive' => $row['delta_positive'] ?? 0,
+            ]);
+        }
+    }
+
+    if ($periods[$precedingPeriods - 1]['total'] !== null) {
+        $globalBalanceSumIncremental = $periods[$precedingPeriods - 1]['total'];
+    } else {
+        $globalBalanceSumIncremental = $db->fetch_field(
+            BalanceOperations::with($db)->get(
+                'SUM(value) AS n',
+                'WHERE date < ' . $cutoffTimestamp
+            ),
+            'n'
+        ) ?? 0;
+    }
+
+    $cacheUpdated = false;
+
+    for ($periodNo = $precedingPeriods; $periodNo >= 0; $periodNo--) {
+        $delta = $periods[$periodNo]['deltaNegative'] + $periods[$periodNo]['deltaPositive'];
+
+        $globalBalanceSumIncremental += $delta;
+
+        if ($periods[$periodNo]['total'] === null) {
+            $periods[$periodNo]['total'] = $globalBalanceSumIncremental;
+
+            if ($periodNo != 0) {
+                $periodId = $periods[$periodNo]['startTimestamp'] . '_' . $periods[$periodNo]['endTimestamp'];
+
+                $cachedPeriods[$periodId] = $periods[$periodNo];
+                $cachedPeriods[$periodId]['dateComputed'] = \TIME_NOW;
+
+                $cacheUpdated = true;
+            }
+        }
+    }
+
+    if ($cacheUpdated) {
+        ksort($cachedPeriods);
+
+        \mint\updateCache([
+            'global_balance_summaries_by_period' => array_slice($cachedPeriods, -$maxCacheEntries),
+        ]);
+    }
+
+    return $periods;
+}
+
 // balance transfers
 function getBalanceTransfers(?string $conditions = null)
 {
