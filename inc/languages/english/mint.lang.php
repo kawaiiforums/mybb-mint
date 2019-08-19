@@ -112,6 +112,7 @@ $l['mint_page_economy_new_items_transaction'] = 'New Transaction';
 $l['mint_item_transaction_new'] = 'New Transaction';
 $l['mint_item_transaction_new_error'] = 'Could not create transaction.';
 $l['mint_item_transaction_new_success'] = 'Successfully created item transaction offer.';
+$l['mint_item_transaction_limit_reached'] = 'You cannot create new Item Transactions at this moment ({1} active transactions out of {2} allowed).';
 $l['mint_item_transaction_select_ask_items'] = 'Select items to ask for.';
 $l['mint_item_transaction_select_bid_items'] = 'Select items to offer (required).';
 

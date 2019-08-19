@@ -375,6 +375,50 @@ function getUsergroupRewardMultipliers(): array
     );
 }
 
+function getUserActiveItemTransactionsLimit(int $userId): ?int
+{
+    static $usersLimits;
+
+    if (!isset($usersLimits[$userId])) {
+        $user = \get_user($userId);
+
+        if (!empty($user)) {
+            $userGroupIds = array_map('intval', explode(',', $user['additionalgroups']));
+            $userGroupIds[] = $user['usergroup'];
+
+            $usersLimits[$userId] = \mint\getArraySubset(
+                \mint\getUsergroupActiveItemTransactionsLimit(),
+                $userGroupIds
+            );
+        } else {
+            $usersLimits[$userId] = null;
+        }
+    }
+
+    $userLimits = $usersLimits[$userId];
+
+    if ($userLimits) {
+        if (in_array(0, $userLimits)) {
+            return 0;
+        } else {
+            return max($userLimits);
+        }
+    } else {
+        return null;
+    }
+}
+
+function getUsergroupActiveItemTransactionsLimit(): array
+{
+    global $cache;
+
+    return array_column(
+        $cache->read('usergroups') ?? [],
+        'mint_active_item_transactions_limit',
+        'gid'
+    );
+}
+
 // inventory
 function getUserInventoryType($user): ?array
 {
@@ -1231,6 +1275,25 @@ function countActivePublicItemTransactions(): int
     global $db;
 
     return ItemTransactions::with($db)->count('active = 1 AND unlisted = 0');
+}
+
+function countUserActiveItemTransactions(int $userId): int
+{
+    global $db;
+
+    $result = $db->fetch_field(
+        $db->query("
+            SELECT
+                COUNT(id) AS n
+                FROM
+                    " . TABLE_PREFIX . "mint_item_transactions iTr
+                    LEFT JOIN " . TABLE_PREFIX . "mint_item_transaction_item_types iTrITy ON iTr.id = iTrITy.item_transaction_id
+                WHERE iTr.ask_user_id = " . (int)$userId . " AND iTr.active = 1 AND iTrITy.item_transaction_id IS NULL
+        "),
+        'n'
+    );
+
+    return $result;
 }
 
 function getRecentActivePublicItemTransactions(?int $limit = null): array

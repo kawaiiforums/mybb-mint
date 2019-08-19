@@ -591,6 +591,15 @@ function admin_user_groups_edit_graph(): void
         )
     );
 
+    $form_container->output_row(
+        $lang->mint_active_item_transactions_limit,
+        $lang->mint_active_item_transactions_limit_description,
+        $form->generate_numeric_field(
+            'mint_active_item_transactions_limit',
+            $mybb->input['mint_active_item_transactions_limit'] ?? 0
+        )
+    );
+
     $form_container->end();
 
     echo '</div>';
@@ -609,6 +618,10 @@ function admin_user_groups_edit_commit(): void
     }
 
     $updated_group['mint_reward_multiplier'] = $value;
+
+    $updated_group['mint_active_item_transactions_limit'] = abs(
+        $mybb->get_input('mint_active_item_transactions_limit', \MyBB::INPUT_INT)
+    );
 }
 
 

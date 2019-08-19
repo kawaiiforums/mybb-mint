@@ -13,6 +13,8 @@ $l['mint_inventory_type'] = 'Inventory Type';
 $l['mint_inventory_slots_bonus'] = 'Bonus Inventory Slots';
 $l['mint_reward_multiplier'] = 'Content Entity Reward Multiplier';
 $l['mint_reward_multiplier_description'] = 'Users\' rewards will be multiplied by this number (rounded to nearest integer). Set to "1" to leave reward amounts unaffected.';
+$l['mint_active_item_transactions_limit'] = 'Active Item Transactions Limit';
+$l['mint_active_item_transactions_limit_description'] = 'Maximum number of user\'s active Item Transactions. Set to "0" to allow creating Transactions without restrictions.';
 
 // Mint
 $l['mint_admin'] = 'Mint';

@@ -71,6 +71,7 @@ function mint_install()
         ],
         'usergroups' => [
             'mint_reward_multiplier' => 'numeric(12,2) NOT NULL DEFAULT 1',
+            'mint_active_item_transactions_limit' => 'integer NOT NULL DEFAULT 0',
         ],
     ], true);
 
@@ -94,7 +95,7 @@ function mint_install()
     ]);
 
     // datacache
-    require_once MYBB_ROOT . '/inc/functions_task.php';
+    $cache->update_usergroups();
 
     $cache->update('mint', [
         'version' => null,
@@ -141,6 +142,7 @@ function mint_uninstall()
         ],
         'usergroups' => [
             'mint_reward_multiplier',
+            'mint_active_item_transactions_limit',
         ],
     ]);
 
