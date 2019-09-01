@@ -1,4 +1,4 @@
-<div class="mint__item-card">
+<div class="mint__item-card mint__list__entry" data-matchable-string="{$matchableString}" id="itemType{$itemTypeId}">
     <div class="mint__item-card__visual">
         <div class="mint__item-icon">
             <div class="{$classes}" style="background-image: url({$imageUrl})">

@@ -289,7 +289,7 @@ function getRenderedInventoryPreview(array $items, ?int $contextUserId = null): 
 }
 
 // block elements
-function getRenderedItemCard(array $item, array $details = []): ?string
+function getRenderedItemCard(array $item, array $details = [], string $templateName = 'item_card'): ?string
 {
     global $mybb, $lang;
 
@@ -297,6 +297,7 @@ function getRenderedItemCard(array $item, array $details = []): ?string
     
     $parser = new \postParser;
 
+    $itemTypeId = (int)$item['item_type_id'];
     $itemTitle = \htmlspecialchars_uni($item['item_type_title']);
     $categoryTitle = \htmlspecialchars_uni($item['item_category_title']);
 
@@ -308,6 +309,12 @@ function getRenderedItemCard(array $item, array $details = []): ?string
         'filter_badwords' => true,
         'allow_smilies' => true,
     ]);
+
+    if ($templateName == 'item_types_entry') {
+        $matchableString = strip_tags($itemTitle) . ' ' . strip_tags($itemDescription);
+    } else {
+        $matchableString = null;
+    }
 
     $flags = null;
 
@@ -420,7 +427,7 @@ function getRenderedItemCard(array $item, array $details = []): ?string
         eval('$attributesHtml .= "' . \mint\tpl('flowing_list_entry') . '<br />";');
     }
 
-    eval('$output = "' . \mint\tpl('item_card') . '";');
+    eval('$output = "' . \mint\tpl($templateName) . '";');
 
     return $output;
 }

@@ -47,6 +47,10 @@ class ItemTypes extends \mint\DbEntityRepository
             'type' => 'bool',
             'notNull' => true,
         ],
+        'referenceable' => [
+            'type' => 'bool',
+            'notNull' => true,
+        ],
     ];
 
     public function updateById(int $id, array $data): bool

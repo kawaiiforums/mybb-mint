@@ -51,6 +51,8 @@ $l['mint_balance_operations_recent'] = 'Recent Balance Operations';
 $l['mint_balance_operations_termination_point'] = 'system operation (<code>{1}</code>)';
 $l['mint_balance_operations_item_transaction'] = 'item transaction';
 
+$l['mint_page_economy_item_types'] = 'Item Reference';
+
 $l['mint_page_economy_items_forge'] = 'Forge Items';
 $l['mint_items_forge_success_amount'] = 'Successfully forged {1} item(s).';
 $l['mint_items_forge_error'] = 'Could not execute the forging operation.';

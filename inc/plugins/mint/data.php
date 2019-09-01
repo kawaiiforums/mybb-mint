@@ -710,6 +710,34 @@ function countAvailableUserInventorySlotsWithItems(int $userId, array $items): i
     return $slotsWithItems;
 }
 
+// item types
+function getItemTypesWithDetails(?string $conditions = null)
+{
+    global $db;
+
+    $query = ItemTypes::with($db)->get(
+        '
+            id AS item_type_id,
+            title AS item_type_title,
+            description AS item_type_description,
+            image AS item_type_image,
+            stacked AS item_type_stacked,
+            transferable AS item_type_transferable,
+            discardable AS item_type_discardable,
+            referenceable AS item_type_referenceable
+        ',
+        $conditions,
+        [
+            'mint_item_categories' => [
+                'id',
+                'title',
+            ],
+        ]
+    );
+
+    return \mint\queryResultAsArray($query, 'item_type_id');
+}
+
 // items
 function getItemsById(array $ids, bool $forUpdate = false)
 {

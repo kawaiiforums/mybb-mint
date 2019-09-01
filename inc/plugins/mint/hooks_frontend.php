@@ -50,6 +50,8 @@ function global_start(): void
                     'item_transaction_entry_itemset',
                     'item_transactions',
                     'item_transactions_entry',
+                    'item_types',
+                    'item_types_entry',
                     'items_action_form',
                     'items_discard_form',
                     'items_forge',
@@ -503,6 +505,42 @@ function misc_start(): void
                 }
 
                 eval('$content = "' . \mint\tpl('balance_operations') . '";');
+                eval('$page = "' . \mint\tpl('page') . '";');
+
+                return $page;
+            },
+        ],
+        'economy_item_types' => [
+            'parents' => [
+                'economy_hub',
+            ],
+            'controller' => function (array $globals) {
+                extract($globals);
+
+                $pageTitle = $lang->mint_page_economy_item_types;
+
+                $entries = null;
+
+                $itemTypes = \mint\getItemTypesWithDetails(
+                    'WHERE referenceable = 1 ORDER BY item_category_title ASC, item_type_title ASC'
+                );
+
+                foreach ($itemTypes as $itemType) {
+                    $entries .= \mint\getRenderedItemCard($itemType, [], 'item_types_entry');
+                }
+
+                $filterValue = \htmlspecialchars_uni($mybb->get_input('q'));
+
+                $itemsCount = $lang->sprintf(
+                    $lang->mint_items_count,
+                    count($itemTypes)
+                );
+
+                $inputJson = \htmlspecialchars_uni(json_encode([
+                    'matchingEntriesCountStringTemplate' => $lang->mint_items_count,
+                ]));
+
+                eval('$content = "' . \mint\tpl('item_types') . '";');
                 eval('$page = "' . \mint\tpl('page') . '";');
 
                 return $page;
