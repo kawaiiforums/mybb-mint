@@ -18,14 +18,18 @@ function getCurrencyTerminationPointByName(string $name): ?array
 {
     global $db;
 
-    return current(CurrencyTerminationPoints::with($db)->getByColumn('name', $name));
+    return array_shift(
+        CurrencyTerminationPoints::with($db)->getByColumn('name', $name)
+    );
 }
 
 function getItemTerminationPointByName(string $name): ?array
 {
     global $db;
 
-    return current(ItemTerminationPoints::with($db)->getByColumn('name', $name));
+    return array_shift(
+        ItemTerminationPoints::with($db)->getByColumn('name', $name)
+    );
 }
 
 // balance
