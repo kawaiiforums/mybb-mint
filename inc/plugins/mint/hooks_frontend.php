@@ -68,6 +68,7 @@ function global_start(): void
                     'reward_sources_legend',
                     'string_to_copy',
                     'user_active_item_transactions',
+                    'user_inventory',
                 ], 'mint_');
             }
 
@@ -739,8 +740,8 @@ function misc_start(): void
                 $form = null;
 
                 if (isset($mybb->input['name'])) {
-                    if (isset($mybb->input['user_item_selection'])) {
-                        $userItemSelection = $mybb->get_input('user_item_selection', \MyBB::INPUT_ARRAY);
+                    if (isset($mybb->input['item_selection'])) {
+                        $userItemSelection = $mybb->get_input('item_selection', \MyBB::INPUT_ARRAY);
                     } elseif (isset($mybb->input['selected_items']) && \verify_post_check($mybb->get_input('my_post_key'))) {
                         $userItemSelection = json_decode($mybb->get_input('selected_items'), true, 2);
                     } else {
@@ -782,13 +783,15 @@ function misc_start(): void
                                 $itemActionName = \htmlspecialchars_uni($itemAction['name']);
                                 $itemActionTitle = $lang->{'mint_item_action_' . $itemAction['name']};
                                 $selectedItemsJson = \htmlspecialchars_uni(
-                                    json_encode($mybb->get_input('user_item_selection', \MyBB::INPUT_ARRAY), 0, 1)
+                                    json_encode($mybb->get_input('item_selection', \MyBB::INPUT_ARRAY), 0, 1)
                                 );
 
                                 eval('$form = "' . \mint\tpl('items_action_form') . '";');
                             } else {
                                 $messages .= \mint\getRenderedMessage($lang->mint_items_action_not_applicable, 'error');
                             }
+                        } else {
+                            $messages .= \mint\getRenderedMessage($lang->mint_items_action_not_applicable, 'error');
                         }
                     }
                 }
@@ -843,7 +846,30 @@ function misc_start(): void
                             ];
                         }
 
-                        $content = \mint\getRenderedInventory($items, 'standard', $userInventoryData['slots']);
+                        $registeredItemActions = \mint\getRegisteredItemActions();
+
+                        if ($user['uid'] == $mybb->user['uid'] && $registeredItemActions) {
+                            $type = 'action-select';
+                        } else {
+                            $type = 'standard';
+                        }
+
+                        $content = \mint\getRenderedInventory($items, $type, $userInventoryData['slots']);
+
+                        if ($user['uid'] == $mybb->user['uid'] && $registeredItemActions) {
+                            $actionSelect = \mint\getRenderedSelectElement(
+                                'name',
+                                array_map(
+                                    function ($value) use ($lang) {
+                                        return $lang->{'mint_item_action_' . $value};
+                                    },
+                                    array_column($registeredItemActions, 'name', 'name')
+                                ),
+                                $lang->mint_with_selected
+                            );
+
+                            eval('$content = "' . \mint\tpl('user_inventory') . '";');
+                        }
                     } else {
                         $content = \mint\getRenderedMessage($lang->mint_no_entries);
                     }
@@ -903,7 +929,7 @@ function misc_start(): void
 
                         foreach ($itemActions as $itemAction) {
                             $links['item_action_' . $itemAction['name']] = [
-                                'url' => 'misc.php?action=economy_items_action&name=' . $itemAction['name'] . '&user_item_selection[' . $item['item_ownership_id'] . ']=1',
+                                'url' => 'misc.php?action=economy_items_action&name=' . $itemAction['name'] . '&item_selection[' . $item['item_ownership_id'] . ']=1',
                                 'title' => $lang->{'mint_item_action_' . $itemAction['name']},
                             ];
                         }

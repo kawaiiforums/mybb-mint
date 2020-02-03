@@ -20,6 +20,7 @@ $l['mint_copied_to_clipboard'] = 'Copied to clipboard.';
 $l['mint_amount'] = 'Amount';
 $l['mint_submit'] = 'Submit';
 $l['mint_continue'] = 'Continue';
+$l['mint_with_selected'] = 'With selected&hellip;';
 $l['mint_currency_simple'] = '{1} {2}';
 $l['mint_to_user'] = 'to {1}';
 $l['mint_from_user'] = 'from {1}';

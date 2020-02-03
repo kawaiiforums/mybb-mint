@@ -66,6 +66,7 @@ a.mint__grid-detail__entry { text-decoration: none; color: inherit; }
 .mint__form__header:last-child { margin-top: 20px; }
 .mint__form__header__title { flex: 11; padding: 12px; align-self: center; }
 .mint__form__header__controls { flex: 1; padding: 12px; align-self: center; text-align: right; }
+.mint__form__header__controls select { padding: 2px; }
 
 .mint__filter-controls { display: block; box-sizing: border-box; margin: 10px 0; padding: 10px; width: 100%; border: none; background: rgba(0,0,0,0.05); }
 

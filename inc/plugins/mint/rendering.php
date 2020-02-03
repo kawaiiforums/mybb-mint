@@ -70,6 +70,23 @@ function getRenderedActionLinks(array $links): ?string
     return $output;
 }
 
+function getRenderedSelectElement(string $name, array $values, ?string $title = null): ?string
+{
+    $options = null;
+
+    if ($title !== null) {
+        $options .= '<option selected="true" disabled="disabled">' . $title . '</option>';
+    }
+
+    foreach ($values as $value => $title) {
+        $options .= '<option value="' . \htmlspecialchars_uni($value) . '">' . \htmlspecialchars_uni($title) . '</option>';
+    }
+
+    $output = '<select name="' . \htmlspecialchars_uni($name) . '">' . $options . '</select>';
+
+    return $output;
+}
+
 // blocks
 function getRenderedRecentBalanceOperations($query, ?int $contextUserId = null): ?string
 {
@@ -236,7 +253,10 @@ function getRenderedInventory(array $items, string $type = 'standard', ?int $pla
             $stackedAmount = null;
         }
 
-        if ($type == 'transaction-select' && $item['item_type_transferable'] && !$item['item_transaction_id']) {
+        if (
+            ($type == 'transaction-select' && $item['item_type_transferable'] && !$item['item_transaction_id']) ||
+            ($type == 'action-select' && !$item['item_transaction_id'])
+        ) {
             if ($item['item_type_stacked']) {
                 $max = (int)$item['stacked_amount'];
                 eval('$fields = "' . \mint\tpl('inventory_entry_options_number') . '";');
