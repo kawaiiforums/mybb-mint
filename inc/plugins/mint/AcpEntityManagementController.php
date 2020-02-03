@@ -114,6 +114,10 @@ class AcpEntityManagementController
                 $column['presenter'] = null;
             }
 
+            if (!isset($column['encoder'])) {
+                $column['encoder'] = null;
+            }
+
             if (!isset($column['outputHandler'])) {
                 $column['outputHandler'] = null;
             }
@@ -339,6 +343,8 @@ class AcpEntityManagementController
             if ($errors) {
                 \flash_message($this->getFormattedErrors($errors), 'error');
             } else {
+                $data = $this->getEncodedValues($data);
+
                 $this->dbRepository->insert($data);
 
                 \flash_message($this->actionLang('added'), 'success');
@@ -356,13 +362,21 @@ class AcpEntityManagementController
 
         if ($entity) {
             if ($this->mybb->request_method == 'post') {
-                $data = array_intersect_key($this->mybb->input, $this->getCustomizableColumns());
+                $data = [];
+
+                foreach ($this->getCustomizableColumns() as $columnName => $column) {
+                    if (isset($this->mybb->input)) {
+                        $data[$columnName] = $this->mybb->input[$columnName] ?? null;
+                    }
+                }
 
                 $errors = $this->getValidationErrors($data);
 
                 if ($errors) {
                     \flash_message($this->getFormattedErrors($errors), 'error');
                 } else {
+                    $data = $this->getEncodedValues($data);
+
                     $this->dbRepository->updateById($entity['id'], $data);
 
                     \flash_message($this->actionLang('updated'), 'success');
@@ -485,6 +499,17 @@ class AcpEntityManagementController
         }
 
         return $output;
+    }
+
+    protected function getEncodedValues(array $data): array
+    {
+        foreach ($data as $key => &$value) {
+            if (isset($this->columns[$key]['encoder']) && is_callable($this->columns[$key]['encoder'])) {
+                $value = $this->columns[$key]['encoder']($value);
+            }
+        }
+
+        return $data;
     }
 
     protected function namespaceLang(?string $name = null): string
