@@ -107,9 +107,13 @@ abstract class DbEntityRepository
         }
 
         if (is_array($value)) {
-            $escapedValues = $this->getEscapedColumnValues($columnName, $value);
+            if (!empty($value)) {
+                $escapedValues = $this->getEscapedColumnValues($columnName, $value);
 
-            $conditions = $columnName . ' IN (' . implode(',', $escapedValues) . ')';
+                $conditions = $columnName . ' IN (' . implode(',', $escapedValues) . ')';
+            } else {
+                return [];
+            }
         } else {
             $conditions = $columnName . ' = ' . $this->getEscapedColumnValue($columnName, $value);
         }
