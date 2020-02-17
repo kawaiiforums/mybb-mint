@@ -687,7 +687,7 @@ function getRequiredUserInventorySlotsForItems(int $userId, array $items): int
 {
     $slotsRequired = 0;
 
-    $distinctUserItemTypeIds = \mint\getDistinctItemTypeIdsByUser($userId);
+    $distinctUserItemTypeIds = array_keys(\mint\getDistinctItemTypeCountsByUser($userId));
 
     foreach ($items as $item) {
         $inArray = in_array($item['item_type_id'], $distinctUserItemTypeIds);
@@ -1175,21 +1175,40 @@ function getItemOwnershipsByItemTypeAndUser(int $itemTypeId, int $userId, ?int $
     );
 }
 
-function getDistinctItemTypeIdsByUser(int $userId): array
+function getDistinctItemTypeCountsByUser(int $userId, ?array $itemTypeIds = null, bool $availableOnly = false): array
 {
     global $db;
+
+    $whereConditions = 'user_id = ' . (int)$userId . ' AND io.active = 1';
+
+    if (!empty($itemTypeIds)) {
+        $whereConditions .= ' AND i.item_type_id IN (' . \mint\getIntegerCsv($itemTypeIds) . ')';
+    }
+
+    if ($availableOnly) {
+        $tableJoins = "
+            LEFT JOIN (
+                " . TABLE_PREFIX . "mint_item_transaction_items iTrI
+                INNER JOIN " . TABLE_PREFIX . "mint_item_transactions iTr ON iTrI.item_transaction_id = iTr.id AND iTr.active = 1 
+            ) ON iTrI.item_id = i.id";
+        $whereConditions .= ' AND iTrI.item_transaction_id IS NULL';
+    } else {
+        $tableJoins = null;
+    }
 
     return \mint\queryResultAsArray(
         $db->query("
             SELECT
-                DISTINCT item_type_id
+                item_type_id, COUNT(i.id) AS n
                 FROM
                     " . TABLE_PREFIX . "mint_item_ownerships io
                     INNER JOIN " . TABLE_PREFIX . "mint_items i ON io.item_id = i.id
-                WHERE user_id = " . (int)$userId . " AND io.active = 1
+                    {$tableJoins}
+                WHERE {$whereConditions}
+                GROUP BY item_type_id
         "),
-        null,
-        'item_type_id'
+        'item_type_id',
+        'n'
     );
 }
 

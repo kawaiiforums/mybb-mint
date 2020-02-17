@@ -54,7 +54,17 @@ function getRenderedActionLinks(array $links): ?string
     $output = null;
 
     foreach ($links as $linkName => $link) {
+        $attributes = null;
+
         $title = \htmlspecialchars_uni($link['title']);
+
+        if (!empty($link['note'])) {
+            $attributes .= ' title="' . \htmlspecialchars_uni($link['note']) . '"';
+        }
+
+        if (!empty($link['disabled'])) {
+            $attributes .= ' disabled';
+        }
 
         if (isset($link['url'])) {
             $url = \htmlspecialchars_uni($link['url']);

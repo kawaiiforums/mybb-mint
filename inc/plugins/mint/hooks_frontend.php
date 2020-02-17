@@ -737,18 +737,12 @@ function misc_start(): void
                 $pageTitle = $lang->mint_page_economy_items_action;
 
                 $messages = null;
-                $form = null;
+                $content = null;
 
                 if (isset($mybb->input['name'])) {
-                    if (isset($mybb->input['item_selection'])) {
-                        $userItemSelection = $mybb->get_input('item_selection', \MyBB::INPUT_ARRAY);
-                    } elseif (isset($mybb->input['selected_items']) && \verify_post_check($mybb->get_input('my_post_key'))) {
+                    if (isset($mybb->input['selected_items']) && \verify_post_check($mybb->get_input('my_post_key'))) {
                         $userItemSelection = json_decode($mybb->get_input('selected_items'), true, 2);
-                    } else {
-                        $userItemSelection = null;
-                    }
 
-                    if ($userItemSelection) {
                         $selectedItems = \mint\getItemIdsByResolvedOwnershipStackedAmount($userItemSelection, true);
 
                         if ($selectedItems) {
@@ -761,42 +755,152 @@ function misc_start(): void
                             if ($itemAction) {
                                 $itemActionItemCount = count($itemOwnershipsDetails);
 
-                                if (isset($mybb->input['selected_items'])) {
-                                    $result = ItemActions::with($db)->execute([
-                                        'user_id' => $mybb->user['uid'],
-                                        'name' => $itemAction['name'],
-                                        'items' => $selectedItems,
-                                    ]);
+                                $action = ItemActions::with($db)->execute([
+                                    'user_id' => $mybb->user['uid'],
+                                    'name' => $itemAction['name'],
+                                    'items' => $selectedItems,
+                                ]);
 
-                                    if ($result) {
-                                        $url = 'misc.php?action=economy_user_inventory';
-
-                                        \redirect($url, $lang->sprintf(
-                                            $lang->mint_items_action_success_amount,
+                                if ($action['success']) {
+                                    $messages .= \mint\getRenderedMessage(
+                                        $lang->sprintf(
+                                            $lang->{'mint_item_action_' . $itemAction['name'] . '_success'} ?? $lang->mint_items_action_success_amount,
                                             $itemActionItemCount
-                                        ));
-                                    } else {
-                                        $messages .= \mint\getRenderedMessage($lang->mint_items_action_error, 'error');
+                                        ),
+                                        'success'
+                                    );
+
+                                    if (!empty($action['createdItemTypeIds'])) {
+                                        $itemTypeData = \mint\getItemTypesWithDetails('WHERE t1.id IN (' . \mint\getIntegerCsv($action['createdItemTypeIds']) . ')');
+
+                                        $content = \mint\getRenderedInventory($itemTypeData);
+
+                                        $messages .= \mint\getRenderedMessage(
+                                            $lang->sprintf(
+                                                $lang->mint_items_action_items_created_amount,
+                                                (int)$action['createdItemTypeIds']
+                                            ),
+                                            'note'
+                                        );
                                     }
+                                } else {
+                                    $messages .= \mint\getRenderedMessage($lang->mint_items_action_error, 'error');
+                                }
+                            }
+                        }
+                    } elseif (isset($mybb->input['item_selection'])) {
+                        $userItemSelection = $mybb->get_input('item_selection', \MyBB::INPUT_ARRAY);
+
+                        if ($mybb->get_input('no_auto_select', \MyBB::INPUT_INT) === 0) {
+                            $selectedItemTypeCounts = \mint\getItemTypeAmountsByOwnershipIdsWithAmount($userItemSelection);
+
+                            if ($selectedItemTypeCounts) {
+                                $selectedItemTypes = ItemTypes::with($db)->getByColumn(
+                                    'id',
+                                    array_keys($selectedItemTypeCounts),
+                                    ['name']
+                                );
+
+                                $userItemSelectionNames = [];
+
+                                foreach ($selectedItemTypeCounts as $id => $count) {
+                                    $userItemSelectionNames[] = $selectedItemTypes[$id]['name'] ?? null;
                                 }
 
+                                $action = \mint\getItemActionBySignature($mybb->get_input('name'), $userItemSelectionNames, false);
+
+                                if ($action) {
+                                    $itemActionItemTypes = array_column(
+                                        ItemTypes::with($db)->getByColumn(
+                                            'name',
+                                            array_unique($action['itemTypeNames']),
+                                            ['id', 'name']
+                                        ),
+                                        null,
+                                        'name'
+                                    );
+
+                                    $itemTypeCounts = [];
+
+                                    foreach ($action['itemTypeNames'] as $name) {
+                                        if (isset($itemActionItemTypes[$name]['id'])) {
+                                            $itemTypeCounts[$itemActionItemTypes[$name]['id']]++;
+                                        }
+                                    }
+
+                                    $missingTypeCounts = [];
+
+                                    foreach ($itemTypeCounts as $id => $count) {
+                                        $missingCount = $count - $selectedItemTypeCounts[$id] ?? 0;
+
+                                        if ($missingCount > 0) {
+                                            $missingTypeCounts[$id] = $missingCount;
+                                        }
+                                    }
+
+                                    if ($missingTypeCounts) {
+                                        $matchingUserItems = \mint\getUserItemsDetailsByItemTypeAndResolvedAmount($missingTypeCounts, $mybb->user['uid']);
+
+                                        if ($matchingUserItems) {
+                                            $addedSelection = array_fill_keys(
+                                                array_column(
+                                                    $matchingUserItems,
+                                                    'item_ownership_id'
+                                                ),
+                                                1
+                                            );
+
+                                            $newSelection = $userItemSelection + $addedSelection;
+
+                                            $url = 'misc.php?action=economy_items_action&name=' . urlencode($action['name']);
+                                            $url .= '&' . http_build_query([
+                                                'item_selection' => $newSelection
+                                            ]);
+                                            $url .= '&no_auto_select=1';
+
+                                            header('Location: ' . $url);
+                                            exit;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        $selectedItems = \mint\getItemIdsByResolvedOwnershipStackedAmount($userItemSelection, true);
+
+                        if ($selectedItems) {
+                            $itemOwnershipsDetails = \mint\getItemOwnershipsDetails(
+                                array_column($selectedItems, 'item_ownership_id')
+                            );
+                            $selectedItemTypeNames = array_column($itemOwnershipsDetails, 'item_type_name');
+                            $selectedItemTypeTitles = array_column($itemOwnershipsDetails, 'item_type_title');
+                            $itemAction = \mint\getItemActionBySignature($mybb->get_input('name'), $selectedItemTypeNames);
+
+                            if ($itemAction) {
                                 $itemActionName = \htmlspecialchars_uni($itemAction['name']);
                                 $itemActionTitle = $lang->{'mint_item_action_' . $itemAction['name']};
                                 $selectedItemsJson = \htmlspecialchars_uni(
                                     json_encode($mybb->get_input('item_selection', \MyBB::INPUT_ARRAY), 0, 1)
                                 );
+                                $itemActionItemCount = count($itemOwnershipsDetails);
+                                $itemActionItemCountString = $lang->sprintf(
+                                    $lang->mint_items_count,
+                                    $itemActionItemCount
+                                );
+                                $itemActionItemList = implode(
+                                    $lang->comma,
+                                    array_map('htmlspecialchars_uni', $selectedItemTypeTitles)
+                                );
 
-                                eval('$form = "' . \mint\tpl('items_action_form') . '";');
+                                eval('$content = "' . \mint\tpl('items_action_form') . '";');
                             } else {
                                 $messages .= \mint\getRenderedMessage($lang->mint_items_action_not_applicable, 'error');
                             }
-                        } else {
-                            $messages .= \mint\getRenderedMessage($lang->mint_items_action_not_applicable, 'error');
                         }
                     }
                 }
 
-                $content = $messages . $form;
+                $content = $messages . $content;
 
                 eval('$page = "' . \mint\tpl('page') . '";');
 
@@ -905,13 +1009,6 @@ function misc_start(): void
 
                     $links = [];
 
-                    if ($item['user_id'] == $mybb->user['uid'] && $item['item_type_discardable'] == true && $item['item_transaction_id'] == null) {
-                        $links['discard'] = [
-                            'url' => 'misc.php?action=economy_items_discard&item_ownership_id=' . $item['item_ownership_id'],
-                            'title' => $lang->mint_items_action_discard,
-                        ];
-                    }
-
                     if (is_member(\mint\getSettingValue('forge_groups'))) {
                         $links['melt'] = [
                             'url' => 'misc.php?action=economy_items_melt&item_ownership_id=' . $item['item_ownership_id'],
@@ -919,19 +1016,83 @@ function misc_start(): void
                         ];
                     }
 
-                    if ($item['item_transaction_id']) {
-                        $links['transaction'] = [
-                            'url' => 'misc.php?action=economy_item_transaction&id=' . $item['item_transaction_id'],
-                            'title' => $lang->mint_items_action_active_transaction,
-                        ];
-                    } elseif ($item['item_type_name']) {
-                        $itemActions = \mint\getItemActionsAcceptingItemTypes([$item['item_type_name']]);
 
-                        foreach ($itemActions as $itemAction) {
-                            $links['item_action_' . $itemAction['name']] = [
-                                'url' => 'misc.php?action=economy_items_action&name=' . $itemAction['name'] . '&item_selection[' . $item['item_ownership_id'] . ']=1',
-                                'title' => $lang->{'mint_item_action_' . $itemAction['name']},
+                    if ($item['user_id'] == $mybb->user['uid']) {
+                        if ($item['item_type_discardable'] == true && $item['item_transaction_id'] == null) {
+                            $links['discard'] = [
+                                'url' => 'misc.php?action=economy_items_discard&item_ownership_id=' . $item['item_ownership_id'],
+                                'title' => $lang->mint_items_action_discard,
                             ];
+                        }
+
+                        if ($item['item_transaction_id']) {
+                            $links['transaction'] = [
+                                'url' => 'misc.php?action=economy_item_transaction&id=' . $item['item_transaction_id'],
+                                'title' => $lang->mint_items_action_active_transaction,
+                            ];
+                        } elseif ($item['item_type_name']) {
+                            $itemActions = \mint\getItemActionsAcceptingItemTypes([$item['item_type_name']], 1);
+
+                            $itemActionsItemTypes = array_column(
+                                ItemTypes::with($db)->getByColumn(
+                                    'name',
+                                    array_unique(
+                                        array_merge(
+                                            ...array_column($itemActions, 'itemTypeNames')
+                                        )
+                                    ),
+                                    ['id', 'name', 'title']
+                                ),
+                                null,
+                                'name'
+                            );
+
+                            $userItemTypeCounts = \mint\getDistinctItemTypeCountsByUser(
+                                $item['user_id'],
+                                array_column($itemActionsItemTypes, 'id'),
+                                true
+                            );
+
+                            foreach ($itemActions as $itemAction) {
+                                $itemTypeCounts = array_count_values($itemAction['itemTypeNames']);
+
+                                $missingTypeCountsByName = [];
+
+                                foreach ($itemTypeCounts as $name => $count) {
+                                    $itemTypeId = $itemActionsItemTypes[$name]['id'] ?? null;
+
+                                    $missingCount = $count - $userItemTypeCounts[$itemTypeId] ?? 0;
+
+                                    if ($missingCount > 0) {
+                                        $missingTypeCountsByName[$name] = $missingCount;
+                                    }
+                                }
+
+                                $link = [
+                                    'url' => 'misc.php?action=economy_items_action&name=' . $itemAction['name'] . '&item_selection[' . $item['item_ownership_id'] . ']=1',
+                                    'title' => $lang->{'mint_item_action_' . $itemAction['name']},
+                                ];
+
+                                if ($missingTypeCountsByName) {
+                                    $entries = [];
+
+                                    foreach ($missingTypeCountsByName as $name => $count) {
+                                        $entries[] = $lang->sprintf(
+                                            $lang->mint_items_action_missing_items_entry,
+                                            \htmlspecialchars_uni($itemActionsItemTypes[$name]['title'] ?? $name),
+                                            $count
+                                        );
+                                    }
+
+                                    $link['note'] = $lang->sprintf(
+                                        $lang->mint_items_action_missing_items,
+                                        implode($lang->comma, $entries)
+                                    );
+                                    $link['disabled'] = true;
+                                }
+
+                                $links['item_action_' . $itemAction['name']] = $link;
+                            }
                         }
                     }
 
@@ -1364,7 +1525,6 @@ function misc_start(): void
 
         \add_breadcrumb($lang->{'mint_page_' . $pageName});
 
-        // https://wiki.php.net/rfc/arrow_functions_v2
         $globals = compact([
             'mybb',
             'lang',

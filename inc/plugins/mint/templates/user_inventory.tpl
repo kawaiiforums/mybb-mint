@@ -1,9 +1,11 @@
 <form action="misc.php?action=economy_items_action" method="post">
+    <!--
     <div class="mint__form__header">
         <div class="mint__form__header__controls" id="inventoryActionControls">
             {$actionSelect}
         </div>
     </div>
+    -->
     {$content}
 </form>
 

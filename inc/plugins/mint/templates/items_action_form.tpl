@@ -6,8 +6,8 @@
         <span class="mint__flowing-list__entry__value">{$itemActionTitle}</span>
     </div>
     <div class="mint__flowing-list__entry">
-        <span class="mint__flowing-list__entry__title">{$lang->mint_amount}</span>
-        <span class="mint__flowing-list__entry__value">{$itemActionItemCount}</span>
+        <span class="mint__flowing-list__entry__title">{$itemActionItemCountString}</span>
+        <span class="mint__flowing-list__entry__value">{$itemActionItemList}</span>
     </div>
 </div>
 

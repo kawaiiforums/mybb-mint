@@ -249,24 +249,34 @@ function getRegisteredItemActions(): array
     return $mintRuntimeRegistry['itemActions'] ?? [];
 }
 
-function getItemActionBySignature(string $name, array $itemTypeNames): ?array
+function getItemActionBySignature(string $name, array $itemTypeNames, bool $strict = true): ?array
 {
     $registeredItemActions = \mint\getRegisteredItemActions();
 
     sort($itemTypeNames);
 
     foreach ($registeredItemActions as $itemAction) {
-        sort($itemAction['itemTypeNames']);
+        if ($itemAction['name'] !== $name) {
+            continue;
+        }
 
-        if ($itemAction['name'] == $name && $itemTypeNames === $itemAction['itemTypeNames']) {
-            return $itemAction;
+        if ($strict) {
+            sort($itemAction['itemTypeNames']);
+
+            if ($itemTypeNames === $itemAction['itemTypeNames']) {
+                return $itemAction;
+            }
+        } else {
+            if (array_diff($itemTypeNames, $itemAction['itemTypeNames']) === []) {
+                return $itemAction;
+            }
         }
     }
 
     return null;
 }
 
-function getItemActionsAcceptingItemTypes(array $itemTypeNames): array
+function getItemActionsAcceptingItemTypes(array $itemTypeNames, ?int $minimumOverlap = null): array
 {
     $itemActions = [];
 
@@ -275,9 +285,9 @@ function getItemActionsAcceptingItemTypes(array $itemTypeNames): array
     sort($itemTypeNames);
 
     foreach ($registeredItemActions as $itemAction) {
-        sort($itemAction['itemTypeNames']);
+        $overlappingItems = array_intersect($itemAction['itemTypeNames'], $itemTypeNames);
 
-        if ($itemTypeNames === $itemAction['itemTypeNames']) {
+        if (count($overlappingItems) === $minimumOverlap ?? count($itemTypeNames)) {
             $itemActions[] = $itemAction;
         }
     }
@@ -321,14 +331,17 @@ function itemsTransferableFromUser(?array $items, int $expectedOwnershipUserId, 
 }
 
 // actions
-function executeItemAction(array $action, array $itemOwnershipsDetails): ?bool
+function executeItemAction(array $action, array $itemOwnershipsDetails): ?array
 {
     $itemAction = getItemActionBySignature($action['name'], array_column($itemOwnershipsDetails, 'item_type_name'));
 
     if ($itemAction) {
         return $itemAction['handler']($action, $itemOwnershipsDetails);
     } else {
-        return null;
+        return [
+            'success' => false,
+            'createdItemTypeIds' => [],
+        ];
     }
 }
 

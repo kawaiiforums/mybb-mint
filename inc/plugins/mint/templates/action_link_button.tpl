@@ -1,1 +1,1 @@
-<input type="submit" class="mint__action-links__entry" name="{$name}" value="{$title}" />
+<input type="submit" class="mint__action-links__entry" name="{$name}" value="{$title}"{$attributes} />

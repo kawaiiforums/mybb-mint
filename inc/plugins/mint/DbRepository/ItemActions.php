@@ -32,7 +32,7 @@ class ItemActions extends \mint\DbEntityRepository
         ],
     ];
 
-    public function execute(array $data, bool $useDbTransaction = true): bool
+    public function execute(array $data, bool $useDbTransaction = true): array
     {
         if ($useDbTransaction) {
             $this->db->write_query('BEGIN');
@@ -95,7 +95,7 @@ class ItemActions extends \mint\DbEntityRepository
             }
 
             // execute action
-            $result &= \mint\executeItemAction($action, $itemOwnershipsDetails);
+            $action = \mint\executeItemAction($action, $itemOwnershipsDetails);
         } catch (\RuntimeException $e) {
             $result = false;
         } finally {
@@ -108,6 +108,9 @@ class ItemActions extends \mint\DbEntityRepository
             }
         }
 
-        return $result;
+        return [
+            'success' => $result,
+            'createdItemTypeIds' => $action['createdItemTypeIds'] ?? [],
+        ];
     }
 }
