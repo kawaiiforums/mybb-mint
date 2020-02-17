@@ -62,7 +62,7 @@ class ItemTransactions extends \mint\DbEntityRepository
             'type' => 'integer',
             'foreignKeys' => [
                 [
-                    'table' => 'balance_transfers',
+                    'table' => 'mint_balance_transfers',
                     'column' => 'id',
                 ],
             ],
