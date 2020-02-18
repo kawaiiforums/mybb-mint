@@ -773,12 +773,16 @@ function misc_start(): void
                                     if (!empty($action['createdItemTypeIds'])) {
                                         $itemTypeData = \mint\getItemTypesWithDetails('WHERE t1.id IN (' . \mint\getIntegerCsv($action['createdItemTypeIds']) . ')');
 
-                                        $content = \mint\getRenderedInventory($itemTypeData);
+                                        $items = array_map(function (int $itemTypeId) use ($itemTypeData) {
+                                            return $itemTypeData[$itemTypeId] ?? [];
+                                        }, $action['createdItemTypeIds']);
+
+                                        $content = \mint\getRenderedInventory($items);
 
                                         $messages .= \mint\getRenderedMessage(
                                             $lang->sprintf(
                                                 $lang->mint_items_action_items_created_amount,
-                                                (int)$action['createdItemTypeIds']
+                                                count($action['createdItemTypeIds'])
                                             ),
                                             'note'
                                         );
