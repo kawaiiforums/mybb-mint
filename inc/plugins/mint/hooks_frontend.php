@@ -956,13 +956,7 @@ function misc_start(): void
 
                         $registeredItemActions = \mint\getRegisteredItemActions();
 
-                        if ($user['uid'] == $mybb->user['uid'] && $registeredItemActions) {
-                            $type = 'action-select';
-                        } else {
-                            $type = 'standard';
-                        }
-
-                        $content = \mint\getRenderedInventory($items, $type, $userInventoryData['slots']);
+                        $content = \mint\getRenderedInventory($items, 'standard', $userInventoryData['slots']);
 
                         if ($user['uid'] == $mybb->user['uid'] && $registeredItemActions) {
                             $actionSelect = \mint\getRenderedSelectElement(
