@@ -673,12 +673,6 @@ function admin_user_users_merge_commit(): void
                 'bid_user_id',
             ],
         ],
-        [
-            'class' => Items::class,
-            'columns' => [
-                'user_id',
-            ],
-        ],
     ];
 
     foreach ($dbRepositories as $repository) {
