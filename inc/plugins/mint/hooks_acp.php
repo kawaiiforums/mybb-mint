@@ -7,11 +7,11 @@ use mint\DbRepository\BalanceOperations;
 use mint\DbRepository\BalanceTransfers;
 use mint\DbRepository\ContentEntityRewards;
 use mint\DbRepository\InventoryTypes;
+use mint\DbRepository\ItemActions;
 use mint\DbRepository\ItemCategories;
 use mint\DbRepository\ItemOwnerships;
 use mint\DbRepository\ItemTransactions;
 use mint\DbRepository\ItemTypes;
-use mint\DbRepository\Items;
 
 function admin_load(): void
 {
@@ -671,6 +671,12 @@ function admin_user_users_merge_commit(): void
             'columns' => [
                 'ask_user_id',
                 'bid_user_id',
+            ],
+        ],
+        [
+            'class' => ItemActions::class,
+            'columns' => [
+                'user_id',
             ],
         ],
     ];
